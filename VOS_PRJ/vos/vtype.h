@@ -1,3 +1,10 @@
+//----------------------------------------------------
+// Copyright (c) 2020, VOS Open source. All rights reserved.
+// Author: 156439848@qq.com; vincent_cws2008@gmail.com
+// History:
+//	     2020-08-01: initial by vincent.
+//------------------------------------------------------
+
 #if 0
 #define u8 	unsigned char
 #define u16 unsigned short

@@ -1,3 +1,10 @@
+//----------------------------------------------------
+// Copyright (c) 2020, VOS Open source. All rights reserved.
+// Author: 156439848@qq.com; vincent_cws2008@gmail.com
+// History:
+//	     2020-08-01: initial by vincent.
+//------------------------------------------------------
+
 #include "vtype.h"
 #include "vos.h"
 #include "list.h"
@@ -18,8 +25,8 @@ volatile s64  gVOSTicks = 0;
 
 volatile s64 gMarkTicksNearest = MAX_SIGNED_VAL_64; //记录最近闹钟响
 
+u32 SVC_EXC_RETURN; //SVC进入后保存，然后返回时要用到 (cortex m4)
 
-u32 svc_exc_return;
 
 long long stack_idle[1024];
 
@@ -371,10 +378,10 @@ void VOSCortexSwitch()
 	if (pRunningTask->status == VOS_STA_FREE) {//回收到空闲链表
 		list_add_tail(&pRunningTask->list, &gListTaskFree);
 	}
-	else if (pRunningTask->status == VOS_STA_BLOCK) {
+	else if (pRunningTask->status == VOS_STA_BLOCK) { //添加到阻塞队列
 		list_add_tail(&pRunningTask->list, &gListTaskBlock);
 	}
-	else {
+	else {//添加到就绪队列，这是因为遇到更高优先级，或者相同优先级时，把当前任务切换出去
 		VOSTaskReadyInsert(pRunningTask);
 	}
 
@@ -418,8 +425,8 @@ void VOSTaskSwitch(u32 from)
 	}
 	__local_irq_restore(irq_save);
 }
-
-static void task_idle_build()
+//创建IDLE任务，无论何时都至少有个IDLE任务在就绪队列
+static void TaskIdleBuild()
 {
 	u32 irq_save = 0;
 	irq_save = __local_irq_save();
@@ -429,7 +436,7 @@ static void task_idle_build()
 		list_del(gListTaskReady.next); //空闲任务队列里删除第一个空闲任务
 	}
 
-	svc_exc_return = HW32_REG((pRunningTask->pstack));
+	SVC_EXC_RETURN = HW32_REG((pRunningTask->pstack));
 	_set_PSP((pRunningTask->pstack + 10 * 4));//栈指向R0
 	NVIC_SetPriority(PendSV_IRQn, 0xFF);
 	SysTick_Config(168000);
@@ -455,7 +462,7 @@ void SVC_Handler_C(unsigned int *svc_args)
 	svc_number = ((char *)svc_args[6])[-2];
 	switch(svc_number) {
 	case 0://系统刚初始化完成，启动第一个任务
-		task_idle_build();
+		TaskIdleBuild();
 		break;
 	case 1://用户任务主动调用切换到更高优先级任务，如果没有则继续用户任务
 		VOSTaskSwitch(TASK_SWITCH_USER);

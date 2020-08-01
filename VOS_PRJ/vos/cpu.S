@@ -1,8 +1,16 @@
+//----------------------------------------------------
+// Copyright (c) 2020, VOS Open source. All rights reserved.
+// Author: 156439848@qq.com; vincent_cws2008@gmail.com
+// History:
+//	     2020-08-01: initial by vincent.
+//------------------------------------------------------
+
+
 .syntax         unified
 .thumb
 .file   "cpu.S"
 
-.global svc_exc_return
+.global SVC_EXC_RETURN
 
 .text
 .align 2
@@ -14,10 +22,10 @@ SVC_Handler:
 	ite	eq
 	mrseq	r0, msp
 	mrsne	r0, psp
-	ldr	r1, =svc_exc_return
+	ldr	r1, =SVC_EXC_RETURN
 	str	lr, [r1]
 	bl	SVC_Handler_C
-	ldr	r1, =svc_exc_return
+	ldr	r1, =SVC_EXC_RETURN
 	ldr	lr, [r1]
 	bx	lr
 

@@ -1,3 +1,11 @@
+//----------------------------------------------------
+// Copyright (c) 2020, VOS Open source. All rights reserved.
+// Author: 156439848@qq.com; vincent_cws2008@gmail.com
+// History:
+//	     2020-08-01: initial by vincent.
+//------------------------------------------------------
+
+
 #ifndef __VOS_H__
 #define __VOS_H__
 

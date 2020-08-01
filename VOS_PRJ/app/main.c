@@ -2,6 +2,11 @@
 #include "../vos/vtype.h"
 #include "../vos/vos.h"
 
+#include "stm32f4xx_hal.h"
+#include "stm32f4xx_hal_uart.h"
+
+int kprintf(char* format, ...);
+
 void VOSSemInit();
 
 extern unsigned int __data_rw_array_start;
@@ -124,6 +129,8 @@ ___start (void)
 	hw_init_clock();
 
 	VOSSemInit();
+	VOSMutexInit();
+	VOSMsgQueInit();
 	VOSTaskInit();
 
 	local_irq_enable();
@@ -152,43 +159,106 @@ u32 VOSTaskDelay(u32 us);
 StVOSSemaphore *sem_hdl = 0;
 void task0(void *param)
 {
+	int cnts = 0;
+	kprintf("%s start ...\r\n", __FUNCTION__);
 	sem_hdl = VOSSemCreate(1, 1, "sem_hdl");
 	while (1) {
 		//VOSTaskDelay(3000);
 		//os_switch_next();
 		if (sem_hdl) {
 			VOSSemWait(sem_hdl, 10*1000*1000);
-			VOSTaskDelay(10*1000*1000);
 		}
+		kprintf("%s cnts=%d\r\n", __FUNCTION__, cnts++);
+		VOSTaskDelay(3*1000*1000);
 	}
 }
 void task1(void *param)
 {
+	int cnts = 0;
+	kprintf("%s start ...\r\n", __FUNCTION__);
 	while(1) {
 		//VOSTaskDelay(3000);
 		if (sem_hdl) {
 			VOSSemWait(sem_hdl, 10*1000*1000);
-			VOSTaskDelay(10*1000*1000);
+
 		}
+		kprintf("%s cnts=%d\r\n", __FUNCTION__, cnts++);
+		VOSTaskDelay(5*1000*1000);
 	}
 }
 void task2(void *param)
 {
+	int cnts = 0;
+	kprintf("%s start ...\r\n", __FUNCTION__);
 	while(1) {
 		//VOSTaskDelay(5000);
 		if (sem_hdl) {
 			VOSSemRelease(sem_hdl);
 		}
+		kprintf("%s cnts=%d\r\n", __FUNCTION__, cnts++);
+		VOSTaskDelay(2*1000*1000);
 	}
+}
+
+UART_HandleTypeDef huart1;
+
+/* USART1 init function */
+void MX_USART1_UART_Init(void)
+{
+
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 115200;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    //_Error_Handler(__FILE__, __LINE__);
+  }
+}
+
+void HAL_UART_MspInit(UART_HandleTypeDef* huart)
+{
+  GPIO_InitTypeDef GPIO_InitStruct;
+  if(huart->Instance==USART1)
+  {
+  /* USER CODE BEGIN USART1_MspInit 0 */
+	  __HAL_RCC_GPIOA_CLK_ENABLE();                        //Ê¹ÄÜGPIOAÊ±ÖÓ
+
+    __HAL_RCC_USART1_CLK_ENABLE();
+/*
+PA9     ------> USART1_TX
+PA10     ------> USART1_RX
+*/
+    GPIO_InitStruct.Pin = GPIO_PIN_9|GPIO_PIN_10;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    GPIO_InitStruct.Alternate = GPIO_AF7_USART1;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    /*USART1 interrupt Init*/
+    HAL_NVIC_SetPriority(USART1_IRQn, 3, 3);
+	//HAL_UART_Receive_IT(&huart1, rData, 1);
+    HAL_NVIC_EnableIRQ(USART1_IRQn);
+
+  }
+}
+
+void vputs(s8 *str, s32 len)
+{
+	HAL_UART_Transmit(&huart1, str, len, 100);
 }
 
 long long task0_stack[1024], task1_stack[1024], task2_stack[1024];
 void VOSStarup();
 int main(int argc, char* argv[])
 {
-//	VOSTaskCreate(task0, 0, task0_stack, sizeof(task0_stack), 100);
-//	VOSTaskCreate(task1, 0, task1_stack, sizeof(task1_stack), 200);
-//	VOSTaskCreate(task2, 0, task2_stack, sizeof(task2_stack), 300);
+	MX_USART1_UART_Init();
+	kprintf("hello world!\r\n");
+
 	VOSTaskCreate(task0, 0, task0_stack, sizeof(task0_stack), 100, "task0");
 	VOSTaskCreate(task1, 0, task1_stack, sizeof(task1_stack), 200, "task1");
 	VOSTaskCreate(task2, 0, task2_stack, sizeof(task2_stack), 300, "task2");
