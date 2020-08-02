@@ -161,6 +161,11 @@ void task0(void *param)
 {
 	int cnts = 0;
 	kprintf("%s start ...\r\n", __FUNCTION__);
+//	while (1) {
+//		kprintf("%s cnts=%d\r\n", __FUNCTION__, cnts++);
+//		VOSTaskDelay(1000*1000);
+//	}
+#if 1
 	sem_hdl = VOSSemCreate(1, 1, "sem_hdl");
 	while (1) {
 		//VOSTaskDelay(3000);
@@ -171,6 +176,7 @@ void task0(void *param)
 		kprintf("%s cnts=%d\r\n", __FUNCTION__, cnts++);
 		VOSTaskDelay(3*1000*1000);
 	}
+#endif
 }
 void task1(void *param)
 {
