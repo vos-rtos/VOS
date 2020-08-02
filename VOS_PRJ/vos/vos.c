@@ -41,11 +41,11 @@ s64 VOSGetTicks()
 	return ticks;
 }
 
-s64 VOSGetTimeUs()
+s64 VOSGetTimeMs()
 {
 	s64 ticks = 0;
 	ticks = VOSGetTicks();
-	return ticks * TICKS_INTERVAL_US;
+	return ticks * TICKS_INTERVAL_MS;
 }
 
 u32 VOSTaskInit()
@@ -73,17 +73,17 @@ StVosTask *VOSGetTaskFromId(s32 task_id)
 	return &gArrVosTask[task_id];
 }
 
-u32 VOSTaskDelay(u32 us)
+u32 VOSTaskDelay(u32 ms)
 {
 	//如果中断被关闭，系统不进入调度，则直接硬延时
 	//todo
 	//否则进入操作系统的闹钟延时
 	u32 irq_save = 0;
 
-	if (us) {//进入延时设置
+	if (ms) {//进入延时设置
 		irq_save = __local_irq_save();
 		pRunningTask->ticks_start = gVOSTicks;
-		pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(us);
+		pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(ms);
 		if (pRunningTask->ticks_alert < gMarkTicksNearest) { //如果闹钟结点小于记录的最少值，则更新
 			gMarkTicksNearest = pRunningTask->ticks_alert;//更新为最近的闹钟
 		}
@@ -92,9 +92,9 @@ u32 VOSTaskDelay(u32 us)
 
 		__local_irq_restore(irq_save);
 	}
-	//us为0，切换任务, 或者VOS_STA_BLOCK_DELAY标志，呼唤调度
+	//ms为0，切换任务, 或者VOS_STA_BLOCK_DELAY标志，呼唤调度
 	VOSTaskSchedule();
-
+	return 0;
 }
 
 
@@ -185,8 +185,8 @@ void VOSTaskEntry(void *param)
 	VOSTaskSchedule();
 }
 
-StVosTask *VOSTaskCreate(void (*task_fun)(void *param), void *param,
-		void *pstack, u32 stack_size, s32 prio, u8 *task_nm)
+s32 VOSTaskCreate(void (*task_fun)(void *param), void *param,
+		void *pstack, u32 stack_size, s32 prio, s8 *task_nm)
 {
 	StVosTask *pNewTask = 0;
 	StVosTask *ptask = 0;
@@ -226,7 +226,7 @@ StVosTask *VOSTaskCreate(void (*task_fun)(void *param), void *param,
 
 END_CREATE:
 	__local_irq_restore(irq_save);
-	return pNewTask;
+	return pNewTask ? pNewTask->id : -1;
 }
 
 //唤醒阻塞队列里的任务, 就是把阻塞队列符合条件的任务添加到就绪队列
@@ -376,7 +376,7 @@ void VOSStarup()
 #include "stm32f4-hal/stm32f4xx_hal.h"
 
 
-void VOSCortexSwitch()
+static void VOSCortexSwitch()
 {
 	pReadyTask = VOSTaskReadyCutPriorest();
 
@@ -396,7 +396,7 @@ void VOSCortexSwitch()
 
 //from==TASK_USER_SWITCH: 应用层主动切换
 //from==TASK_USER_SYSTICK: 时钟定时器切换，被动切换
-void VOSTaskSwitch(u32 from)
+static void VOSTaskSwitch(u32 from)
 {
 	s32 ret = 0;
 	u32 irq_save = 0;
@@ -435,7 +435,7 @@ static void TaskIdleBuild()
 {
 	u32 irq_save = 0;
 	irq_save = __local_irq_save();
-	VOSTaskCreate(task_idle, 0, stack_idle, sizeof(stack_idle), 500, "idle");
+	VOSTaskCreate(task_idle, 0, stack_idle, sizeof(stack_idle), TASK_PRIO_MAX, "idle");
 	if (!list_empty(&gListTaskReady)) {
 		pRunningTask = list_entry(gListTaskReady.next, StVosTask, list); //获取第一个空闲任务
 		list_del(gListTaskReady.next); //空闲任务队列里删除第一个空闲任务
@@ -482,12 +482,9 @@ void __attribute__ ((section(".after_vectors")))
 SysTick_Handler()
 {
 	gVOSTicks++;
-
 	if (gVOSTicks >= gMarkTicksNearest) {//闹钟响，查找阻塞队列，把对应的阻塞任务添加到就绪队列中
 		VOSTaskBlockWaveUp();
 	}
-#if 1
 	VOSTaskSwitch(TASK_SWITCH_SYSTICK);
-#endif
 }
 

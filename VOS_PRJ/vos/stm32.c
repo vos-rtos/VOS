@@ -104,8 +104,7 @@ void hw_init_clock(void)
 
 int test()
 {
-	SCB->CCR |= SCB_CCR_STKALIGN_Msk;
-	VOSStarup();
+
 	while(1) {;}
 }
 

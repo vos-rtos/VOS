@@ -7,6 +7,10 @@
 
 int kprintf(char* format, ...);
 
+long long task0_stack[1024], task1_stack[1024], task2_stack[1024];
+
+long long main_stack[1024];
+
 void VOSSemInit();
 
 extern unsigned int __data_rw_array_start;
@@ -111,6 +115,8 @@ abort(void)
 void hw_init_clock(void);
 u32 VOSTaskInit();
 
+void main(void *param);
+
 void __attribute__ ((section(".after_vectors")))
 ___start (void)
 {
@@ -137,46 +143,41 @@ ___start (void)
 
 	argc = 1;
 	*argv = &argv[0];
+
 	//__run_init_array ();
-	code = main (argc, argv);
+
+	code = VOSTaskCreate(main, 0, main_stack, sizeof(main_stack), TASK_PRIO_NORMAL, "main");
+
+	SCB->CCR |= SCB_CCR_STKALIGN_Msk;
+
+	MX_USART1_UART_Init();
+
+	VOSStarup();
+
+	//code = main (argc, argv);
 	//__run_fini_array ();
 	_exit (code);
 	while(1) ;
 }
-
-
-
-StVosTask *VOSTaskCreate(void (*task_fun)(void *param), void *param, void *pstack, u32 stack_size, u32 prio, char *task_nm);
-
-
-int aaa = 101;
-int bbb = 102;
-int ccc = 0;
-int test();
-
-u32 VOSTaskDelay(u32 us);
 
 StVOSSemaphore *sem_hdl = 0;
 void task0(void *param)
 {
 	int cnts = 0;
 	kprintf("%s start ...\r\n", __FUNCTION__);
-//	while (1) {
-//		kprintf("%s cnts=%d\r\n", __FUNCTION__, cnts++);
-//		VOSTaskDelay(1000*1000);
-//	}
-#if 1
+	s64 mark_time = VOSGetTimeMs()/1000;
+	kprintf("mark_time: %d\r\n", (u32)mark_time);
+
 	sem_hdl = VOSSemCreate(1, 1, "sem_hdl");
 	while (1) {
 		//VOSTaskDelay(3000);
 		//os_switch_next();
 		if (sem_hdl) {
-			VOSSemWait(sem_hdl, 10*1000*1000);
+			VOSSemWait(sem_hdl, 1*1000);
 		}
 		kprintf("%s cnts=%d\r\n", __FUNCTION__, cnts++);
-		VOSTaskDelay(3*1000*1000);
+		VOSTaskDelay(1*1000);
 	}
-#endif
 }
 void task1(void *param)
 {
@@ -185,11 +186,11 @@ void task1(void *param)
 	while(1) {
 		//VOSTaskDelay(3000);
 		if (sem_hdl) {
-			VOSSemWait(sem_hdl, 10*1000*1000);
+			VOSSemWait(sem_hdl, 1*1000);
 
 		}
 		kprintf("%s cnts=%d\r\n", __FUNCTION__, cnts++);
-		VOSTaskDelay(5*1000*1000);
+		VOSTaskDelay(1*1000);
 	}
 }
 void task2(void *param)
@@ -202,7 +203,7 @@ void task2(void *param)
 			VOSSemRelease(sem_hdl);
 		}
 		kprintf("%s cnts=%d\r\n", __FUNCTION__, cnts++);
-		VOSTaskDelay(2*1000*1000);
+		VOSTaskDelay(1*1000);
 	}
 }
 
@@ -258,17 +259,18 @@ void vputs(s8 *str, s32 len)
 	HAL_UART_Transmit(&huart1, str, len, 100);
 }
 
-long long task0_stack[1024], task1_stack[1024], task2_stack[1024];
+
 void VOSStarup();
-int main(int argc, char* argv[])
+void main(void *param)
 {
-	MX_USART1_UART_Init();
+	s32 task_id;
+
 	kprintf("hello world!\r\n");
 
-	VOSTaskCreate(task0, 0, task0_stack, sizeof(task0_stack), 100, "task0");
-	VOSTaskCreate(task1, 0, task1_stack, sizeof(task1_stack), 200, "task1");
-	VOSTaskCreate(task2, 0, task2_stack, sizeof(task2_stack), 300, "task2");
-	ccc = aaa+bbb;
-	test();
-	return 0;
+	task_id = VOSTaskCreate(task0, 0, task0_stack, sizeof(task0_stack), TASK_PRIO_NORMAL, "task0");
+	task_id = VOSTaskCreate(task1, 0, task1_stack, sizeof(task1_stack), TASK_PRIO_HIGH, "task1");
+	task_id = VOSTaskCreate(task2, 0, task2_stack, sizeof(task2_stack), TASK_PRIO_LOW, "task2");
+	while (1) {
+		VOSTaskDelay(1*1000);
+	}
 }

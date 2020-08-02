@@ -79,9 +79,9 @@ void _ISB();
 #define MAX_CPU_NUM 1
 #define MAX_VOSTASK_NUM  10
 
-#define TICKS_INTERVAL_US 1000 //systick的间隔，1000us
+#define TICKS_INTERVAL_MS 1 //systick的间隔，1ms
 
-#define MAKE_TICKS(us) (((us)+TICKS_INTERVAL_US-1)/(TICKS_INTERVAL_US))
+#define MAKE_TICKS(ms) (((ms)+TICKS_INTERVAL_MS-1)/(TICKS_INTERVAL_MS))
 
 #define HW32_REG(ADDRESS) (*((volatile unsigned long *)(ADDRESS)))
 
@@ -111,6 +111,13 @@ void _ISB();
 #define VOS_BLOCK_MSGQUE		(u32)(1<<4) //消息队列阻塞
 
 
+#define TASK_PRIO_REAL			(u32)(100)
+#define TASK_PRIO_HIGH			(u32)(130)
+#define TASK_PRIO_NORMAL		(u32)(150)
+#define TASK_PRIO_LOW			(u32)(200)
+#define TASK_PRIO_MAX			(u32)(255) //次优先级分配给IDLE
+
+
 //关中断，并返回关中断前的值，多用于嵌套中断情况
 extern u32 __local_irq_save();
 //开中断，并把中断前的值恢复，多用于嵌套中断情况
@@ -120,19 +127,46 @@ extern void local_irq_disable(void);
 
 extern void local_irq_enable(void);
 
-void VOSTaskSwitch(u32 from);
-
 void VOSSemInit();
 
 StVOSSemaphore *VOSSemCreate(s32 max_sems, s32 init_sems, s8 *name);
 
-s32 VOSSemWait(StVOSSemaphore *pSem, u64 timeout_us);
+s32 VOSSemWait(StVOSSemaphore *pSem, u64 timeout_ms);
 
 s32 VOSSemRelease(StVOSSemaphore *pSem);
 
 s32 VOSSemDelete(StVOSSemaphore *pSem);
 
+void VOSMutexInit();
 
+StVOSMutex *VOSMutexCreate(s32 init_locked, s8 *name);
+
+s32 VOSMutexWait(StVOSMutex *pMutex, s64 timeout_ms);
+s32 VOSMutexRelease(StVOSMutex *pMutex);
+s32 VOSMutexDelete(StVOSMutex *pMutex);
+s32 VOSEventWait(u32 event_mask, u64 timeout_ms);
+s32 VOSEventSet(s32 task_id, u32 event);
+u32 VOSEventGet(s32 task_id);
+s32 VOSEventClear(s32 task_id, u32 event);
+void VOSMsgQueInit();
+StVOSMsgQueue *VOSMsgQueCreate(s8 *pRingBuf, s32 length, s32 msg_size, s8 *name);
+s32 VOSMsgQuePut(StVOSMsgQueue *pMQ, void *pmsg, s32 len);
+s32 VOSMsgQueGet(StVOSMsgQueue *pMQ, void *pmsg, s32 len, s64 timeout_ms);
+s32 VOSMailQueFree(StVOSMsgQueue *pMQ);
+
+s64 VOSGetTicks();
+s64 VOSGetTimeMs();
+u32 VOSTaskInit();
 StVosTask *VOSGetTaskFromId(s32 task_id);
+u32 VOSTaskDelay(u32 ms);
+u32 VOSTaskReadyInsert(StVosTask *pReadyTask);
+s32 VOSTaskReadyCmpPrioTo(StVosTask *pRunTask);
+StVosTask *VOSTaskReadyCutPriorest();
+void VOSTaskEntry(void *param);
+s32 VOSTaskCreate(void (*task_fun)(void *param), void *param,
+		void *pstack, u32 stack_size, s32 prio, s8 *task_nm);
+void VOSTaskBlockWaveUp();
+void VOSStarup();
+void VOSTaskSchedule();
 
 #endif

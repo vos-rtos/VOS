@@ -8,20 +8,27 @@
 #include "vos.h"
 #include "list.h"
 
-#define MAX_VOS_SEMAPHONRE_NUM  10
-#define MAX_VOS_MUTEX_NUM   10
-#define MAX_VOS_MSG_QUE_NUM   10
+#ifndef MAX_VOS_SEMAPHONRE_NUM
+#define MAX_VOS_SEMAPHONRE_NUM  2
+#endif
 
+#ifndef MAX_VOS_MUTEX_NUM
+#define MAX_VOS_MUTEX_NUM   2
+#endif
+
+#ifndef MAX_VOS_MSG_QUE_NUM
+#define MAX_VOS_MSG_QUE_NUM   2
+#endif
 
 extern struct StVosTask *pRunningTask;
 extern volatile s64  gVOSTicks;
 extern volatile s64 gMarkTicksNearest;
 
-struct list_head gListSemaphore;//空闲信号量链表
+static struct list_head gListSemaphore;//空闲信号量链表
 
-struct list_head gListMutex;//空闲互斥锁链表
+static struct list_head gListMutex;//空闲互斥锁链表
 
-struct list_head gListMsgQue;//空闲消息队列链表
+static struct list_head gListMsgQue;//空闲消息队列链表
 
 StVOSSemaphore gVOSSemaphore[MAX_VOS_SEMAPHONRE_NUM];
 
@@ -63,7 +70,7 @@ StVOSSemaphore *VOSSemCreate(s32 max_sems, s32 init_sems, s8 *name)
 	return  pSemaphore;
 }
 
-s32 VOSSemWait(StVOSSemaphore *pSem, u64 timeout_us)
+s32 VOSSemWait(StVOSSemaphore *pSem, u64 timeout_ms)
 {
 	s32 ret = 0;
 	u32 irq_save = 0;
@@ -83,7 +90,7 @@ s32 VOSSemWait(StVOSSemaphore *pSem, u64 timeout_us)
 		pRunningTask->psyn = pSem;
 		//同时是超时时间类型
 		pRunningTask->ticks_start = gVOSTicks;
-		pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(timeout_us);
+		pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(timeout_ms);
 		if (pRunningTask->ticks_alert < gMarkTicksNearest) { //如果闹钟结点小于记录的最少值，则更新
 			gMarkTicksNearest = pRunningTask->ticks_alert;//更新为最近的闹钟
 		}
@@ -188,7 +195,7 @@ StVOSMutex *VOSMutexCreate(s32 init_locked, s8 *name)
 }
 
 
-s32 VOSMutexWait(StVOSMutex *pMutex, s64 timeout_us)
+s32 VOSMutexWait(StVOSMutex *pMutex, s64 timeout_ms)
 {
 	s32 ret = 0;
 	u32 irq_save = 0;
@@ -209,7 +216,7 @@ s32 VOSMutexWait(StVOSMutex *pMutex, s64 timeout_us)
 		pRunningTask->psyn = pMutex;
 		//同时是超时时间类型
 		pRunningTask->ticks_start = gVOSTicks;
-		pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(timeout_us);
+		pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(timeout_ms);
 		if (pRunningTask->ticks_alert < gMarkTicksNearest) { //如果闹钟结点小于记录的最少值，则更新
 			gMarkTicksNearest = pRunningTask->ticks_alert;//更新为最近的闹钟
 		}
@@ -282,7 +289,7 @@ s32 VOSMutexDelete(StVOSMutex *pMutex)
 }
 
 
-s32 VOSEventWait(u32 event_mask, u64 timeout_us)
+s32 VOSEventWait(u32 event_mask, u64 timeout_ms)
 {
 	s32 ret = 0;
 	u32 irq_save = 0;
@@ -298,7 +305,7 @@ s32 VOSEventWait(u32 event_mask, u64 timeout_us)
 	pRunningTask->event_mask = event_mask;
 	//同时是超时时间类型
 	pRunningTask->ticks_start = gVOSTicks;
-	pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(timeout_us);
+	pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(timeout_ms);
 	if (pRunningTask->ticks_alert < gMarkTicksNearest) { //如果闹钟结点小于记录的最少值，则更新
 		gMarkTicksNearest = pRunningTask->ticks_alert;//更新为最近的闹钟
 	}
@@ -437,7 +444,7 @@ s32 VOSMsgQuePut(StVOSMsgQueue *pMQ, void *pmsg, s32 len)
 	return ret;
 }
 //返回添加的个数
-s32 VOSMsgQueGet(StVOSMsgQueue *pMQ, void *pmsg, s32 len, s64 timeout_us)
+s32 VOSMsgQueGet(StVOSMsgQueue *pMQ, void *pmsg, s32 len, s64 timeout_ms)
 {
 	s32 ret = 0;
 	u8 *phead = 0;
@@ -460,7 +467,7 @@ s32 VOSMsgQueGet(StVOSMsgQueue *pMQ, void *pmsg, s32 len, s64 timeout_us)
 		pRunningTask->psyn = pMQ;
 		//同时是超时时间类型
 		pRunningTask->ticks_start = gVOSTicks;
-		pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(timeout_us);
+		pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(timeout_ms);
 		if (pRunningTask->ticks_alert < gMarkTicksNearest) { //如果闹钟结点小于记录的最少值，则更新
 			gMarkTicksNearest = pRunningTask->ticks_alert;//更新为最近的闹钟
 		}
@@ -496,7 +503,7 @@ s32 VOSMsgQueGet(StVOSMsgQueue *pMQ, void *pmsg, s32 len, s64 timeout_us)
 	return ret;
 }
 
-s32 VOSMailQueFree(StVOSMsgQueue *pMQ, void *pitem)
+s32 VOSMailQueFree(StVOSMsgQueue *pMQ)
 {
 	u32 irq_save = 0;
 	irq_save = __local_irq_save();
