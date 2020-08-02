@@ -1,6 +1,8 @@
-
+#include "vtype.h"
 #include "cmsis/stm32f4xx.h"
 #include "stm32f4-hal/stm32f4xx_hal.h"
+
+extern unsigned int __vectors_start;
 
 /**
  * @brief  System Clock Configuration
@@ -102,10 +104,107 @@ void hw_init_clock(void)
   SystemCoreClockUpdate();
 }
 
-int test()
+#define VECT_TAB_OFFSET 0
+void SysInit(void)
+{
+  /* FPU settings ------------------------------------------------------------*/
+  #if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
+    SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));  /* set CP10 and CP11 Full Access */
+  #endif
+  /* Reset the RCC clock configuration to the default reset state ------------*/
+  /* Set HSION bit */
+  RCC->CR |= (uint32_t)0x00000001;
+
+  /* Reset CFGR register */
+  RCC->CFGR = 0x00000000;
+
+  /* Reset HSEON, CSSON and PLLON bits */
+  RCC->CR &= (uint32_t)0xFEF6FFFF;
+
+  /* Reset PLLCFGR register */
+  RCC->PLLCFGR = 0x24003010;
+
+  /* Reset HSEBYP bit */
+  RCC->CR &= (uint32_t)0xFFFBFFFF;
+
+  /* Disable all interrupts */
+  RCC->CIR = 0x00000000;
+
+#if defined (DATA_IN_ExtSRAM) || defined (DATA_IN_ExtSDRAM)
+  SystemInit_ExtMemCtl();
+#endif /* DATA_IN_ExtSRAM || DATA_IN_ExtSDRAM */
+
+  /* Configure the Vector Table location add offset address ------------------*/
+#ifdef VECT_TAB_SRAM
+  SCB->VTOR = SRAM_BASE | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal SRAM */
+#else
+  SCB->VTOR = FLASH_BASE | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal FLASH */
+#endif
+}
+
+void hardware_early(void)
+{
+  // Call the CSMSIS system initialisation routine.
+	SysInit();
+
+#if defined(__ARM_ARCH_7M__) || defined(__ARM_ARCH_7EM__)
+  // Set VTOR to the actual address, provided by the linker script.
+  // Override the manual, possibly wrong, SystemInit() setting.
+  SCB->VTOR = (uint32_t)(&__vectors_start);
+#endif
+
+}
+
+UART_HandleTypeDef huart1;
+
+/* USART1 init function */
+void MX_USART1_UART_Init(void)
 {
 
-	while(1) {;}
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 115200;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    //_Error_Handler(__FILE__, __LINE__);
+  }
+}
+
+void HAL_UART_MspInit(UART_HandleTypeDef* huart)
+{
+  GPIO_InitTypeDef GPIO_InitStruct;
+  if(huart->Instance==USART1)
+  {
+  /* USER CODE BEGIN USART1_MspInit 0 */
+	  __HAL_RCC_GPIOA_CLK_ENABLE();                        //Ê¹ÄÜGPIOAÊ±ÖÓ
+
+    __HAL_RCC_USART1_CLK_ENABLE();
+/*
+PA9     ------> USART1_TX
+PA10     ------> USART1_RX
+*/
+    GPIO_InitStruct.Pin = GPIO_PIN_9|GPIO_PIN_10;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    GPIO_InitStruct.Alternate = GPIO_AF7_USART1;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    /*USART1 interrupt Init*/
+    HAL_NVIC_SetPriority(USART1_IRQn, 3, 3);
+	//HAL_UART_Receive_IT(&huart1, rData, 1);
+    HAL_NVIC_EnableIRQ(USART1_IRQn);
+
+  }
+}
+
+void vputs(s8 *str, s32 len)
+{
+	HAL_UART_Transmit(&huart1, str, len, 100);
 }
 
 

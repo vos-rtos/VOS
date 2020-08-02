@@ -5,6 +5,7 @@
 //	     2020-08-01: initial by vincent.
 //------------------------------------------------------
 
+#include "vconf.h"
 #include "vos.h"
 #include "list.h"
 
