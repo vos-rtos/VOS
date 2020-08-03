@@ -62,18 +62,10 @@ abort(void)
 void __attribute__ ((section(".after_vectors")))
 ___start (void)
 {
-
-	int argc;
-	static char name[] = "";
-	static char* argv[2] = { "vos.bin", 0 };
 	int code = 0;
-
 	local_irq_disable();
-
 	hardware_early();
 	init_data_and_bss ();
-
-
 	hw_init_clock();
 
 	VOSSemInit();
@@ -81,23 +73,14 @@ ___start (void)
 	VOSMsgQueInit();
 	VOSTaskInit();
 
-	local_irq_enable();
-
-	argc = 1;
-	*argv = &argv[0];
-
-	//__run_init_array ();
-
-	code = VOSTaskCreate(main, 0, main_stack, sizeof(main_stack), TASK_PRIO_NORMAL, "main");
-
 	SCB->CCR |= SCB_CCR_STKALIGN_Msk;
-
 	MX_USART1_UART_Init();
 
+	local_irq_enable();
+
+	code = VOSTaskCreate(main, 0, main_stack, sizeof(main_stack), TASK_PRIO_NORMAL, "main");
 	VOSStarup();
 
-	//code = main (argc, argv);
-	//__run_fini_array ();
 	_exit (code);
 	while(1) ;
 }

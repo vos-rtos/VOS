@@ -152,7 +152,7 @@ void VOSMsgQueInit();
 StVOSMsgQueue *VOSMsgQueCreate(s8 *pRingBuf, s32 length, s32 msg_size, s8 *name);
 s32 VOSMsgQuePut(StVOSMsgQueue *pMQ, void *pmsg, s32 len);
 s32 VOSMsgQueGet(StVOSMsgQueue *pMQ, void *pmsg, s32 len, s64 timeout_ms);
-s32 VOSMailQueFree(StVOSMsgQueue *pMQ);
+s32 VOSMsgQueFree(StVOSMsgQueue *pMQ);
 
 s64 VOSGetTicks();
 s64 VOSGetTimeMs();

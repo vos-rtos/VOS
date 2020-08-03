@@ -301,7 +301,7 @@ s32 VOSEventWait(u32 event_mask, u64 timeout_ms)
 	pRunningTask->status = VOS_STA_BLOCK; //添加到阻塞队列
 
 	//信号量阻塞类型
-	pRunningTask->block_type |= VOS_BLOCK_MUTEX;//互斥锁类型
+	pRunningTask->block_type |= VOS_WAKEUP_FROM_EVENT;//事件类型
 	pRunningTask->psyn = 0;
 	pRunningTask->event_mask = event_mask;
 	//同时是超时时间类型
@@ -324,6 +324,7 @@ s32 VOSEventWait(u32 event_mask, u64 timeout_ms)
 			ret = 1;
 			break;
 		default:
+			ret = -1;
 			//printf info here
 			break;
 		}
@@ -504,7 +505,7 @@ s32 VOSMsgQueGet(StVOSMsgQueue *pMQ, void *pmsg, s32 len, s64 timeout_ms)
 	return ret;
 }
 
-s32 VOSMailQueFree(StVOSMsgQueue *pMQ)
+s32 VOSMsgQueFree(StVOSMsgQueue *pMQ)
 {
 	u32 irq_save = 0;
 	irq_save = __local_irq_save();

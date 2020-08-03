@@ -440,14 +440,17 @@ static void TaskIdleBuild()
 		pRunningTask = list_entry(gListTaskReady.next, StVosTask, list); //获取第一个空闲任务
 		list_del(gListTaskReady.next); //空闲任务队列里删除第一个空闲任务
 	}
+	__local_irq_restore(irq_save);
+}
 
+void RunFirstTask ()
+{
 	SVC_EXC_RETURN = HW32_REG((pRunningTask->pstack));
 	_set_PSP((pRunningTask->pstack + 10 * 4));//栈指向R0
 	NVIC_SetPriority(PendSV_IRQn, 0xFF);
 	SysTick_Config(168000);
 	_set_CONTROL(0x3);
 	_ISB();
-	__local_irq_restore(irq_save);
 }
 
 //这个必须在用户模式下使用，切换上下文
@@ -467,7 +470,8 @@ void SVC_Handler_C(unsigned int *svc_args)
 	svc_number = ((char *)svc_args[6])[-2];
 	switch(svc_number) {
 	case 0://系统刚初始化完成，启动第一个任务
-		TaskIdleBuild();
+		TaskIdleBuild();//创建idle任务
+		RunFirstTask(); //加载第一个任务，这时任务不一定是IDLE任务
 		break;
 	case 1://用户任务主动调用切换到更高优先级任务，如果没有则继续用户任务
 		VOSTaskSwitch(TASK_SWITCH_USER);

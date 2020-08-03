@@ -1,7 +1,7 @@
 #include "../vos.h"
 
 StVOSSemaphore *sem_hdl = 0;
-void task0(void *param)
+static void task0(void *param)
 {
 	int cnts = 0;
 	kprintf("%s start ...\r\n", __FUNCTION__);
@@ -19,7 +19,7 @@ void task0(void *param)
 		VOSTaskDelay(1*1000);
 	}
 }
-void task1(void *param)
+static void task1(void *param)
 {
 	int cnts = 0;
 	kprintf("%s start ...\r\n", __FUNCTION__);
@@ -33,7 +33,7 @@ void task1(void *param)
 		VOSTaskDelay(1*1000);
 	}
 }
-void task2(void *param)
+static void task2(void *param)
 {
 	int cnts = 0;
 	kprintf("%s start ...\r\n", __FUNCTION__);
@@ -47,7 +47,7 @@ void task2(void *param)
 	}
 }
 
-long long task0_stack[1024], task1_stack[1024], task2_stack[1024];
+static long long task0_stack[1024], task1_stack[1024], task2_stack[1024];
 void sem_test()
 {
 	kprintf("test sem!\r\n");
