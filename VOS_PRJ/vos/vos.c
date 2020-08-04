@@ -25,8 +25,6 @@ volatile s64  gVOSTicks = 0;
 
 volatile s64 gMarkTicksNearest = MAX_SIGNED_VAL_64; //记录最近闹钟响
 
-volatile s64 gIsVOSStartup = 0;
-
 u32 SVC_EXC_RETURN; //SVC进入后保存，然后返回时要用到 (cortex m4)
 
 
@@ -165,13 +163,8 @@ s32 VOSTaskRestorePrioBeforeRelease(StVosTask *pRunTask)
 u32 VOSTaskListPrioInsert(StVosTask *pTask, s32 which_list)
 {
 	s32 ret = -1;
-	StVosTask *ptask_dest = 0;
-	StVosTask *ptask_temp = 0;
 	StVosTask *ptask_prio = 0;
-	StVosTask *ptask_ready = 0;
-	struct list_head *list_dest = 0;
 	struct list_head *list_prio;
-	struct list_head *list_ready;
 	struct list_head *phead = 0;
 	u32 irq_save = 0;
 
@@ -198,45 +191,6 @@ u32 VOSTaskListPrioInsert(StVosTask *pTask, s32 which_list)
 	if (list_prio == phead) {//找不到合适位置，就直接插入到链表的最后
 		list_add_tail(&pTask->list, phead);
 	}
-
-	/* 处理任务优先级反转，解决方法：任务优先级继承*/
-	/* 处理任务优先级反转，解决方法：任务优先级继承*/
-	// 注意释放信号量操作的是当前运行的任务，不是参数里的，参数里的是阻塞的任务
-//	if (which_list == VOS_LIST_READY && pRunningTask->psyn) {//当释放信号时，都把阻塞的任务添加到就绪队列，这时候要恢复原始的优先级
-//		if (pRunningTask->prio_save != TASK_PRIO_INVALID) {
-//			ptask_ready->prio_save
-//		}
-//
-//	}
-//	if (which_list == VOS_LIST_BLOCK && pTask->psyn) {
-//		//任务插入到阻塞队列，同时有指向阻塞控制量（互斥锁或信号量），则需要处理优先级反转问题
-//		//目前使用优先级继承方法来处理，处理方法如下：
-//		//在就绪队列里查找指向同样阻塞控制量的任务，如果该任务优先级低于当前阻塞任务，
-//		//则提升就绪里的任务为当前阻塞任务的优先级水平。
-//		list_for_each_safe(list_ready, ptask_temp, &gListTaskReady) {
-//			ptask_ready = list_entry(list_ready, struct StVosTask, list);
-//			if (ptask_ready->psyn == pTask->psyn && //必须指向同一个阻塞控制量
-//					ptask_ready->prio > pTask->prio) {//同时就绪队列的任务优先级低于当前阻塞任务的优先级
-//				if (ptask_ready->prio_save == TASK_PRIO_INVALID) {//必须是无效优先级，prio_save只记录原始的优先级，因为这里可能被多次提升
-//					ptask_ready->prio_save = ptask_ready->prio; //提升就绪队列里的所有指向同一阻塞控制量的就绪任务优先级
-//				}
-//				ptask_ready->prio = pTask->prio;
-//				//重新排序,其实就是把当前就绪节点往前移植，一直移到gListTaskReady为止
-//				list_dest = list_ready;
-//				//优先级冒泡提升
-//				while (list_dest->prev != &gListTaskReady) {
-//					list_dest = list_dest->prev;
-//					ptask_dest = list_entry(list_dest, struct StVosTask, list);
-//					if (ptask_dest->prio <= ptask_ready->prio) {//找到要插入的位置，在这个位置后面插入提升的任务
-//						if (list_dest != list_ready->prev) {//如果提升任务的优先级已经是适合的位置就不做任何链表操作。
-//							list_move(list_ready, list_dest);
-//						}
-//						break;//跳出提升任务的循环，继续遍历后面的就绪任务，可能多个任务指向阻塞控制量，都要提升
-//					}
-//				}//ended while (list_dest->prev != &gListTaskReady) {
-//			}//ended if (ptask_ready->psyn == pTask->psyn &&
-//		}//ended list_for_each_safe(list_ready, ptask_temp, &gListTaskReady) {
-//	}//ended if (which_list == VOS_LIST_BLOCK && pTask->psyn) {
 	__local_irq_restore(irq_save);
 
 	return ret;
@@ -602,8 +556,7 @@ void RunFirstTask ()
 	SysTick_Config(168000);
 	_set_CONTROL(0x3);
 	_ISB();
-	//设置
-	gIsVOSStartup = 1;
+
 }
 
 //这个必须在用户模式下使用，切换上下文
