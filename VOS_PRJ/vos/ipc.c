@@ -139,6 +139,7 @@ s32 VOSSemRelease(StVOSSemaphore *pSem)
 		pSem->left++; //释放信号量
 		VOSTaskBlockWaveUp(); //唤醒在阻塞队列里阻塞的等待该信号量的任务
 		VOSTaskRestorePrioBeforeRelease(pRunningTask);//恢复自身的优先级
+		pRunningTask->psyn = 0; //清除指向资源的指针。
 		ret = 1;
 	}
 	__local_irq_restore(irq_save);
@@ -271,6 +272,7 @@ s32 VOSMutexRelease(StVOSMutex *pMutex)
 		pMutex->counter++; //释放互斥锁
 		VOSTaskBlockWaveUp(); //唤醒在阻塞队列里阻塞的等待该互斥锁的任务
 		VOSTaskRestorePrioBeforeRelease(pRunningTask);//恢复自身的优先级
+		pRunningTask->psyn = 0; //清除指向资源的指针。
 		ret = 1;
 	}
 	__local_irq_restore(irq_save);
@@ -448,6 +450,7 @@ s32 VOSMsgQuePut(StVOSMsgQueue *pMQ, void *pmsg, s32 len)
 		pMQ->msg_cnts++;
 		VOSTaskBlockWaveUp(); //唤醒在阻塞队列里阻塞的等待该信号量的任务
 		VOSTaskRestorePrioBeforeRelease(pRunningTask);//恢复自身的优先级
+		pRunningTask->psyn = 0; //清除指向资源的指针。
 		ret = 1;
 	}
 	__local_irq_restore(irq_save);
