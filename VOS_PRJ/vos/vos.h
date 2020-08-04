@@ -12,8 +12,21 @@
 #include "vtype.h"
 #include "list.h"
 
+#define MCU_FREQUENCY_HZ (u32)(168000000)
+
 #define MAX_SIGNED_VAL_64 (0x7FFFFFFFFFFFFFFF)
 
+#define VOS_TASK_NOT_INHERITANCE   (0)  //默认是优先级继承来处理优先级反转问题，如果定义为1，则不处理反转问题
+
+#if VOS_TASK_NOT_INHERITANCE
+#define VOSTaskRestorePrioBeforeRelease
+#define VOSTaskRaisePrioBeforeBlock
+#endif
+
+enum {
+	VOS_LIST_READY = 0,
+	VOS_LIST_BLOCK,
+};
 
 enum {
 	TASK_SWITCH_USER = 0,
@@ -51,10 +64,11 @@ typedef struct StVOSMsgQueue {
 }StVOSMsgQueue;
 
 typedef struct StVosTask {
-	u8 *pstack; //指向任务自己的栈指针
+	u8 *pstack; //指向任务自己的栈指针, 必须放到结构体第一个位置，汇编里要使用这个成员
 	u8 *pstack_top; //栈顶指针
 	u32 stack_size; //栈最大size
 	s32 prio; //任务优先级，值越低，优先级越高
+	s32 prio_save; //保存任务优先级提升前的数值，当释放控制量时及时恢复。
 	u32 id; //任务唯一ID
 	u8 *name; //任务名
 	volatile u32 status; //任务状态
@@ -70,7 +84,6 @@ typedef struct StVosTask {
 	u32 event;  //事件类型，32位事件
 
 	struct list_head list;//空闲链表和优先级任务链表,优先级高的排第头，优先级低的排尾
-	struct list_head list_sib;//相同优先级任务兄弟链表，基于时间片来轮询调度
 }StVosTask;
 
 void _set_PSP(u32 psp);
@@ -110,12 +123,12 @@ void _ISB();
 #define VOS_BLOCK_MUTEX			(u32)(1<<3) //互斥阻塞
 #define VOS_BLOCK_MSGQUE		(u32)(1<<4) //消息队列阻塞
 
-
-#define TASK_PRIO_REAL			(u32)(100)
-#define TASK_PRIO_HIGH			(u32)(130)
-#define TASK_PRIO_NORMAL		(u32)(150)
-#define TASK_PRIO_LOW			(u32)(200)
-#define TASK_PRIO_MAX			(u32)(255) //次优先级分配给IDLE
+#define TASK_PRIO_INVALID		(s32)(-1) //次优先级分配给IDLE
+#define TASK_PRIO_REAL			(s32)(100)
+#define TASK_PRIO_HIGH			(s32)(130)
+#define TASK_PRIO_NORMAL		(s32)(150)
+#define TASK_PRIO_LOW			(s32)(200)
+#define TASK_PRIO_MAX			(s32)(255) //次优先级分配给IDLE
 
 
 //关中断，并返回关中断前的值，多用于嵌套中断情况
@@ -159,7 +172,7 @@ s64 VOSGetTimeMs();
 u32 VOSTaskInit();
 StVosTask *VOSGetTaskFromId(s32 task_id);
 u32 VOSTaskDelay(u32 ms);
-u32 VOSTaskReadyInsert(StVosTask *pReadyTask);
+u32 VOSTaskListPrioInsert(StVosTask *pTask, s32 which_list);
 s32 VOSTaskReadyCmpPrioTo(StVosTask *pRunTask);
 StVosTask *VOSTaskReadyCutPriorest();
 void VOSTaskEntry(void *param);
@@ -168,5 +181,8 @@ s32 VOSTaskCreate(void (*task_fun)(void *param), void *param,
 void VOSTaskBlockWaveUp();
 void VOSStarup();
 void VOSTaskSchedule();
+
+s32 VOSTaskRaisePrioBeforeBlock(StVosTask *pRunTask);
+s32 VOSTaskRestorePrioBeforeRelease(StVosTask *pRunTask);
 
 #endif

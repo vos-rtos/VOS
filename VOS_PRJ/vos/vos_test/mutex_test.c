@@ -1,6 +1,6 @@
 #include "../vos.h"
 
-StVOSMutex *gMutexPtr;
+static StVOSMutex *gMutexPtr;
 
 static void task0(void *param)
 {

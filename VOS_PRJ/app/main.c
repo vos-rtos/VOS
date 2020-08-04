@@ -8,6 +8,7 @@ void event_test();
 void mq_test();
 void mutex_test();
 void delay_test();
+void schedule_test();
 void main(void *param)
 {
 	kprintf("main function!\r\n");
@@ -15,7 +16,8 @@ void main(void *param)
 	//sem_test();
 	//mq_test();
 	//mutex_test();
-	delay_test();
+	//delay_test();
+	schedule_test();
 	while (1) {
 		VOSTaskDelay(1*1000);
 	}

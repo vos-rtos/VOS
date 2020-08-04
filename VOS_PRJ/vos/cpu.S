@@ -125,3 +125,19 @@ local_irq_disable:
 local_irq_enable:
     cpsie	i
     bx      lr
+
+
+.text
+.align 2
+.global VOSDelayUs
+.thumb
+.thumb_func
+VOSDelayUs:
+	mov r1, #172  //168MHz: 1us执行168条指令 + 4条指令
+	asr r1, r1, #1 //除2，因为内循环消耗2个指令
+loop_1us:
+	subs r1, #1
+	bne loop_1us
+	subs r0, #1
+	bne VOSDelayUs
+	bx lr
