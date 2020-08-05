@@ -61,7 +61,7 @@ u32 VOSTaskInit()
 	for (i=0; i<MAX_VOSTASK_NUM; i++) {
 		list_add_tail(&gArrVosTask[i].list, &gListTaskFree);
 		gArrVosTask[i].status = VOS_STA_FREE;
-		gArrVosTask[i].prio_save = TASK_PRIO_INVALID;
+		//gArrVosTask[i].prio = TASK_PRIO_INVALID;
 	}
 	__local_irq_restore(irq_save);
 	return 0;
@@ -96,61 +96,66 @@ u32 VOSTaskDelay(u32 ms)
 	VOSTaskSchedule();
 	return 0;
 }
-//把就绪队列里的所有指向相同互斥控制块（互斥锁，信号量等）的任务提升到跟准备阻塞前的当前任务一样
-s32 VOSTaskRaisePrioBeforeBlock(StVosTask *pRunTask)
+//把就绪队列里的所有指向相同互斥控制块（只处理互斥锁）的任务提升到跟准备阻塞前的当前任务一样
+//如果当前任务优先级不如拥有者任务，则不处理
+//该函数不可以在中断里调用
+s32 VOSTaskRaisePrioBeforeBlock(StVosTask *pMutexOwnerTask)
 {
 	StVosTask *ptask_dest = 0;
 	StVosTask *ptask_temp = 0;
 	StVosTask *ptask_ready = 0;
-	struct list_head *list_ready = 0;
+	struct list_head *list_owner = 0;
 	struct list_head *list_dest = 0;
+
+	struct list_head *list_head = 0;
+
 	u32 irq_save = 0;
 	irq_save = __local_irq_save();
-	if (pRunTask->psyn) {
-		//任务插入到阻塞队列，同时有指向阻塞控制量（互斥锁或信号量），则需要处理优先级反转问题
-		//目前使用优先级继承方法来处理，处理方法如下：
-		//在就绪队列里查找指向同样阻塞控制量的任务，如果该任务优先级低于当前阻塞任务，
-		//则提升就绪里的任务为当前阻塞任务的优先级水平。
-		list_for_each_safe(list_ready, ptask_temp, &gListTaskReady) {
-			ptask_ready = list_entry(list_ready, struct StVosTask, list);
-			if (ptask_ready->psyn == pRunTask->psyn && //必须指向同一个阻塞控制量
-					ptask_ready->prio > pRunTask->prio) {//同时就绪队列的任务优先级低于当前阻塞任务的优先级
-				if (ptask_ready->prio_save == TASK_PRIO_INVALID) {//必须是无效优先级，prio_save只记录原始的优先级，因为这里可能被多次提升
-					ptask_ready->prio_save = ptask_ready->prio; //提升就绪队列里的所有指向同一阻塞控制量的就绪任务优先级
-				}
-				ptask_ready->prio = pRunTask->prio;
-				//重新排序,其实就是把当前就绪节点往前移植，一直移到gListTaskReady为止
-				list_dest = list_ready;
-				//优先级冒泡提升
-				while (list_dest->prev != &gListTaskReady) {
-					list_dest = list_dest->prev;
-					ptask_dest = list_entry(list_dest, struct StVosTask, list);
-					if (ptask_dest->prio <= ptask_ready->prio) {//找到要插入的位置，在这个位置后面插入提升的任务
-						if (list_dest != list_ready->prev) {//如果提升任务的优先级已经是适合的位置就不做任何链表操作。
-							list_move(list_ready, list_dest);
-						}
-						break;//跳出提升任务的循环，继续遍历后面的就绪任务，可能多个任务指向阻塞控制量，都要提升
-					}
-				}//ended while (list_dest->prev != &gListTaskReady) {
-				if (list_dest->prev == &gListTaskReady) {//插入到第一个位置
-					if (list_dest != list_ready) {//如果提升任务的优先级已经是适合的位置就不做任何链表操作。
-						list_move(list_ready, list_dest);
-					}
-				}
-			}//ended if (ptask_ready->psyn == pTask->psyn &&
-		}//ended list_for_each_safe(list_ready, ptask_temp, &gListTaskReady) {
-	}//ended if (which_list == VOS_LIST_BLOCK && pTask->psyn) {
+
+	if (pMutexOwnerTask->prio > pRunningTask->prio) {
+		pMutexOwnerTask->prio = pRunningTask->prio;
+	}
+	//互斥锁拥有者可能在就绪队列里面，也有可能在阻塞队列里面，如果在阻塞队列里，
+	//证明锁拥有者先获取到这个锁后在申请别的锁（信号量等）或延时进入阻塞队列
+	if (pMutexOwnerTask->status == VOS_STA_READY) {//在就绪队列里（优先级排序队列）
+		list_head = &gListTaskReady;
+	}
+	else if (pMutexOwnerTask->status == VOS_STA_BLOCK) {//在阻塞队列里（优先级排序队列）
+		list_head = &gListTaskBlock;
+	}
+	else {
+		goto END_RAISE_PRIO;
+	}
+
+	list_dest = list_owner = &pMutexOwnerTask->list;
+	//优先级冒泡提升
+	while (list_dest->prev != list_head) {
+		list_dest = list_dest->prev;
+		ptask_dest = list_entry(list_dest, struct StVosTask, list);
+		if (ptask_dest->prio <= pMutexOwnerTask->prio) {//找到要插入的位置，在这个位置后面插入提升的任务
+			if (list_dest != list_owner->prev) {//如果提升任务的优先级已经是适合的位置就不做任何链表操作。
+				list_move(list_owner, list_dest);
+			}
+			break;//跳出提升任务的循环，继续遍历后面的就绪任务，可能多个任务指向阻塞控制量，都要提升
+		}
+	}
+	if (list_dest->prev == list_head) {//插入到第一个位置
+		if (list_dest != list_owner) {//如果提升任务的优先级已经是适合的位置就不做任何链表操作。
+			list_move(list_owner, list_dest);
+		}
+	}
+
+END_RAISE_PRIO:
 	__local_irq_restore(irq_save);
 	return 0;
 }
 
-s32 VOSTaskRestorePrioBeforeRelease(StVosTask *pRunTask)
+s32 VOSTaskRestorePrioBeforeRelease()
 {
 	u32 irq_save = 0;
 	irq_save = __local_irq_save();
-	if (pRunTask->prio_save != TASK_PRIO_INVALID) {
-		pRunTask->prio = pRunTask->prio_save;
-		pRunTask->prio_save = TASK_PRIO_INVALID;
+	if (pRunningTask->prio_base != pRunningTask->prio) {
+		pRunningTask->prio = pRunningTask->prio_base;
 	}
 	__local_irq_restore(irq_save);
 	return 0;
@@ -288,9 +293,7 @@ s32 VOSTaskCreate(void (*task_fun)(void *param), void *param,
 	list_del(gListTaskFree.next); //空闲任务队列里删除第一个空闲任务
 	ptask->id = (ptask - gArrVosTask);
 
-	ptask->prio = prio;
-
-	ptask->prio_save = TASK_PRIO_INVALID;
+	ptask->prio = ptask->prio_base = prio;
 
 	ptask->stack_size = stack_size;
 
@@ -386,7 +389,10 @@ void VOSTaskBlockWaveUp()
 		else if (ptask_block->block_type & VOS_BLOCK_MUTEX) { //自定义互斥锁阻塞类型
 			StVOSMutex *pMutex = (StVOSMutex *)ptask_block->psyn;
 			if (pMutex->counter > 0 || pMutex->distory == 1) {//有至少一个信号量 或者互斥锁被删除
-				if (pMutex->counter > 0) pMutex->counter--;
+				if (pMutex->counter > 0) {
+					pMutex->counter--;
+					pMutex->ptask_owner = ptask_block;
+				}
 				//断开当前阻塞队列
 				list_del(&ptask_block->list);
 				//修改状态

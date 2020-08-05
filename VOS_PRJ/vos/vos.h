@@ -23,6 +23,8 @@
 #define VOSTaskRaisePrioBeforeBlock
 #endif
 
+extern struct StVosTask;
+
 enum {
 	VOS_LIST_READY = 0,
 	VOS_LIST_BLOCK,
@@ -46,6 +48,7 @@ typedef struct StVOSMutex {
 	s32 counter; //最大为1，就是互斥锁
 	s8 *name; //互斥锁名字
 	s32 distory; //删除互斥锁标志，需要把就绪队列里的所有等待该锁的阻塞任务添加到就绪队列
+	struct StVosTask *ptask_owner; //指向某个任务拥有这个锁，只有一个任务拥有这个锁
 	struct list_head list;
 }StVOSMutex;
 
@@ -68,7 +71,7 @@ typedef struct StVosTask {
 	u8 *pstack_top; //栈顶指针
 	u32 stack_size; //栈最大size
 	s32 prio; //任务优先级，值越低，优先级越高
-	s32 prio_save; //保存任务优先级提升前的数值，当释放控制量时及时恢复。
+	s32 prio_base; //原始优先级。
 	u32 id; //任务唯一ID
 	u8 *name; //任务名
 	volatile u32 status; //任务状态
@@ -182,7 +185,7 @@ void VOSTaskBlockWaveUp();
 void VOSStarup();
 void VOSTaskSchedule();
 
-s32 VOSTaskRaisePrioBeforeBlock(StVosTask *pRunTask);
-s32 VOSTaskRestorePrioBeforeRelease(StVosTask *pRunTask);
+s32 VOSTaskRaisePrioBeforeBlock(StVosTask *pMutexOwnerTask);
+s32 VOSTaskRestorePrioBeforeRelease();
 
 #endif

@@ -100,7 +100,7 @@ s32 VOSSemWait(StVOSSemaphore *pSem, u64 timeout_ms)
 		}
 		pRunningTask->block_type |= VOS_BLOCK_DELAY;//指明阻塞类型为自延时
 
-		VOSTaskRaisePrioBeforeBlock(pRunningTask); //阻塞前处理优先级反转问题，提升就绪队列里的任务优先级
+		//VOSTaskRaisePrioBeforeBlock(pRunningTask); //阻塞前处理优先级反转问题，提升就绪队列里的任务优先级
 	}
 
 	__local_irq_restore(irq_save);
@@ -138,7 +138,7 @@ s32 VOSSemRelease(StVOSSemaphore *pSem)
 	if (pSem->left < pSem->max) {
 		pSem->left++; //释放信号量
 		VOSTaskBlockWaveUp(); //唤醒在阻塞队列里阻塞的等待该信号量的任务
-		VOSTaskRestorePrioBeforeRelease(pRunningTask);//恢复自身的优先级
+		//VOSTaskRestorePrioBeforeRelease(pRunningTask);//恢复自身的优先级
 		pRunningTask->psyn = 0; //清除指向资源的指针。
 		ret = 1;
 	}
@@ -184,6 +184,7 @@ void VOSMutexInit()
 	for (i=0; i<MAX_VOS_MUTEX_NUM; i++) {
 		list_add_tail(&gVOSMutex[i].list, &gListMutex);
 		gVOSMutex[i].counter = -1; //初始化为-1，表示无效
+		gVOSMutex[i].ptask_owner = 0;
 	}
 	__local_irq_restore(irq_save);
 }
@@ -215,7 +216,8 @@ s32 VOSMutexWait(StVOSMutex *pMutex, s64 timeout_ms)
 
 	if (pMutex->counter > 0) {
 		pMutex->counter--;
-		pRunningTask->psyn = pMutex; //也要设置指向资源的指针，优先级反转需要用到
+		pMutex->ptask_owner = pRunningTask;
+		//pRunningTask->psyn = pMutex; //也要设置指向资源的指针，优先级反转需要用到
 		ret = 1;
 	}
 	else {//把当前任务切换到阻塞队列
@@ -232,7 +234,7 @@ s32 VOSMutexWait(StVOSMutex *pMutex, s64 timeout_ms)
 		}
 		pRunningTask->block_type |= VOS_BLOCK_DELAY;//指明阻塞类型为自延时
 
-		VOSTaskRaisePrioBeforeBlock(pRunningTask); //阻塞前处理优先级反转问题，提升就绪队列里的任务优先级
+		VOSTaskRaisePrioBeforeBlock(pMutex->ptask_owner); //阻塞前处理优先级反转问题，提升就绪队列里的任务优先级
 	}
 
 	__local_irq_restore(irq_save);
@@ -271,8 +273,9 @@ s32 VOSMutexRelease(StVOSMutex *pMutex)
 	if (pMutex->counter < 1) {
 		pMutex->counter++; //释放互斥锁
 		VOSTaskBlockWaveUp(); //唤醒在阻塞队列里阻塞的等待该互斥锁的任务
-		VOSTaskRestorePrioBeforeRelease(pRunningTask);//恢复自身的优先级
+		VOSTaskRestorePrioBeforeRelease();//恢复自身的优先级
 		pRunningTask->psyn = 0; //清除指向资源的指针。
+		pMutex->ptask_owner = 0; //清除拥有者
 		ret = 1;
 	}
 	__local_irq_restore(irq_save);
@@ -449,7 +452,7 @@ s32 VOSMsgQuePut(StVOSMsgQueue *pMQ, void *pmsg, s32 len)
 		pMQ->pos_tail = pMQ->pos_tail % pMQ->msg_maxs;
 		pMQ->msg_cnts++;
 		VOSTaskBlockWaveUp(); //唤醒在阻塞队列里阻塞的等待该信号量的任务
-		VOSTaskRestorePrioBeforeRelease(pRunningTask);//恢复自身的优先级
+		//VOSTaskRestorePrioBeforeRelease(pRunningTask);//恢复自身的优先级
 		pRunningTask->psyn = 0; //清除指向资源的指针。
 		ret = 1;
 	}
@@ -494,7 +497,7 @@ s32 VOSMsgQueGet(StVOSMsgQueue *pMQ, void *pmsg, s32 len, s64 timeout_ms)
 		}
 		pRunningTask->block_type |= VOS_BLOCK_DELAY;//指明阻塞类型为自延时
 
-		VOSTaskRaisePrioBeforeBlock(pRunningTask); //阻塞前处理优先级反转问题，提升就绪队列里的任务优先级
+		//VOSTaskRaisePrioBeforeBlock(pRunningTask); //阻塞前处理优先级反转问题，提升就绪队列里的任务优先级
 	}
 	__local_irq_restore(irq_save);
 
