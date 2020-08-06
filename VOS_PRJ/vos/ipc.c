@@ -40,6 +40,7 @@ StVOSMutex gVOSMutex[MAX_VOS_MUTEX_NUM];
 StVOSMsgQueue gVOSMsgQue[MAX_VOS_MSG_QUE_NUM];
 
 
+
 void VOSSemInit()
 {
 	s32 i = 0;
@@ -68,11 +69,28 @@ StVOSSemaphore *VOSSemCreate(s32 max_sems, s32 init_sems, s8 *name)
 			init_sems = max_sems;
 		}
 		pSemaphore->left = init_sems; //初始化信号量为满
+		memset(pSemaphore->bitmap, 0, sizeof(pSemaphore->bitmap)); //清空位图，位图指向占用该信号量的任务id.
 	}
 	__local_irq_restore(irq_save);
 	return  pSemaphore;
 }
 
+
+s32 VOSSemTryWait(StVOSSemaphore *pSem)
+{
+	s32 ret = -1;
+	u32 irq_save = 0;
+	if (pSem->max == 0) return -1; //信号量可能不存在或者被释放
+
+	irq_save = __local_irq_save();
+
+	if (pSem->left > 0) {
+		pSem->left--;
+		ret = 1;
+	}
+	__local_irq_restore(irq_save);
+	return ret;
+}
 s32 VOSSemWait(StVOSSemaphore *pSem, u64 timeout_ms)
 {
 	s32 ret = 0;
@@ -83,7 +101,8 @@ s32 VOSSemWait(StVOSSemaphore *pSem, u64 timeout_ms)
 
 	if (pSem->left > 0) {
 		pSem->left--;
-		pRunningTask->psyn = pSem; //也要设置指向资源的指针，优先级反转需要用到
+		//pRunningTask->psyn = pSem; //也要设置指向资源的指针，优先级反转需要用到
+		//bitmap_set(pRunningTask->id, pSem->bitmap);
 		ret = 1;
 	}
 	else {//把当前任务切换到阻塞队列
@@ -110,7 +129,7 @@ s32 VOSSemWait(StVOSSemaphore *pSem, u64 timeout_ms)
 		VOSTaskSchedule(); //任务调度并进入阻塞队列
 		switch(pRunningTask->wakeup_from) { //阻塞后是被定时器唤醒或者信号量唤醒
 		case VOS_WAKEUP_FROM_DELAY:
-			ret = -1;
+			ret = 0;
 			break;
 		case VOS_WAKEUP_FROM_SEM:
 			ret = 1;
@@ -138,8 +157,8 @@ s32 VOSSemRelease(StVOSSemaphore *pSem)
 	if (pSem->left < pSem->max) {
 		pSem->left++; //释放信号量
 		VOSTaskBlockWaveUp(); //唤醒在阻塞队列里阻塞的等待该信号量的任务
-		//VOSTaskRestorePrioBeforeRelease(pRunningTask);//恢复自身的优先级
 		pRunningTask->psyn = 0; //清除指向资源的指针。
+		//bitmap_clear(pRunningTask->id, pSem->bitmap); //清除任务编号，如果同个任务多次获取相同信号量该如何处理？
 		ret = 1;
 	}
 	__local_irq_restore(irq_save);
@@ -151,25 +170,27 @@ s32 VOSSemRelease(StVOSSemaphore *pSem)
 	return ret;
 }
 
+
+
 s32 VOSSemDelete(StVOSSemaphore *pSem)
 {
+	s32 ret = -1;
 	u32 irq_save = 0;
 	irq_save = __local_irq_save();
 	if (!list_empty(&gListSemaphore)) {
 
-		//清楚信号量，是否需要把就绪队列里的所有等待该信号量的阻塞任务添加到就绪队列
-		pSem->distory = 1;
-		VOSTaskBlockWaveUp(); //唤醒在阻塞队列里阻塞的等待该信号量的任务
-
-		list_del(pSem);
-		list_add_tail(&pSem->list, &gListSemaphore);
-		pSem->max = 0;
-		pSem->name = 0;
-		pSem->left = 0;
-		pSem->distory = 0;
+		if (pSem->max == pSem->left) {//所有任务都归还信号量，这时可以释放。
+			list_del(pSem);
+			list_add_tail(&pSem->list, &gListSemaphore);
+			pSem->max = 0;
+			pSem->name = 0;
+			pSem->left = 0;
+			//pSem->distory = 0;
+			ret = 0;
+		}
 	}
 	__local_irq_restore(irq_save);
-	return 0;
+	return ret;
 }
 
 
@@ -188,17 +209,19 @@ void VOSMutexInit()
 	}
 	__local_irq_restore(irq_save);
 }
-//init_locked： 如过是0，则初始化为没锁； 如果是1，则初始化是已经锁紧。
-StVOSMutex *VOSMutexCreate(s32 init_locked, s8 *name)
+//创建是可以在任务之外创建
+StVOSMutex *VOSMutexCreate(s8 *name)
 {
 	StVOSMutex *pMutex = 0;
 	u32 irq_save = 0;
+
 	irq_save = __local_irq_save();
 	if (!list_empty(&gListMutex)) {
 		pMutex = list_entry(gListMutex.next, StVOSMutex, list); //获取第一个空闲互斥锁
 		list_del(gListMutex.next);
 		pMutex->name = name;
-		pMutex->counter = init_locked ? 0 : 1;
+		pMutex->counter = 1;
+		pMutex->ptask_owner =  0;
 	}
 	__local_irq_restore(irq_save);
 	return  pMutex;
@@ -209,6 +232,7 @@ s32 VOSMutexWait(StVOSMutex *pMutex, s64 timeout_ms)
 {
 	s32 ret = 0;
 	u32 irq_save = 0;
+	if (pRunningTask == 0) return -1; //需要在用户任务里执行
 	if (pMutex->counter == -1) return -1; //信号量可能不存在或者被释放
 	if (pMutex->counter > 1) pMutex->counter = 1;
 
@@ -265,12 +289,13 @@ s32 VOSMutexRelease(StVOSMutex *pMutex)
 {
 	s32 ret = 0;
 	u32 irq_save = 0;
+
 	if (pMutex->counter == -1) return -1; //互斥锁可能不存在或者被释放
 	if (pMutex->counter > 1) pMutex->counter = 1;
 
 	irq_save = __local_irq_save();
 
-	if (pMutex->counter < 1) {
+	if (pMutex->counter < 1 && pMutex->ptask_owner == pRunningTask) {//互斥量必须要由拥有者才能释放
 		pMutex->counter++; //释放互斥锁
 		VOSTaskBlockWaveUp(); //唤醒在阻塞队列里阻塞的等待该互斥锁的任务
 		VOSTaskRestorePrioBeforeRelease();//恢复自身的优先级
@@ -289,21 +314,23 @@ s32 VOSMutexRelease(StVOSMutex *pMutex)
 
 s32 VOSMutexDelete(StVOSMutex *pMutex)
 {
+	s32 ret = -1;
 	u32 irq_save = 0;
 	irq_save = __local_irq_save();
 	if (!list_empty(&gListSemaphore)) {
-		//清楚互斥锁，是否需要把就绪队列里的所有等待该锁的阻塞任务添加到就绪队列
-		pMutex->distory = 1;
-		VOSTaskBlockWaveUp(); //唤醒在阻塞队列里阻塞的等待该互斥锁的任务
-		//删除自己
-		list_del(pMutex);
-		list_add_tail(&pMutex->list, &gListMutex);
-		pMutex->name = 0;
-		pMutex->counter = -1;
-		pMutex->distory = 0;
+
+		if (pMutex->ptask_owner == 0 && pMutex->counter == 1) {//互斥锁没被引用，直接释放
+			//删除自己
+			list_del(pMutex);
+			list_add_tail(&pMutex->list, &gListMutex);
+			pMutex->name = 0;
+			pMutex->counter = -1;
+			//pMutex->distory = 0;
+			ret = 0;
+		}
 	}
 	__local_irq_restore(irq_save);
-	return 0;
+	return ret;
 }
 
 
@@ -480,7 +507,7 @@ s32 VOSMsgQueGet(StVOSMsgQueue *pMQ, void *pmsg, s32 len, s64 timeout_ms)
 		pMQ->pos_head = pMQ->pos_head % pMQ->msg_maxs;
 		pMQ->msg_cnts--;
 
-		pRunningTask->psyn = pMQ; //也要设置指向资源的指针，优先级反转需要用到
+		//pRunningTask->psyn = pMQ; //也要设置指向资源的指针，优先级反转需要用到
 		ret = 1;
 	}
 	else {//没消息，进入就绪队列
@@ -532,26 +559,74 @@ s32 VOSMsgQueGet(StVOSMsgQueue *pMQ, void *pmsg, s32 len, s64 timeout_ms)
 
 s32 VOSMsgQueFree(StVOSMsgQueue *pMQ)
 {
+	s32 ret = -1;
 	u32 irq_save = 0;
 	irq_save = __local_irq_save();
 	if (!list_empty(&gListMsgQue)) {
-		//清除消息队列，是否需要把就绪队列里的所有等待该信号量的阻塞任务添加到就绪队列
-		pMQ->distory = 1;
-		VOSTaskBlockWaveUp(); //唤醒在阻塞队列里阻塞的等待该信号量的任务
 
-		list_del(pMQ);
-		list_add_tail(&pMQ->list, &gListMsgQue);
-		pMQ->distory = 0;
-		pMQ->name = 0;
-		pMQ->pdata = 0;
-		pMQ->length = 0;
-		pMQ->pos_head = 0;
-		pMQ->pos_tail = 0;
-		pMQ->msg_cnts = 0;
-		pMQ->msg_maxs = 0;
-		pMQ->msg_size = 0;
+		if (pMQ->msg_cnts == 0) {//消息为空，释放
+//			//清除消息队列，是否需要把就绪队列里的所有等待该信号量的阻塞任务添加到就绪队列
+//			pMQ->distory = 1;
+//			VOSTaskBlockWaveUp(); //唤醒在阻塞队列里阻塞的等待该信号量的任务
+
+			list_del(pMQ);
+			list_add_tail(&pMQ->list, &gListMsgQue);
+			pMQ->distory = 0;
+			pMQ->name = 0;
+			pMQ->pdata = 0;
+			pMQ->length = 0;
+			pMQ->pos_head = 0;
+			pMQ->pos_tail = 0;
+			pMQ->msg_cnts = 0;
+			pMQ->msg_maxs = 0;
+			pMQ->msg_size = 0;
+			ret = 0;
+		}
 	}
 	__local_irq_restore(irq_save);
-	return 0;
+	return ret;
 }
+
+#if 0 //位图测试
+#define MAX_TASK_NUM 10;
+u8 bitmap[10];
+int bitmap_prinf(u8 *bitmap, s32 num)
+{
+	s32 line_num = 0;
+	u32 n = 0;
+	bitmap_for_each(n, num)
+	{
+		//printf("%d ", bitmap_get(n, bitmap) ? 1 : 0);
+		printf("%d ", bitmap_get(n, bitmap));
+		line_num++;
+		if (line_num % 8 == 0) printf("\r\n");
+	}
+	printf("\r\n");
+}
+
+int bitmap_test() {
+	u32 n = 0;
+	memset(bitmap, 0, sizeof(bitmap));
+	bitmap_set(2, bitmap);
+	bitmap_prinf(bitmap, sizeof(bitmap));
+	bitmap_clear(2, bitmap);
+	bitmap_prinf(bitmap, sizeof(bitmap));
+	bitmap_set(7, bitmap);
+	bitmap_prinf(bitmap, sizeof(bitmap));
+	bitmap_set(8, bitmap);
+	bitmap_prinf(bitmap, sizeof(bitmap));
+	bitmap_set(15, bitmap);
+	bitmap_prinf(bitmap, sizeof(bitmap));
+	bitmap_set(16, bitmap);
+	bitmap_prinf(bitmap, sizeof(bitmap));
+
+#if 0
+	bitmap_for_each(n, bitmap) {
+		if (bitmap_check(n, bitmap)) {
+
+		}
+	}
+#endif
+}
+#endif
 

@@ -15,7 +15,7 @@ static void task_low(void *param)
 	s64 mark_time = VOSGetTimeMs()/1000;
 	kprintf("mark_time: %d\r\n", (u32)mark_time);
 
-	gMutexPtr = VOSMutexCreate(0, "mutex_schedule");
+	gMutexPtr = VOSMutexCreate("mutex_schedule");
 
 	while (1) {
 		kprintf("%sks=%d!\r\n", __FUNCTION__, (u32)VOSGetTimeMs());

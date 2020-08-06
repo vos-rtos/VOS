@@ -9,7 +9,7 @@ static void task0(void *param)
 	s64 mark_time = VOSGetTimeMs()/1000;
 	kprintf("mark_time: %d\r\n", (u32)mark_time);
 
-	gMutexPtr = VOSMutexCreate(0, "mutex test");
+	gMutexPtr = VOSMutexCreate("mutex test");
 
 	while (1) {
 		if (gMutexPtr) {

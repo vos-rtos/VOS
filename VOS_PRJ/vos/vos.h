@@ -12,6 +12,18 @@
 #include "vtype.h"
 #include "list.h"
 
+/*
+  * 位图操作宏定义
+ */
+#define bitmap_for_each(pos, bitmap_byte) \
+	for (pos = 0; pos < bitmap_byte*8; pos++)
+
+#define bitmap_get(n, bitmap)		(!!(((u8*)(bitmap))[(n)>>3] & 1<<((n)&0x07)))
+#define bitmap_clear(n, bitmap)		(((u8*)(bitmap))[(n)>>3] &= ~(1<<((n)&0x07)))
+#define bitmap_set(n, bitmap)		(((u8*)(bitmap))[(n)>>3] |= 1<<((n)&0x07))
+
+
+
 #define MCU_FREQUENCY_HZ (u32)(168000000)
 
 #define MAX_SIGNED_VAL_64 (0x7FFFFFFFFFFFFFFF)
@@ -35,10 +47,59 @@ enum {
 	TASK_SWITCH_SYSTICK,
 };
 
+
+void _set_PSP(u32 psp);
+void _ISB();
+
+#define MAX_CPU_NUM 1
+#define MAX_VOSTASK_NUM  10
+
+#define TICKS_INTERVAL_MS 1 //systick的间隔，1ms
+
+#define MAKE_TICKS(ms) (((ms)+TICKS_INTERVAL_MS-1)/(TICKS_INTERVAL_MS))
+
+#define HW32_REG(ADDRESS) (*((volatile unsigned long *)(ADDRESS)))
+
+#define MAX_TICKS_TIMESLICE 10
+
+
+#define VOS_WAKEUP_FROM_SEM			(u32)(0)
+#define VOS_WAKEUP_FROM_SEM_DEL		(u32)(1) //删除信号量，必须通知的各等待信号量的任务添加到就绪队列
+#define VOS_WAKEUP_FROM_DELAY		(u32)(2)
+#define VOS_WAKEUP_FROM_MUTEX		(u32)(3)
+#define VOS_WAKEUP_FROM_MUTEX_DEL	(u32)(4) //删除互斥锁，必须通知的各等待互斥锁的任务添加到就绪队列
+#define VOS_WAKEUP_FROM_EVENT		(u32)(5)
+#define VOS_WAKEUP_FROM_EVENT_DEL	(u32)(6) //删除事件，必须通知的各等待事件的任务添加到就绪队列
+#define VOS_WAKEUP_FROM_MSGQUE		(u32)(7)
+#define VOS_WAKEUP_FROM_MSGQUE_DEL	(u32)(8)
+
+
+#define	VOS_STA_FREE 			(u32)(0) //空闲队列回收
+#define VOS_STA_READY			(u32)(1) //就绪队列
+#define VOS_STA_BLOCK			(u32)(2) //就绪队列
+
+
+#define VOS_BLOCK_DELAY			(u32)(1<<0) //自延时引起阻塞
+#define VOS_BLOCK_SEMP			(u32)(1<<1) //信号量阻塞
+#define VOS_BLOCK_EVENT			(u32)(1<<2) //事件阻塞
+#define VOS_BLOCK_MUTEX			(u32)(1<<3) //互斥阻塞
+#define VOS_BLOCK_MSGQUE		(u32)(1<<4) //消息队列阻塞
+
+#define TASK_PRIO_INVALID		(s32)(-1) //次优先级分配给IDLE
+#define TASK_PRIO_REAL			(s32)(100)
+#define TASK_PRIO_HIGH			(s32)(130)
+#define TASK_PRIO_NORMAL		(s32)(150)
+#define TASK_PRIO_LOW			(s32)(200)
+#define TASK_PRIO_MAX			(s32)(255) //次优先级分配给IDLE
+
+
+
+
 typedef struct StVOSSemaphore {
 	s32 max;  //最大信号量个数
 	s32 left; //目前剩余的信号量个数
 	s8 *name; //信号量名字
+	u8 bitmap[(MAX_VOSTASK_NUM+sizeof(u8)-1)/sizeof(u8)];//每位特的偏移数就是被占用任务的id.
 	s32 distory; //删除互斥锁标志，需要把就绪队列里的所有等待该锁的阻塞任务添加到就绪队列
 	struct list_head list;
 }StVOSSemaphore;
@@ -89,49 +150,6 @@ typedef struct StVosTask {
 	struct list_head list;//空闲链表和优先级任务链表,优先级高的排第头，优先级低的排尾
 }StVosTask;
 
-void _set_PSP(u32 psp);
-void _ISB();
-
-#define MAX_CPU_NUM 1
-#define MAX_VOSTASK_NUM  10
-
-#define TICKS_INTERVAL_MS 1 //systick的间隔，1ms
-
-#define MAKE_TICKS(ms) (((ms)+TICKS_INTERVAL_MS-1)/(TICKS_INTERVAL_MS))
-
-#define HW32_REG(ADDRESS) (*((volatile unsigned long *)(ADDRESS)))
-
-#define MAX_TICKS_TIMESLICE 10
-
-
-#define VOS_WAKEUP_FROM_SEM			(u32)(0)
-#define VOS_WAKEUP_FROM_SEM_DEL		(u32)(1) //删除信号量，必须通知的各等待信号量的任务添加到就绪队列
-#define VOS_WAKEUP_FROM_DELAY		(u32)(2)
-#define VOS_WAKEUP_FROM_MUTEX		(u32)(3)
-#define VOS_WAKEUP_FROM_MUTEX_DEL	(u32)(4) //删除互斥锁，必须通知的各等待互斥锁的任务添加到就绪队列
-#define VOS_WAKEUP_FROM_EVENT		(u32)(5)
-#define VOS_WAKEUP_FROM_EVENT_DEL	(u32)(6) //删除事件，必须通知的各等待事件的任务添加到就绪队列
-#define VOS_WAKEUP_FROM_MSGQUE		(u32)(7)
-#define VOS_WAKEUP_FROM_MSGQUE_DEL	(u32)(8)
-
-
-#define	VOS_STA_FREE 			(u32)(0) //空闲队列回收
-#define VOS_STA_READY			(u32)(1) //就绪队列
-#define VOS_STA_BLOCK			(u32)(2) //就绪队列
-
-
-#define VOS_BLOCK_DELAY			(u32)(1<<0) //自延时引起阻塞
-#define VOS_BLOCK_SEMP			(u32)(1<<1) //信号量阻塞
-#define VOS_BLOCK_EVENT			(u32)(1<<2) //事件阻塞
-#define VOS_BLOCK_MUTEX			(u32)(1<<3) //互斥阻塞
-#define VOS_BLOCK_MSGQUE		(u32)(1<<4) //消息队列阻塞
-
-#define TASK_PRIO_INVALID		(s32)(-1) //次优先级分配给IDLE
-#define TASK_PRIO_REAL			(s32)(100)
-#define TASK_PRIO_HIGH			(s32)(130)
-#define TASK_PRIO_NORMAL		(s32)(150)
-#define TASK_PRIO_LOW			(s32)(200)
-#define TASK_PRIO_MAX			(s32)(255) //次优先级分配给IDLE
 
 
 //关中断，并返回关中断前的值，多用于嵌套中断情况
@@ -148,16 +166,17 @@ void VOSSemInit();
 StVOSSemaphore *VOSSemCreate(s32 max_sems, s32 init_sems, s8 *name);
 
 s32 VOSSemWait(StVOSSemaphore *pSem, u64 timeout_ms);
-
+s32 VOSSemTryWait(StVOSSemaphore *pSem);
 s32 VOSSemRelease(StVOSSemaphore *pSem);
 
 s32 VOSSemDelete(StVOSSemaphore *pSem);
 
 void VOSMutexInit();
 
-StVOSMutex *VOSMutexCreate(s32 init_locked, s8 *name);
+StVOSMutex *VOSMutexCreate(s8 *name);
 
 s32 VOSMutexWait(StVOSMutex *pMutex, s64 timeout_ms);
+
 s32 VOSMutexRelease(StVOSMutex *pMutex);
 s32 VOSMutexDelete(StVOSMutex *pMutex);
 s32 VOSEventWait(u32 event_mask, u64 timeout_ms);
