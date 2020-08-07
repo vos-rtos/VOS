@@ -31,6 +31,17 @@ SVC_Handler:
 
 .text
 .align 2
+.global asm_ctx_switch
+.thumb
+.thumb_func
+asm_ctx_switch:
+	LDR     R0, =0xE000ED04 //触发PendSV_Handler中断
+	LDR     R1, =0x10000000
+	STR     R1, [R0]
+	BX      LR
+
+.text
+.align 2
 .global PendSV_Handler
 .thumb
 .thumb_func
@@ -61,6 +72,39 @@ PendSV_Handler:
 
 .text
 .align 2
+.global RunFirstTask
+.thumb
+.thumb_func
+RunFirstTask:
+	//push	{lr}
+    LDR     R0, =VOSRunning //设置系统运行标志
+    MOVS    R1, #1
+    STRB    R1, [R0]
+
+	LDR 	R0, =pRunningTask
+	LDR		R1, =SVC_EXC_RETURN
+	LDR		R2, [R0]
+	LDR		R2, [R2] //ptask->pstack
+	LDR		R3, [R2] //*ptask->pstack
+	STR		R3,	[R1] //写SVC中断的LR值
+	MOV		R0, #10
+    LSL		R0, R0, #2 // 10 * 4
+	ADD 	R1, R2, R0
+    MSR		PSP, R1    //设置PSP的值
+	LDR     R0, =0xE000ED22 //设置PendSV_Handler为最低优先级
+	LDR     R1, =0xFF
+	STRB    R1, [R0]
+
+	MRS     R0, CONTROL //设置线程模式)，用户级
+	ORR     R0, R0, #3
+	MSR     CONTROL, R0
+	ISB
+	//BL		VOSSysTickSet //设置tick间隔
+	//ISB
+	//pop 	{pc}
+
+.text
+.align 2
 .global _set_CONTROL
 .thumb
 .thumb_func
@@ -87,16 +131,35 @@ _set_PSP:
 	bx lr
 
 
+//.text
+//.align 2
+//.global __local_irq_save
+//.thumb
+//.thumb_func
+//__local_irq_save:
+//    mrs     r0, basepri
+//    mov     r1, #0xff
+//    msr     basepri, r1
+//    bx      lr
+
 .text
 .align 2
 .global __local_irq_save
 .thumb
 .thumb_func
 __local_irq_save:
-    mrs     r0, basepri
-    mov     r1, #0xff
-    msr     basepri, r1
-    bx      lr
+    MRS     R0, PRIMASK
+    CPSID   I
+    BX      LR
+
+//.text
+//.align 2
+//.global __local_irq_restore
+//.thumb
+//.thumb_func
+//__local_irq_restore:
+//    msr     basepri, r0
+//    bx      lr
 
 .text
 .align 2
@@ -104,8 +167,8 @@ __local_irq_save:
 .thumb
 .thumb_func
 __local_irq_restore:
-    msr     basepri, r0
-    bx      lr
+    MSR     PRIMASK, R0
+    BX      LR
 
 
 .text
@@ -141,3 +204,5 @@ loop_1us:
 	subs r0, #1
 	bne VOSDelayUs
 	bx lr
+
+

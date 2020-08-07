@@ -27,6 +27,11 @@ volatile s64 gMarkTicksNearest = MAX_SIGNED_VAL_64; //记录最近闹钟响
 
 u32 SVC_EXC_RETURN; //SVC进入后保存，然后返回时要用到 (cortex m4)
 
+volatile u32 VOSIntNesting = 0;
+
+volatile u32 VOSRunning = 0;
+
+
 
 long long stack_idle[1024];
 
@@ -315,8 +320,9 @@ s32 VOSTaskCreate(void (*task_fun)(void *param), void *param,
 	ptask->pstack = ptask->pstack_top - (18 << 2);
 	HW32_REG((ptask->pstack + (16 << 2))) = (unsigned long) VOSTaskEntry;
 	HW32_REG((ptask->pstack + (17 << 2))) = 0x01000000;
-	HW32_REG((ptask->pstack)) = 0xFFFFFFFDUL;
 	HW32_REG((ptask->pstack + (1 << 2))) = 0x03;
+	HW32_REG((ptask->pstack)) = 0xFFFFFFFDUL;
+
 	//插入到就绪队列
 	VOSTaskListPrioInsert(ptask, VOS_LIST_READY);
 
@@ -479,13 +485,16 @@ void task_idle(void *param)
 
 void VOSStarup()
 {
-	__asm volatile ("svc 0\n");
+	if (VOSRunning == 0) { //启动第一个任务时会设置个VOSRunning为1
+		__asm volatile ("svc 0\n");
+	}
 }
 
 
 #include "cmsis/stm32f4xx.h"
 #include "stm32f4-hal/stm32f4xx_hal.h"
 
+extern void asm_ctx_switch(); //触发PendSV_Handler中断
 
 static void VOSCortexSwitch()
 {
@@ -501,12 +510,13 @@ static void VOSCortexSwitch()
 		VOSTaskListPrioInsert(pRunningTask, VOS_LIST_READY);
 	}
 
-	SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk; //触发上下文切换中断
+	//SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk; //触发上下文切换中断
+	asm_ctx_switch();
 }
 
 
-//from==TASK_USER_SWITCH: 应用层主动切换
-//from==TASK_USER_SYSTICK: 时钟定时器切换，被动切换
+//from==TASK_SWITCH_ACTIVE: 主动切换 (包括应用层直接放弃cpu和阻塞等时间，理解切换出来)
+//from==TASK_SWITCH_PASSIVE: 被动切换(包括时钟定时器切换或其他中断返回切换，除SVC),相同任务需要查看时间片。
 static void VOSTaskSwitch(u32 from)
 {
 	s32 ret = 0;
@@ -514,7 +524,7 @@ static void VOSTaskSwitch(u32 from)
 	irq_save = __local_irq_save();
 	if (pRunningTask && !list_empty(&gListTaskReady)) {
 		ret = VOSTaskReadyCmpPrioTo(pRunningTask); //比较运行任务优先级跟就绪队列里的任务优先级
-		if (from == TASK_SWITCH_USER) {//主动切换任务，不需要判断时间片等内容，直接切换
+		if (from == TASK_SWITCH_ACTIVE) {//主动切换任务，不需要判断时间片等内容，直接切换
 			if (ret <= 0 || //正在运行的任务优先级相同或更低，需要任务切换
 				pRunningTask->status == VOS_STA_FREE || //任务状态如果是FREE状态，也需要切换
 				pRunningTask->status == VOS_STA_BLOCK //任务添加到阻塞队列
@@ -522,7 +532,7 @@ static void VOSTaskSwitch(u32 from)
 				VOSCortexSwitch();
 			}
 		}
-		else if (from == TASK_SWITCH_SYSTICK) {//系统定时切换，被动切换
+		else if (from == TASK_SWITCH_PASSIVE) {//系统定时切换，被动切换
 			if (ret < 0 || //ret < 0: 就绪队列有更高优先级，强制切换
 				pRunningTask->status == VOS_STA_FREE || //被释放掉的任务强制切换
 				pRunningTask->status == VOS_STA_BLOCK || //任务需要添加到阻塞队列
@@ -541,6 +551,33 @@ static void VOSTaskSwitch(u32 from)
 	}
 	__local_irq_restore(irq_save);
 }
+
+void  VOSIntEnter()
+{
+	u32 irq_save = 0;
+    if (VOSRunning) {
+    	irq_save = __local_irq_save();
+        if (VOSIntNesting < 0xFFFFFFFFU) {
+        	VOSIntNesting++;                      /* Increment ISR nesting level                        */
+        }
+        __local_irq_restore(irq_save);
+    }
+}
+
+void  VOSIntExit ()
+{
+	u32 irq_save = 0;
+
+    if (VOSRunning) {
+    	irq_save = __local_irq_save();
+        if (VOSIntNesting) VOSIntNesting--;
+        if (VOSIntNesting == 0) {
+        	VOSTaskSwitch(TASK_SWITCH_PASSIVE);
+        }
+        __local_irq_restore(irq_save);
+    }
+}
+
 //创建IDLE任务，无论何时都至少有个IDLE任务在就绪队列
 static void TaskIdleBuild()
 {
@@ -554,16 +591,21 @@ static void TaskIdleBuild()
 	__local_irq_restore(irq_save);
 }
 
-void RunFirstTask ()
+void VOSSysTickSet()
 {
-	SVC_EXC_RETURN = HW32_REG((pRunningTask->pstack));
-	_set_PSP((pRunningTask->pstack + 10 * 4));//栈指向R0
-	NVIC_SetPriority(PendSV_IRQn, 0xFF);
 	SysTick_Config(168000);
-	_set_CONTROL(0x3);
-	_ISB();
-
 }
+//
+//void RunFirstTask ()
+//{
+//	SVC_EXC_RETURN = HW32_REG((pRunningTask->pstack));
+//	_set_PSP((pRunningTask->pstack + 10 * 4));//栈指向R0
+//	NVIC_SetPriority(PendSV_IRQn, 0xFF);
+//	SysTick_Config(168000);
+//	_set_CONTROL(0x3);
+//	_ISB();
+//
+//}
 
 //这个必须在用户模式下使用，切换上下文
 //但是VOSTaskSwitch必须在特权模式下访问，否则异常。
@@ -579,14 +621,18 @@ void SVC_Handler_C(unsigned int *svc_args);
 void SVC_Handler_C(unsigned int *svc_args)
 {
 	u8 svc_number;
+	u32 irq_save;
 	svc_number = ((char *)svc_args[6])[-2];
 	switch(svc_number) {
 	case 0://系统刚初始化完成，启动第一个任务
+    	irq_save = __local_irq_save();
 		TaskIdleBuild();//创建idle任务
 		RunFirstTask(); //加载第一个任务，这时任务不一定是IDLE任务
+		VOSSysTickSet();//设置tick时钟间隔
+		__local_irq_restore(irq_save);
 		break;
 	case 1://用户任务主动调用切换到更高优先级任务，如果没有则继续用户任务
-		VOSTaskSwitch(TASK_SWITCH_USER);
+		VOSTaskSwitch(TASK_SWITCH_ACTIVE);
 		break;
 	default:
 		break;
@@ -597,10 +643,17 @@ void SVC_Handler_C(unsigned int *svc_args)
 void __attribute__ ((section(".after_vectors")))
 SysTick_Handler()
 {
+	u32 irq_save;
+
+	VOSIntEnter();
+
+	irq_save = __local_irq_save();
 	gVOSTicks++;
-	if (gVOSTicks >= gMarkTicksNearest) {//闹钟响，查找阻塞队列，把对应的阻塞任务添加到就绪队列中
+	__local_irq_restore(irq_save);
+	if (VOSRunning && gVOSTicks >= gMarkTicksNearest) {//闹钟响，查找阻塞队列，把对应的阻塞任务添加到就绪队列中
 		VOSTaskBlockWaveUp();
 	}
-	VOSTaskSwitch(TASK_SWITCH_SYSTICK);
+	//VOSTaskSwitch(TASK_SWITCH_PASSIVE);
+	VOSIntExit ();
 }
 

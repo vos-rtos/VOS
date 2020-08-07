@@ -39,7 +39,7 @@ StVOSMutex gVOSMutex[MAX_VOS_MUTEX_NUM];
 
 StVOSMsgQueue gVOSMsgQue[MAX_VOS_MSG_QUE_NUM];
 
-
+extern volatile u32 VOSIntNesting;
 
 void VOSSemInit()
 {
@@ -96,6 +96,7 @@ s32 VOSSemWait(StVOSSemaphore *pSem, u64 timeout_ms)
 	s32 ret = 0;
 	u32 irq_save = 0;
 	if (pSem->max == 0) return -1; //信号量可能不存在或者被释放
+	if (VOSIntNesting != 0) return -1;
 
 	irq_save = __local_irq_save();
 
@@ -151,6 +152,7 @@ s32 VOSSemRelease(StVOSSemaphore *pSem)
 	s32 ret = 0;
 	u32 irq_save = 0;
 	if (pSem->max == 0) return -1; //信号量可能不存在或者被释放
+	if (VOSIntNesting != 0) return -1;
 
 	irq_save = __local_irq_save();
 
@@ -176,6 +178,9 @@ s32 VOSSemDelete(StVOSSemaphore *pSem)
 {
 	s32 ret = -1;
 	u32 irq_save = 0;
+
+	if (VOSIntNesting != 0) return -1;
+
 	irq_save = __local_irq_save();
 	if (!list_empty(&gListSemaphore)) {
 
@@ -234,6 +239,9 @@ s32 VOSMutexWait(StVOSMutex *pMutex, s64 timeout_ms)
 	u32 irq_save = 0;
 	if (pRunningTask == 0) return -1; //需要在用户任务里执行
 	if (pMutex->counter == -1) return -1; //信号量可能不存在或者被释放
+
+	if (VOSIntNesting != 0) return -1;
+
 	if (pMutex->counter > 1) pMutex->counter = 1;
 
 	irq_save = __local_irq_save();
@@ -293,6 +301,8 @@ s32 VOSMutexRelease(StVOSMutex *pMutex)
 	if (pMutex->counter == -1) return -1; //互斥锁可能不存在或者被释放
 	if (pMutex->counter > 1) pMutex->counter = 1;
 
+	if (VOSIntNesting != 0) return -1;
+
 	irq_save = __local_irq_save();
 
 	if (pMutex->counter < 1 && pMutex->ptask_owner == pRunningTask) {//互斥量必须要由拥有者才能释放
@@ -316,6 +326,9 @@ s32 VOSMutexDelete(StVOSMutex *pMutex)
 {
 	s32 ret = -1;
 	u32 irq_save = 0;
+
+	if (VOSIntNesting != 0) return -1;
+
 	irq_save = __local_irq_save();
 	if (!list_empty(&gListSemaphore)) {
 
@@ -338,6 +351,8 @@ s32 VOSEventWait(u32 event_mask, u64 timeout_ms)
 {
 	s32 ret = 0;
 	u32 irq_save = 0;
+
+	if (VOSIntNesting != 0) return -1;
 
 	irq_save = __local_irq_save();
 
@@ -381,6 +396,9 @@ s32 VOSEventSet(s32 task_id, u32 event)
 {
 	s32 ret = -1;
 	u32 irq_save = 0;
+
+	if (VOSIntNesting != 0) return -1;
+
 	irq_save = __local_irq_save();
 	StVosTask *pTask = VOSGetTaskFromId(task_id);
 	if (pTask) {
@@ -402,6 +420,9 @@ u32 VOSEventGet(s32 task_id)
 {
 	u32 event_mask = 0;
 	u32 irq_save = 0;
+
+	if (VOSIntNesting != 0) return -1;
+
 	irq_save = __local_irq_save();
 	StVosTask *pTask = VOSGetTaskFromId(task_id);
 	if (pTask) {
@@ -416,6 +437,9 @@ s32 VOSEventClear(s32 task_id, u32 event)
 {
 	u32 mask = 0;
 	u32 irq_save = 0;
+
+	if (VOSIntNesting != 0) return -1;
+
 	irq_save = __local_irq_save();
 	StVosTask *pTask = VOSGetTaskFromId(task_id);
 	if (pTask) {
@@ -432,6 +456,7 @@ void VOSMsgQueInit()
 {
 	s32 i = 0;
 	u32 irq_save = 0;
+
 	irq_save = __local_irq_save();
 	//初始化信号量队列
 	INIT_LIST_HEAD(&gListMsgQue);
@@ -446,6 +471,9 @@ StVOSMsgQueue *VOSMsgQueCreate(s8 *pRingBuf, s32 length, s32 msg_size, s8 *name)
 {
 	StVOSMsgQueue *pMsgQue = 0;
 	u32 irq_save = 0;
+
+	if (VOSIntNesting != 0) return -1;
+
 	irq_save = __local_irq_save();
 	if (!list_empty(&gListMsgQue)) {
 		pMsgQue = list_entry(gListMsgQue.next, StVOSMsgQueue, list);
@@ -468,6 +496,8 @@ s32 VOSMsgQuePut(StVOSMsgQueue *pMQ, void *pmsg, s32 len)
 	s32 ret = 0;
 	u8 *ptail = 0;
 	u32 irq_save = 0;
+
+	if (VOSIntNesting != 0) return -1;
 
 	irq_save = __local_irq_save();
 	if (pMQ->pos_tail != pMQ->pos_head || //头不等于尾，可以添加新消息
@@ -498,6 +528,9 @@ s32 VOSMsgQueGet(StVOSMsgQueue *pMQ, void *pmsg, s32 len, s64 timeout_ms)
 	s32 ret = 0;
 	u8 *phead = 0;
 	u32 irq_save = 0;
+
+	if (VOSIntNesting != 0) return -1;
+
 	irq_save = __local_irq_save();
 	if (pMQ->msg_cnts > 0) {//有消息
 		phead = pMQ->pdata + pMQ->pos_head * pMQ->msg_size;
@@ -561,6 +594,9 @@ s32 VOSMsgQueFree(StVOSMsgQueue *pMQ)
 {
 	s32 ret = -1;
 	u32 irq_save = 0;
+
+	if (VOSIntNesting != 0) return -1;
+
 	irq_save = __local_irq_save();
 	if (!list_empty(&gListMsgQue)) {
 
