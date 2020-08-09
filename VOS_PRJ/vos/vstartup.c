@@ -76,6 +76,8 @@ ___start (void)
 	SCB->CCR |= SCB_CCR_STKALIGN_Msk;
 	MX_USART1_UART_Init();
 
+	HAL_NVIC_SetPriority(SVCall_IRQn, 2, 0U);
+
 	local_irq_enable();
 
 	code = VOSTaskCreate(main, 0, main_stack, sizeof(main_stack), TASK_PRIO_NORMAL, "main");

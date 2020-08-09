@@ -46,21 +46,36 @@ asm_ctx_switch:
 .thumb
 .thumb_func
 PendSV_Handler:
-	mrs	r0, psp
-	tst	lr, #0x10
+    MRS     r0, PRIMASK //关中断
+    CPSID   I
+    push  {r0}
+	//判断pRunningTask和pReadyTask指针是否为0，如果为0就不切换
+    ldr r1, =pRunningTask
+    ldr r2, =pReadyTask
+	ldr r1, [r1]
+	ldr r2, [r2]
+	cmp r1, #0
+	beq  INT_ENABLE
+	cmp r2, #0
+	beq  INT_ENABLE
+
+	mrs	r0, psp //保存当前上下文
+	tst	lr, #0x10 //测试浮点是否需要压栈
 	it eq
 	vstmdbeq r0!, {s16-s31}
-	mov r2, lr
-	mrs r3, control
-	stmdb r0!, {r2-r11}
-	ldr r1, =pRunningTask
+	mov r2, lr  //r2 为中断进入前的lr
+	mrs r3, control //r3为进入前的control
+	stmdb r0!, {r2-r11} //r2,r3(lr,control), r4-r11 保存到任务栈
+	ldr r1, =pRunningTask //保存当前运行任务的地址
 	ldr r2, [r1]
-	str r0, [r2]
-	ldr r4, =pReadyTask
-	ldr r4, [r4]
-	str r4, [r1]
-	ldr r0, [r4]
-	ldmia r0!, {r2-r11}
+	str r0, [r2] //psp保存到pRunningTask->ptask
+	ldr r3, =pReadyTask
+	ldr r4, [r3]
+	str r4, [r1] //pReadyTask指向的任务赋值给pRunningTask
+	ldr r0, [r4] //[r4]为pReadyTask的psp指针
+	mov r2, #0
+	str r2, [r3] //清空pReadyTask的值
+	ldmia r0!, {r2-r11} //把pReadyTask->ptask栈恢复到当前的寄存器
 	mov lr, r2
 	msr control, r3
 	isb
@@ -68,7 +83,12 @@ PendSV_Handler:
 	it eq
 	vldmiaeq r0!, {s16-s31}
 	msr psp, r0
-	bx lr
+
+INT_ENABLE:
+	pop {r0}
+	MSR PRIMASK, R0
+
+	bx lr //返回后才切换到psp
 
 .text
 .align 2

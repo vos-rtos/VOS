@@ -26,9 +26,12 @@
  * generate better code by using them directly rather than
  * using the generic single-entry routines.
  */
+
+extern struct StVosTask;
 struct list_head 
 {
 	struct list_head *next, *prev;
+	struct StVosTask *pTask;
 };
 
 #define LIST_HEAD_INIT(name) { &(name), &(name) }

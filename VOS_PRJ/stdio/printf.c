@@ -215,7 +215,7 @@ void vputs(s8 *str, s32 len);
 
 int kprintf(char* format, ...)
 {
-	char temp[64];
+	char temp[200];
 	int i=0;
 	va_list lst;
 	va_start (lst, format);

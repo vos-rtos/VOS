@@ -1,6 +1,7 @@
 #include "vtype.h"
 #include "cmsis/stm32f4xx.h"
 #include "stm32f4-hal/stm32f4xx_hal.h"
+#include "vos.h"
 
 extern unsigned int __vectors_start;
 
@@ -156,7 +157,11 @@ void hardware_early(void)
 }
 
 UART_HandleTypeDef huart1;
-
+volatile s32 gUartRxCnts = 0;
+volatile s32 gUartRxWrIdx = 0;
+volatile s32 gUartRxRdIdx = 0;
+u8 gUart1Buf[1024];
+volatile u8 gRxOne;
 /* USART1 init function */
 void MX_USART1_UART_Init(void)
 {
@@ -169,10 +174,8 @@ void MX_USART1_UART_Init(void)
   huart1.Init.Mode = UART_MODE_TX_RX;
   huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
   huart1.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_UART_Init(&huart1) != HAL_OK)
-  {
-    //_Error_Handler(__FILE__, __LINE__);
-  }
+  HAL_UART_Init(&huart1);
+  //HAL_UART_Receive_IT(&huart1, &gRxOne, 1);
 }
 
 void HAL_UART_MspInit(UART_HandleTypeDef* huart)
@@ -180,26 +183,49 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
   GPIO_InitTypeDef GPIO_InitStruct;
   if(huart->Instance==USART1)
   {
-  /* USER CODE BEGIN USART1_MspInit 0 */
-	  __HAL_RCC_GPIOA_CLK_ENABLE();                        //使能GPIOA时钟
-
-    __HAL_RCC_USART1_CLK_ENABLE();
-/*
-PA9     ------> USART1_TX
-PA10     ------> USART1_RX
-*/
-    GPIO_InitStruct.Pin = GPIO_PIN_9|GPIO_PIN_10;
+	/* USER CODE BEGIN USART1_MspInit 0 */
+	__HAL_RCC_GPIOA_CLK_ENABLE();                        //使能GPIOA时钟
+	__HAL_RCC_USART1_CLK_ENABLE();
+	//PA9     ------> USART1_TX
+	//PA10     ------> USART1_RX
+    GPIO_InitStruct.Pin = GPIO_PIN_9 | GPIO_PIN_10;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF7_USART1;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-    /*USART1 interrupt Init*/
-    HAL_NVIC_SetPriority(USART1_IRQn, 3, 3);
-	//HAL_UART_Receive_IT(&huart1, rData, 1);
-    HAL_NVIC_EnableIRQ(USART1_IRQn);
 
+    /*USART1 interrupt Init*/
+   // HAL_NVIC_SetPriority(USART1_IRQn, 0x0F, 0);//NVIC_PriorityGroup_4, 最后参数为0
+
+    //HAL_NVIC_EnableIRQ(USART1_IRQn);
   }
+}
+
+
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+  /* Prevent unused argument(s) compilation warning */
+	if(huart->ErrorCode&HAL_UART_ERROR_ORE)
+	{
+		__HAL_UART_CLEAR_OREFLAG(huart);
+	}
+}
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *husart)
+{
+	u32 irq_save = 0;
+
+	irq_save = __local_irq_save();
+	if (gUartRxCnts == sizeof(gUart1Buf)) {
+		gUartRxCnts = 0; //覆盖，从头算起
+		//kprintf(".");
+	}
+	gUart1Buf[gUartRxWrIdx++] = gRxOne;
+	gUartRxCnts++;
+	gUartRxWrIdx %= sizeof(gUart1Buf);
+	__local_irq_restore(irq_save);
+
+	HAL_UART_Receive_IT(&huart1, &gRxOne, 1);
 }
 
 void vputs(s8 *str, s32 len)
@@ -207,5 +233,94 @@ void vputs(s8 *str, s32 len)
 	HAL_UART_Transmit(&huart1, str, len, 100);
 }
 
+s32 vgetc(u8 *ch)
+{
+
+	s32 ret = 0;
+
+	u32 irq_save;
+	irq_save = __local_irq_save();
+	if (gUartRxCnts > 0) {
+		*ch = gUart1Buf[gUartRxRdIdx++];
+		gUartRxCnts--;
+		gUartRxRdIdx %= sizeof(gUart1Buf);
+		ret = 1;
+	}
+	__local_irq_restore(irq_save);
+
+	return ret;
+
+}
+
+s32 vvgets(u8 *buf, s32 len)
+{
+	s32 ret = 0;
+	HAL_StatusTypeDef status = HAL_UART_Receive(&huart1, buf, len, 100);
+	switch(status) {
+	case HAL_OK:
+		ret = len-huart1.RxXferCount;
+		break;
+	case HAL_ERROR:
+		ret = -1;
+		break;
+	case HAL_BUSY:
+		ret = -1;
+		break;
+	case HAL_TIMEOUT:
+		ret = 0;
+		break;
+	}
+	return ret;
+}
+
+void SVC_Handler_C(unsigned int *svc_args)
+{
+	u8 svc_number;
+	u32 irq_save;
+	svc_number = ((char *)svc_args[6])[-2];
+	switch(svc_number) {
+	case 0://系统刚初始化完成，启动第一个任务
+    	irq_save = __local_irq_save();
+		TaskIdleBuild();//创建idle任务
+		RunFirstTask(); //加载第一个任务，这时任务不一定是IDLE任务
+		VOSSysTickSet();//设置tick时钟间隔
+		__local_irq_restore(irq_save);
+		break;
+	case 1://用户任务主动调用切换到更高优先级任务，如果没有则继续用户任务
+		VOSTaskSwitch(TASK_SWITCH_ACTIVE);
+		//asm_ctx_switch();
+		break;
+	default:
+		break;
+	}
+}
+
+void VOSSysTickSet()
+{
+	SysTick_Config(168000);
+}
+
+void HAL_IncTick(void);
+void __attribute__ ((section(".after_vectors")))
+SysTick_Handler()
+{
+	HAL_IncTick(); //stm32串口驱动超时要用到
+
+	VOSIntEnter();
+	VOSSysTick();
+	VOSIntExit ();
+}
 
 
+
+
+
+void USART1_IRQHandler(void)
+{
+	//VOSIntEnter();
+	u32 irq_save = 0;
+	irq_save = __local_irq_save();
+	HAL_UART_IRQHandler(&huart1);
+	__local_irq_restore(irq_save);
+	//VOSIntExit ();
+}

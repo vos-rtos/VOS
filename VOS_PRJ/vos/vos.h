@@ -129,12 +129,13 @@ typedef struct StVOSMsgQueue {
 
 typedef struct StVosTask {
 	u8 *pstack; //指向任务自己的栈指针, 必须放到结构体第一个位置，汇编里要使用这个成员
+
 	u8 *pstack_top; //栈顶指针
 	u32 stack_size; //栈最大size
 	s32 prio; //任务优先级，值越低，优先级越高
 	s32 prio_base; //原始优先级。
 	u32 id; //任务唯一ID
-	u8 *name; //任务名
+	s8 *name; //任务名
 	volatile u32 status; //任务状态
 	volatile u32 block_type; //如果阻塞，则这里指名阻塞类型
 	void (*task_fun)(void *param);
@@ -204,7 +205,11 @@ void VOSTaskBlockWaveUp();
 void VOSStarup();
 void VOSTaskSchedule();
 
+void VOSSysTick();
+
 s32 VOSTaskRaisePrioBeforeBlock(StVosTask *pMutexOwnerTask);
 s32 VOSTaskRestorePrioBeforeRelease();
+
+extern void asm_ctx_switch(); //触发PendSV_Handler中断
 
 #endif

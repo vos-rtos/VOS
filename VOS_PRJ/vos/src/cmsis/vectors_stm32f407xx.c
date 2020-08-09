@@ -114,8 +114,8 @@ void __attribute__ ((weak, alias ("Default_Handler")))
 SPI1_IRQHandler(void);
 void __attribute__ ((weak, alias ("Default_Handler")))
 SPI2_IRQHandler(void);
-void __attribute__ ((weak, alias ("Default_Handler")))
-USART1_IRQHandler(void);
+//void __attribute__ ((weak, alias ("Default_Handler")))
+//USART1_IRQHandler(void);
 void __attribute__ ((weak, alias ("Default_Handler")))
 USART2_IRQHandler(void);
 void __attribute__ ((weak, alias ("Default_Handler")))
@@ -203,6 +203,7 @@ HASH_RNG_IRQHandler(void);
 void __attribute__ ((weak, alias ("Default_Handler")))
 FPU_IRQHandler(void);
 
+extern void USART1_IRQHandler(void);
 // ----------------------------------------------------------------------------
 
 extern unsigned int _estack;
