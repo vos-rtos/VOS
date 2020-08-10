@@ -42,20 +42,26 @@ static void task_uartin(void *param)
 {
 	s32 ret = 0;
 	u8 buf[100];
+	u32 counts = 0;
+	u32 mark_cnts = 0;
+	s64 mark_ms = 0;
 
+	s32 time_spend = 0;
+	VOSTaskDelay(5*1000);
+	mark_ms = VOSGetTimeMs();
+	kprintf("statistics:\r\n");
 	while(1) {
 		ret = vvgets(buf, sizeof(buf)-1);
 		if (ret > 0){
 			buf[ret] = 0;
-			//kprintf(".");
-			kprintf("buf=%s\r\n", buf);
+			counts += ret;
+			if (counts > mark_cnts+5000){
+				mark_cnts = counts;
+				time_spend = (s32)(VOSGetTimeMs()-mark_ms);
+				kprintf("speed[%08dms:%08dB:%05dBps]\r\n", time_spend, counts, (s32)(counts*1000/time_spend));
+			}
 		}
-
-		VOSTaskDelay(10);
-		if (aaa) {
-			VOSTaskPrtList(VOS_LIST_READY);
-			VOSTaskPrtList(VOS_LIST_BLOCK);
-		}
+		VOSTaskDelay(1);
 	}
 }
 
