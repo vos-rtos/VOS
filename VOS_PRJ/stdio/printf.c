@@ -1,4 +1,4 @@
-#include "../vtype.h"
+#include "vtype.h"
 #include "stdio.h"
 #include "stdarg.h"
 

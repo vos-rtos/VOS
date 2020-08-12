@@ -1,10 +1,10 @@
 
-#include "cmsis/stm32f407xx.h"
+//#include "cmsis/stm32f407xx.h"
 #include "../vos/vtype.h"
 #include "../vos/vos.h"
 
-#include "stm32f4xx_hal.h"
-#include "stm32f4xx_hal_uart.h"
+//#include "stm32f4xx_hal.h"
+//#include "stm32f4xx_hal_uart.h"
 
 
 
@@ -60,24 +60,28 @@ abort(void)
 
 
 void __attribute__ ((section(".after_vectors")))
-___start (void)
+vos_start (void)
 {
 	int code = 0;
 	local_irq_disable();
-	hardware_early();
+	//hardware_early();
+	SystemInit();
 	init_data_and_bss ();
-	hw_init_clock();
+	//hw_init_clock();
 
 	VOSSemInit();
 	VOSMutexInit();
 	VOSMsgQueInit();
 	VOSTaskInit();
 
-	SCB->CCR |= SCB_CCR_STKALIGN_Msk;
-	MX_USART1_UART_Init();
+	//SCB->CCR |= SCB_CCR_STKALIGN_Msk;
+	//MX_USART1_UART_Init();
 
-	HAL_NVIC_SetPriority(SVCall_IRQn, 2, 0U);
-
+	//HAL_NVIC_SetPriority(SVCall_IRQn, 2, 0U);
+	//NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
+	//uart_init(115200);
+	void misc_init ();
+	misc_init ();
 	local_irq_enable();
 
 	code = VOSTaskCreate(main, 0, main_stack, sizeof(main_stack), TASK_PRIO_NORMAL, "main");

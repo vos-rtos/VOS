@@ -1,6 +1,6 @@
 #include "../vos/vtype.h"
-#include "cmsis/stm32f4xx.h"
-#include "stm32f4-hal/stm32f4xx_hal.h"
+//#include "cmsis/stm32f4xx.h"
+//#include "stm32f4-hal/stm32f4xx_hal.h"
 #include "../vos/vos.h"
 
 s32 vgets(u8 *buf, s32 len)
@@ -51,14 +51,14 @@ static void task_uartin(void *param)
 	mark_ms = VOSGetTimeMs();
 	kprintf("statistics:\r\n");
 	while(1) {
-		ret = vvgets(buf, sizeof(buf)-1);
+		ret = vgets(buf, sizeof(buf)-1);
 		if (ret > 0){
 			buf[ret] = 0;
 			counts += ret;
 			if (counts > mark_cnts+5000){
 				mark_cnts = counts;
 				time_spend = (s32)(VOSGetTimeMs()-mark_ms);
-				kprintf("speed[%08dms:%08dB:%05dBps]\r\n", time_spend, counts, (s32)(counts*1000/time_spend));
+				kprintf("speed[%08dms:%08dB:%05dBps]\r\n", time_spend, counts, (s32)((u64)(counts)*1000/time_spend));
 			}
 		}
 		VOSTaskDelay(1);

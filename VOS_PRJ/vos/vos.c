@@ -31,7 +31,7 @@ volatile u32 VOSIntNesting = 0;
 
 volatile u32 VOSRunning = 0;
 
-
+u32 VOSCtxSwitching = 0; //
 
 
 long long stack_idle[1024];
@@ -561,8 +561,13 @@ void task_idle(void *param)
 	 * 原因： 如果空闲任务被置换到阻塞队列，导致就绪任务剩下一个时，就无法被切出去。
 	 *       如果剩下一个就绪任务被切换出去，那么当前cpu跑啥东西，需要空闲任务不能阻塞。
 	 */
+	static s64 mark_time=0;
+	mark_time = VOSGetTimeMs();
 	while (1) {//禁止空闲任务阻塞
-		//VOSTaskSchTable();
+//		if ((s32)(VOSGetTimeMs()-mark_time) > 1000) {
+//			mark_time = VOSGetTimeMs();
+//			VOSTaskSchTable();
+//		}
 	}
 }
 
