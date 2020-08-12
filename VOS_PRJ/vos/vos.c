@@ -36,6 +36,9 @@ u32 VOSCtxSwitching = 0; //
 
 long long stack_idle[1024];
 
+u32 VOSUserIRQSave();
+void VOSUserIRQRestore(u32 save);
+
 
 s64 VOSGetTicks()
 {
@@ -84,21 +87,20 @@ u32 VOSTaskDelay(u32 ms)
 	//如果中断被关闭，系统不进入调度，则直接硬延时
 	//todo
 	//否则进入操作系统的闹钟延时
-	u32 irq_save = 0;
+//	u32 irq_save = 0;
 
 	if (ms) {//进入延时设置
-		irq_save = __local_irq_save();
-		pRunningTask->ticks_start = gVOSTicks;
-		pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(ms);
-		if (pRunningTask->ticks_alert < gMarkTicksNearest) { //如果闹钟结点小于记录的最少值，则更新
-			gMarkTicksNearest = pRunningTask->ticks_alert;//更新为最近的闹钟
-		}
-		pRunningTask->status = VOS_STA_BLOCK; //添加到阻塞队列
-		pRunningTask->block_type |= VOS_BLOCK_DELAY;//指明阻塞类型为自延时
-
-		//VOSTaskSwitch(TASK_SWITCH_ACTIVE);
-
-		__local_irq_restore(irq_save);
+//		irq_save = __local_irq_save();
+//		pRunningTask->ticks_start = gVOSTicks;
+//		pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(ms);
+//		if (pRunningTask->ticks_alert < gMarkTicksNearest) { //如果闹钟结点小于记录的最少值，则更新
+//			gMarkTicksNearest = pRunningTask->ticks_alert;//更新为最近的闹钟
+//		}
+//		pRunningTask->status = VOS_STA_BLOCK; //添加到阻塞队列
+//		pRunningTask->block_type |= VOS_BLOCK_DELAY;//指明阻塞类型为自延时
+//		__local_irq_restore(irq_save);
+		u32 VOSUserSVNTaskDelay(u32 ms);
+		VOSUserSVNTaskDelay(ms);
 	}
 	//ms为0，切换任务, 或者VOS_STA_BLOCK_DELAY标志，呼唤调度
 	VOSTaskSchedule();
@@ -433,6 +435,9 @@ void VOSTaskBlockWaveUp()
 	//遍历阻塞队列，把符合条件的添加到就绪队列
 	list_for_each_safe(list_block, list_temp, &gListTaskBlock) {
 		ptask_block = list_entry(list_block, struct StVosTask, list);
+		if (ptask_block->block_type == 0) {
+			kprintf("xxxxxxxxx");
+		}
 		//处理定时或超时唤醒时间，这个超时可以跟信号量，互斥锁，事件同时发生。
 		if (ptask_block->block_type & VOS_BLOCK_DELAY) { //自定义延时阻塞类型
 			if (gVOSTicks >= ptask_block->ticks_alert) {//检查超时
@@ -564,10 +569,10 @@ void task_idle(void *param)
 	static s64 mark_time=0;
 	mark_time = VOSGetTimeMs();
 	while (1) {//禁止空闲任务阻塞
-//		if ((s32)(VOSGetTimeMs()-mark_time) > 1000) {
-//			mark_time = VOSGetTimeMs();
-//			VOSTaskSchTable();
-//		}
+		if ((s32)(VOSGetTimeMs()-mark_time) > 1000) {
+			mark_time = VOSGetTimeMs();
+			VOSTaskSchTable();
+		}
 	}
 }
 
@@ -595,6 +600,9 @@ static void VOSCortexSwitch()
 		list_add_tail(&pRunningTask->list, &gListTaskFree);
 	}
 	else if (pRunningTask->status == VOS_STA_BLOCK) { //添加到阻塞队列
+		if (pRunningTask->block_type == 0) {
+			kprintf("fuck");
+		}
 		VOSTaskListPrioInsert(pRunningTask, VOS_LIST_BLOCK);
 	}
 	else {//添加到就绪队列，这是因为遇到更高优先级，或者相同优先级时，把当前任务切换出去
@@ -687,9 +695,57 @@ void TaskIdleBuild()
 //但是VOSTaskSwitch必须在特权模式下访问，否则异常。
 void VOSTaskSchedule()
 {
-	__asm volatile ("svc 1\n");
+	__asm volatile (
+			"svc 1\n"
+			);
 }
 
+u32 VOSUserSVNTaskDelay(u32 ms)
+{
+	__asm volatile ("svc 2\n");
+
+}
+
+void SVC_Handler_C(u32 *svc_args)
+{
+	u32 psp_r0;
+	u8 svc_number;
+	u32 irq_save;
+	irq_save = __local_irq_save();
+	svc_number = ((char *)svc_args[6])[-2];
+
+	switch(svc_number) {
+	case 0://系统刚初始化完成，启动第一个任务
+
+		TaskIdleBuild();//创建idle任务
+		RunFirstTask(); //加载第一个任务，这时任务不一定是IDLE任务
+		VOSSysTickSet();//设置tick时钟间隔
+
+		break;
+	case 1://用户任务主动调用切换到更高优先级任务，如果没有则继续用户任务
+		VOSTaskSwitch(TASK_SWITCH_ACTIVE);
+		//asm_ctx_switch();
+		break;
+	case 2: //SVN VOSTaskDelay
+		psp_r0 = svc_args[0];
+		pRunningTask->ticks_start = gVOSTicks;
+		pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(psp_r0);
+		if (pRunningTask->ticks_alert < gMarkTicksNearest) { //如果闹钟结点小于记录的最少值，则更新
+			gMarkTicksNearest = pRunningTask->ticks_alert;//更新为最近的闹钟
+		}
+		pRunningTask->status = VOS_STA_BLOCK; //添加到阻塞队列
+		pRunningTask->block_type |= VOS_BLOCK_DELAY;//指明阻塞类型为自延时
+
+		break;
+	case 3:
+
+		break;
+	default:
+		break;
+	}
+
+	__local_irq_restore(irq_save);
+}
 
 void VOSSysTick()
 {

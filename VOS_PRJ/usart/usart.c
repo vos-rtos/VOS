@@ -76,7 +76,7 @@ void USART1_IRQHandler(void)
 {
 	u32 irq_save = 0;
 	u8 Res;
-	//VOSIntEnter();
+	VOSIntEnter();
 	if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)
 	{
 		Res =USART_ReceiveData(USART1);
@@ -89,7 +89,7 @@ void USART1_IRQHandler(void)
 		gUartRxWrIdx %= sizeof(gUart1Buf);
 		__local_irq_restore(irq_save);
 	}
-	//VOSIntExit ();
+	VOSIntExit ();
 } 
 
 s32 vgetc(u8 *ch)

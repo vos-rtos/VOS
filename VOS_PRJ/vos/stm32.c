@@ -176,27 +176,6 @@ void misc_init ()
 	uart_init(115200);
 }
 
-void SVC_Handler_C(unsigned int *svc_args)
-{
-	u8 svc_number;
-	u32 irq_save;
-	svc_number = ((char *)svc_args[6])[-2];
-	switch(svc_number) {
-	case 0://系统刚初始化完成，启动第一个任务
-    	irq_save = __local_irq_save();
-		TaskIdleBuild();//创建idle任务
-		RunFirstTask(); //加载第一个任务，这时任务不一定是IDLE任务
-		VOSSysTickSet();//设置tick时钟间隔
-		__local_irq_restore(irq_save);
-		break;
-	case 1://用户任务主动调用切换到更高优先级任务，如果没有则继续用户任务
-		VOSTaskSwitch(TASK_SWITCH_ACTIVE);
-		//asm_ctx_switch();
-		break;
-	default:
-		break;
-	}
-}
 
 void VOSSysTickSet()
 {
@@ -215,14 +194,3 @@ SysTick_Handler()
 
 
 
-//
-//
-//void USART1_IRQHandler(void)
-//{
-//	VOSIntEnter();
-//	u32 irq_save = 0;
-//	irq_save = __local_irq_save();
-//	HAL_UART_IRQHandler(&huart1);
-//	__local_irq_restore(irq_save);
-//	VOSIntExit ();
-//}
