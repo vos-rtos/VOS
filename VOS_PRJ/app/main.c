@@ -28,13 +28,7 @@ void main(void *param)
 	//schedule_test();
 	uart_test();
 
-	VOSTaskPrtList(VOS_LIST_READY);
-	VOSTaskPrtList(VOS_LIST_BLOCK);
 	while (1) {
-		if (aaa) {
-			VOSTaskPrtList(VOS_LIST_READY);
-			VOSTaskPrtList(VOS_LIST_BLOCK);
-		}
 		VOSTaskDelay(1*1000);
 	}
 }

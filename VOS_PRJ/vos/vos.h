@@ -92,8 +92,46 @@ void _ISB();
 #define TASK_PRIO_LOW			(s32)(200)
 #define TASK_PRIO_MAX			(s32)(255) //次优先级分配给IDLE
 
+#define VOS_SVC_NUM_STARTUP			(u32)(0) //svc 0 加载第一个任务
+#define VOS_SVC_NUM_SCHEDULE		(u32)(1) //svc 1 主动调度
+#define VOS_SVC_NUM_DELAY			(u32)(3) //svc 3 系统延时，提高效率
+#define VOS_SVC_NUM_SYSCALL			(u32)(5) //svc 5 进入系统调用例程
+
+#define VOS_SYSCALL_MUTEX_CREAT   	(u32)(10)
+#define VOS_SYSCALL_MUTEX_WAIT		(u32)(11)
+#define VOS_SYSCALL_MUTEX_RELEASE	(u32)(12)
+#define VOS_SYSCALL_MUTEX_DELETE	(u32)(13)
+
+#define VOS_SYSCALL_SEM_CREATE		(u32)(14)
+#define VOS_SYSCALL_SEM_WAIT		(u32)(15)
+#define VOS_SYSCALL_SEM_TRY_WAIT	(u32)(16)
+#define VOS_SYSCALL_SEM_RELEASE		(u32)(17)
+#define VOS_SYSCALL_SEM_DELETE		(u32)(18)
+
+#define VOS_SYSCALL_EVENT_WAIT		(u32)(19)
+#define VOS_SYSCALL_EVENT_SET		(u32)(20)
+#define VOS_SYSCALL_EVENT_GET		(u32)(21)
+#define VOS_SYSCALL_EVENT_CLEAR		(u32)(22)
+
+#define VOS_SYSCALL_MSGQUE_CREAT	(u32)(23)
+#define VOS_SYSCALL_MSGQUE_PUT		(u32)(24)
+#define VOS_SYSCALL_MSGQUE_GET		(u32)(25)
+#define VOS_SYSCALL_MSGQUE_FREE		(u32)(26)
+
+#define VOS_SYSCALL_TASK_DELAY   	(u32)(27)
 
 
+
+typedef struct StVosSysCallParam {
+	u32 call_num; //系统调用号
+	u32 u32param0; //参数32位0
+	u32 u32param1; //参数32位1
+	u32 u32param2; //参数32位2
+	u32 u32param3; //参数32位3
+	u32 u32param4; //参数32位4
+	u64 u64param0; //参数64位0
+	u64 u64param1; //参数64位1
+}StVosSysCallParam;
 
 typedef struct StVOSSemaphore {
 	s32 max;  //最大信号量个数
@@ -163,38 +201,56 @@ extern void local_irq_disable(void);
 extern void local_irq_enable(void);
 
 void VOSSemInit();
-
 StVOSSemaphore *VOSSemCreate(s32 max_sems, s32 init_sems, s8 *name);
-
 s32 VOSSemWait(StVOSSemaphore *pSem, u64 timeout_ms);
 s32 VOSSemTryWait(StVOSSemaphore *pSem);
 s32 VOSSemRelease(StVOSSemaphore *pSem);
-
 s32 VOSSemDelete(StVOSSemaphore *pSem);
 
+StVOSSemaphore *VOSSemCreateSysCall(StVosSysCallParam *psa);
+s32 SysCallVOSSemTryWait(StVosSysCallParam *psa);
+s32 SysCallVOSSemWait(StVosSysCallParam *psa);
+s32 SysCallVOSSemRelease(StVosSysCallParam *psa);
+
 void VOSMutexInit();
-
 StVOSMutex *VOSMutexCreate(s8 *name);
-
 s32 VOSMutexWait(StVOSMutex *pMutex, s64 timeout_ms);
-
 s32 VOSMutexRelease(StVOSMutex *pMutex);
 s32 VOSMutexDelete(StVOSMutex *pMutex);
+s32 SysCallVOSSemDelete(StVosSysCallParam *psa);
+
+StVOSMutex *SysCallVOSMutexCreate(StVosSysCallParam *psa);
+s32 SysCallVOSMutexWait(StVosSysCallParam *psa);
+s32 SysCallVOSMutexRelease(StVosSysCallParam *psa);
+s32 SysCallVOSMutexDelete(StVosSysCallParam *psa);
+
 s32 VOSEventWait(u32 event_mask, u64 timeout_ms);
 s32 VOSEventSet(s32 task_id, u32 event);
 u32 VOSEventGet(s32 task_id);
 s32 VOSEventClear(s32 task_id, u32 event);
+
+s32 SysCallVOSEventWait(StVosSysCallParam *psa);
+s32 SysCallVOSEventSet(StVosSysCallParam *psa);
+u32 SysCallVOSEventGet(StVosSysCallParam *psa);
+s32 SysCallVOSEventClear(StVosSysCallParam *psa);
+
 void VOSMsgQueInit();
 StVOSMsgQueue *VOSMsgQueCreate(s8 *pRingBuf, s32 length, s32 msg_size, s8 *name);
 s32 VOSMsgQuePut(StVOSMsgQueue *pMQ, void *pmsg, s32 len);
 s32 VOSMsgQueGet(StVOSMsgQueue *pMQ, void *pmsg, s32 len, s64 timeout_ms);
 s32 VOSMsgQueFree(StVOSMsgQueue *pMQ);
 
+StVOSMsgQueue *SysCallVOSMsgQueCreate(StVosSysCallParam *psa);
+s32 SysCallVOSMsgQuePut(StVosSysCallParam *psa);
+s32 SysCallVOSMsgQueGet(StVosSysCallParam *psa);
+s32 SysCallVOSMsgQueFree(StVosSysCallParam *psa);
+
 s64 VOSGetTicks();
 s64 VOSGetTimeMs();
 u32 VOSTaskInit();
 StVosTask *VOSGetTaskFromId(s32 task_id);
 u32 VOSTaskDelay(u32 ms);
+u32 SysCallVOSTaskDelay(StVosSysCallParam *psa);
 u32 VOSTaskListPrioInsert(StVosTask *pTask, s32 which_list);
 s32 VOSTaskReadyCmpPrioTo(StVosTask *pRunTask);
 StVosTask *VOSTaskReadyCutPriorest();

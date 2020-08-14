@@ -225,4 +225,15 @@ loop_1us:
 	bne VOSDelayUs
 	bx lr
 
+.text
+.align 2
+.global vos_sys_call
+.thumb
+.thumb_func
+vos_sys_call:
+    svc		5  //VOS_SVC_NUM_SYSCALL
+    bx      lr
+
+
+
 
