@@ -12,6 +12,9 @@
 #include "vtype.h"
 #include "list.h"
 
+
+typedef void (*task_fun_t)(void *param);
+
 /*
   * 位图操作宏定义
  */
@@ -121,6 +124,8 @@ void _ISB();
 
 #define VOS_SYSCALL_TASK_DELAY   	(u32)(27)
 
+#define VOS_SYSCALL_TASK_CREATE		(u32)(28)
+
 
 
 typedef struct StVosSysCallParam {
@@ -130,6 +135,7 @@ typedef struct StVosSysCallParam {
 	u32 u32param2; //参数32位2
 	u32 u32param3; //参数32位3
 	u32 u32param4; //参数32位4
+	u32 u32param5; //参数32位5
 	u64 u64param0; //参数64位0
 	u64 u64param1; //参数64位1
 }StVosSysCallParam;
@@ -289,8 +295,13 @@ u32 SysCallVOSTaskDelay(StVosSysCallParam *psa);
 s64 VOSGetTicks();
 s64 VOSGetTimeMs();
 
-
+//任务上下文使用VOSTaskCreate
 s32 VOSTaskCreate(void (*task_fun)(void *param), void *param,
+		void *pstack, u32 stack_size, s32 prio, s8 *task_nm);
+s32 SysCallVOSTaskCreate(StVosSysCallParam *psa);
+
+//创建任务，不能在任务上下文创建(任务上下文使用VOSTaskCreate)
+s32 VOSTaskInBuild(void (*task_fun)(void *param), void *param,
 		void *pstack, u32 stack_size, s32 prio, s8 *task_nm);
 u32 VOSTaskInit();
 StVosTask *VOSGetTaskFromId(s32 task_id);
@@ -304,6 +315,7 @@ void VOSTaskSchedule();
 void VOSSysTick();
 s32 VOSTaskRaisePrioBeforeBlock(StVosTask *pMutexOwnerTask);
 s32 VOSTaskRestorePrioBeforeRelease();
+
 
 extern void asm_ctx_switch(); //触发PendSV_Handler中断
 

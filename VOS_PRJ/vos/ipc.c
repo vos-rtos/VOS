@@ -857,7 +857,6 @@ u32 VOSTaskDelay(u32 ms)
 }
 
 
-
 #if 0 //ŒªÕº≤‚ ‘
 #define MAX_TASK_NUM 10;
 u8 bitmap[10];
