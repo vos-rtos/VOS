@@ -541,10 +541,10 @@ void task_idle(void *param)
 	static s64 mark_time=0;
 	mark_time = VOSGetTimeMs();
 	while (1) {//½ûÖ¹¿ÕÏÐÈÎÎñ×èÈû
-		if ((s32)(VOSGetTimeMs()-mark_time) > 1000) {
-			mark_time = VOSGetTimeMs();
-			VOSTaskSchTable();
-		}
+//		if ((s32)(VOSGetTimeMs()-mark_time) > 1000) {
+//			mark_time = VOSGetTimeMs();
+//			VOSTaskSchTable();
+//		}
 	}
 }
 

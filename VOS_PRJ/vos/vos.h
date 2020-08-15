@@ -211,7 +211,6 @@ typedef struct StVOSTimer{
 	u32	type; //两种类型，one shot 和 periodic
 	u32 ticks_alert; //结束时间点
 	u32 ticks_start; //开始时间点
-	u32 ticks_period; //周期时间
 	u32 ticks_delay; //设定的延时
 	VOS_TIMER_CB callback; //定时器到，调用回调函数
 	void *arg; //回调函数的参数
@@ -284,24 +283,25 @@ s32 SysCallVOSMsgQuePut(StVosSysCallParam *psa);
 s32 SysCallVOSMsgQueGet(StVosSysCallParam *psa);
 s32 SysCallVOSMsgQueFree(StVosSysCallParam *psa);
 
-s64 VOSGetTicks();
-s64 VOSGetTimeMs();
-u32 VOSTaskInit();
-StVosTask *VOSGetTaskFromId(s32 task_id);
 u32 VOSTaskDelay(u32 ms);
 u32 SysCallVOSTaskDelay(StVosSysCallParam *psa);
+
+s64 VOSGetTicks();
+s64 VOSGetTimeMs();
+
+
+s32 VOSTaskCreate(void (*task_fun)(void *param), void *param,
+		void *pstack, u32 stack_size, s32 prio, s8 *task_nm);
+u32 VOSTaskInit();
+StVosTask *VOSGetTaskFromId(s32 task_id);
 u32 VOSTaskListPrioInsert(StVosTask *pTask, s32 which_list);
 s32 VOSTaskReadyCmpPrioTo(StVosTask *pRunTask);
 StVosTask *VOSTaskReadyCutPriorest();
 void VOSTaskEntry(void *param);
-s32 VOSTaskCreate(void (*task_fun)(void *param), void *param,
-		void *pstack, u32 stack_size, s32 prio, s8 *task_nm);
 void VOSTaskBlockWaveUp();
 void VOSStarup();
 void VOSTaskSchedule();
-
 void VOSSysTick();
-
 s32 VOSTaskRaisePrioBeforeBlock(StVosTask *pMutexOwnerTask);
 s32 VOSTaskRestorePrioBeforeRelease();
 

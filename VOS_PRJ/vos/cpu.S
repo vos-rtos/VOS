@@ -235,5 +235,3 @@ vos_sys_call:
     bx      lr
 
 
-
-

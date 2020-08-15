@@ -74,7 +74,7 @@ vos_start (void)
 	VOSMsgQueInit();
 	VOSTaskInit();
 
-	VOSTimerInit(); //定时器初始化，依赖信号量
+
 
 	//SCB->CCR |= SCB_CCR_STKALIGN_Msk;
 	//MX_USART1_UART_Init();
@@ -85,6 +85,8 @@ vos_start (void)
 	void misc_init ();
 	misc_init ();
 	local_irq_enable();
+
+	VOSTimerInit(); //定时器初始化，依赖信号量，互斥量，不能关中断里执行，因为里面有使用svn中断
 
 	code = VOSTaskCreate(main, 0, main_stack, sizeof(main_stack), TASK_PRIO_NORMAL, "main");
 	VOSStarup();

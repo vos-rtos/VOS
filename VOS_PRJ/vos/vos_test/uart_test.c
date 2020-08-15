@@ -1,6 +1,4 @@
 #include "../vos/vtype.h"
-//#include "cmsis/stm32f4xx.h"
-//#include "stm32f4-hal/stm32f4xx_hal.h"
 #include "../vos/vos.h"
 
 s32 vgets(u8 *buf, s32 len)
@@ -15,27 +13,6 @@ s32 vgets(u8 *buf, s32 len)
 	}
 	return i;
 }
-extern int aaa;
-//static void task_uartin(void *param)
-//{
-//	s32 ret = 0;
-//	u8 buf[100];
-//
-//	while(1) {
-//		ret = vgets(buf, sizeof(buf));
-//		if (ret > 0 && ret != sizeof(buf)){
-//			buf[ret] = 0;
-//			kprintf(".");
-//			//kprintf("buf=%s\r\n", buf);
-//		}
-//
-//		VOSTaskDelay(100);
-//		if (aaa) {
-//			VOSTaskPrtList(VOS_LIST_READY);
-//			VOSTaskPrtList(VOS_LIST_BLOCK);
-//		}
-//	}
-//}
 
 s32 vvgets(u8 *buf, s32 len);
 static void task_uartin(void *param)

@@ -25,7 +25,7 @@ static StVOSMutex *gMutexVosTimer = 0; //互斥锁来保护资源
 #define VOS_TIMER_LOCK() VOSMutexWait(gMutexVosTimer, TIME_OUT_NERVER)
 #define VOS_TIMER_UNLOCK() VOSMutexRelease(gMutexVosTimer)
 
-volatile u32 gVosTimerMarkNearest = 0xFFFFFFFF;
+volatile u32 gVosTimerMarkNearest = 0xFFFFFFFF; //记录延时时刻
 
 
 void VOSTimerSemPost()
@@ -40,6 +40,7 @@ StVOSTimer *VOSTimerCreate(s32 type, u32 delay_ms, VOS_TIMER_CB callback, void *
 	if (!list_empty(&gListTimerFree)) {
 		pTimer = list_entry(gListTimerFree.next, StVOSTimer, list);
 		list_del(gListTimerFree.next);
+		pTimer->type = type;
 		pTimer->name = name;
 		pTimer->status = VOS_TIMER_STA_STOPPED;
 		pTimer->ticks_delay = MAKE_TICKS(delay_ms);
@@ -48,7 +49,7 @@ StVOSTimer *VOSTimerCreate(s32 type, u32 delay_ms, VOS_TIMER_CB callback, void *
 		pTimer->callback = callback;
 		pTimer->arg = arg;
 		//添加到在暂停的链表
-		list_add_tail(&gListTimerStop, &pTimer->list);
+		list_add_tail(&pTimer->list, &gListTimerStop);
 	}
 	VOS_TIMER_UNLOCK();
 	return  pTimer;
@@ -91,7 +92,7 @@ s32 VOSTimerStart(StVOSTimer *pTimer)
 		notify = 1;
 	}
 
-	list_add_tail(&gListTimerRunning, &pTimer->list);
+	list_add_tail(&pTimer->list, &gListTimerRunning);
 
 
 END_TIMER_START:
@@ -116,7 +117,7 @@ s32 VOSTimerStop(StVOSTimer *pTimer)
 	list_del(&pTimer->list);
 	//添加到暂停列表
 	pTimer->status = VOS_TIMER_STA_STOPPED;
-	list_add_tail(&gListTimerStop, &pTimer->list);
+	list_add_tail(&pTimer->list, &gListTimerStop);
 
 END_TIMER_STOP:
 	VOS_TIMER_UNLOCK();
@@ -154,19 +155,22 @@ void VOSTaskTimer(void *param)
 	struct list_head *list_temp;
 	StVOSTimer *pTimer;
 	while(gSemVosTimer) {
-		ret = VOSSemWait(gSemVosTimer, gVosTimerMarkNearest);//最小闹钟时间或者有信号发生就唤醒
+		if (gVosTimerMarkNearest > gVOSTicks) {
+			ret = VOSSemWait(gSemVosTimer, gVosTimerMarkNearest-gVOSTicks);//最小闹钟时间或者有信号发生就唤醒,注意这里要减去当前的时间才是延时的长度
+		}
 		VOS_TIMER_LOCK();
+
 		gVosTimerMarkNearest = 0xFFFFFFFF; //设置最大，下面更新最少的延时，然后延时处理
 		list_for_each_safe(list_timer, list_temp, &gListTimerRunning) {
 			pTimer = list_entry(list_timer, struct StVOSTimer, list);
-			if (pTimer->ticks_alert  >= gVOSTicks) { //闹钟到，执行相关任务
+			if (gVOSTicks >= pTimer->ticks_alert) { //闹钟到，执行相关任务
 				if (pTimer->callback) pTimer->callback(pTimer, pTimer->arg);
 				if (pTimer->type == VOS_TIMER_TYPE_ONE_SHOT) {
 					//删除自己
 					list_del(&pTimer->list);
 					//添加到暂停队列
 					pTimer->status = VOS_TIMER_STA_STOPPED;
-					list_add_tail(&gListTimerStop, &pTimer->list);
+					list_add_tail(&pTimer->list, &gListTimerStop);
 				}
 				else if (pTimer->type == VOS_TIMER_TYPE_PERIODIC){//更新闹钟时间，重新计时
 					pTimer->ticks_start = gVOSTicks;
@@ -177,7 +181,7 @@ void VOSTaskTimer(void *param)
 				}
 			}
 			//都需要找到最近的闹钟
-			if (pTimer->status = VOS_TIMER_STA_RUNNING &&
+			if (pTimer->status == VOS_TIMER_STA_RUNNING &&
 					pTimer->ticks_alert < gVosTimerMarkNearest) {
 				gVosTimerMarkNearest = pTimer->ticks_alert;
 			}
@@ -195,7 +199,8 @@ void VOSTimerInit()
 	irq_save = __local_irq_save();
 
 	INIT_LIST_HEAD(&gListTimerFree);
-
+	INIT_LIST_HEAD(&gListTimerRunning);
+	INIT_LIST_HEAD(&gListTimerStop);
 	for (i=0; i<MAX_VOS_TIEMR_NUM; i++) {
 		list_add_tail(&gVOSTimer[i].list, &gListTimerFree);
 		gVOSTimer[i].status = VOS_TIMER_STA_FREE;
