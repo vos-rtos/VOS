@@ -74,6 +74,8 @@ vos_start (void)
 	VOSMsgQueInit();
 	VOSTaskInit();
 
+	VOSTimerInit(); //定时器初始化，依赖信号量
+
 	//SCB->CCR |= SCB_CCR_STKALIGN_Msk;
 	//MX_USART1_UART_Init();
 

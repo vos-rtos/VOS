@@ -57,6 +57,7 @@ void _ISB();
 #define TICKS_INTERVAL_MS 1 //systick的间隔，1ms
 
 #define MAKE_TICKS(ms) (((ms)+TICKS_INTERVAL_MS-1)/(TICKS_INTERVAL_MS))
+#define MAKE_TIME_MS(ticks) (TICKS_INTERVAL_MS*(ticks))
 
 #define HW32_REG(ADDRESS) (*((volatile unsigned long *)(ADDRESS)))
 
@@ -189,6 +190,44 @@ typedef struct StVosTask {
 	struct list_head list;//空闲链表和优先级任务链表,优先级高的排第头，优先级低的排尾
 }StVosTask;
 
+
+enum {
+	VOS_TIMER_TYPE_ONE_SHOT,
+	VOS_TIMER_TYPE_PERIODIC,
+};
+
+enum {
+	VOS_TIMER_STA_FREE,
+	VOS_TIMER_STA_RUNNING,
+	VOS_TIMER_STA_STOPPED,
+};
+
+#define MAX_VOS_TIEMR_NUM 10
+#define VOS_TASK_TIMER_PRIO  10
+
+typedef  void (*VOS_TIMER_CB)(void *ptimer, void *parg);
+
+typedef struct StVOSTimer{
+	u32	type; //两种类型，one shot 和 periodic
+	u32 ticks_alert; //结束时间点
+	u32 ticks_start; //开始时间点
+	u32 ticks_period; //周期时间
+	u32 ticks_delay; //设定的延时
+	VOS_TIMER_CB callback; //定时器到，调用回调函数
+	void *arg; //回调函数的参数
+	s8 *name; //定时器名字
+	u32 status; //状态
+	struct list_head list;
+} StVOSTimer;
+
+
+void VOSTimerInit();
+StVOSTimer *VOSTimerCreate(s32 type, u32 delay_ms, VOS_TIMER_CB callback, void *arg, s8 *name);
+s32 VOSTimerDelete(StVOSTimer *pTimer);
+s32 VOSTimerStart(StVOSTimer *pTimer);
+s32 VOSTimerStop(StVOSTimer *pTimer);
+s32 VOSTimerGetStatus(StVOSTimer *pTimer);
+s32 VOSTimerGetLeftTime(StVOSTimer *pTimer);
 
 
 //关中断，并返回关中断前的值，多用于嵌套中断情况

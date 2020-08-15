@@ -162,10 +162,6 @@ u32 VOSTaskListPrioInsert(StVosTask *pTask, s32 which_list)
 	struct list_head *phead = 0;
 	u32 irq_save = 0;
 
-//	if (VOSTaskCheck()>=2) {
-//		VOSTaskPrtList(VOS_LIST_READY);
-//		VOSTaskPrtList(VOS_LIST_BLOCK);
-//	}
 	irq_save = __local_irq_save();
 	switch (which_list) {
 	case VOS_LIST_READY:
