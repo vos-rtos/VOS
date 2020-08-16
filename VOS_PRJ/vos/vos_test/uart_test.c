@@ -42,7 +42,6 @@ static void task_uartin(void *param)
 	s64 mark_ms = 0;
 
 	s32 time_spend = 0;
-	VOSTaskDelay(5*1000);
 	mark_ms = VOSGetTimeMs();
 	kprintf("statistics:\r\n");
 	while(1) {

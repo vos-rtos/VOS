@@ -34,6 +34,8 @@ volatile u32 VOSRunning = 0;
 u32 VOSCtxSwitching = 0; //
 
 
+
+
 long long stack_idle[1024];
 
 u32 VOSUserIRQSave();
@@ -336,7 +338,7 @@ s32 VOSTaskInBuild(void (*task_fun)(void *param), void *param,
 	ptask->pstack = ptask->pstack_top - (18 << 2);
 	HW32_REG((ptask->pstack + (16 << 2))) = (unsigned long) VOSTaskEntry;
 	HW32_REG((ptask->pstack + (17 << 2))) = 0x01000000;
-	HW32_REG((ptask->pstack + (1 << 2))) = 0x03;
+	HW32_REG((ptask->pstack + (1 << 2))) = 0x03; //#2:特权+PSP, #3:用户级+PSP
 	HW32_REG((ptask->pstack)) = 0xFFFFFFFDUL;
 
 	//插入到就绪队列
@@ -658,6 +660,12 @@ void SVC_Handler_C(u32 *svc_args)
 		psa = (StVosSysCallParam *)svc_args[0];
 		VOSSysCall(psa);
 		break;
+
+	case VOS_SVC_INT_SAVE: //svc 6 切换到特权柄并关中断
+		svc_args[6] = __switch_to_svc_mode();
+		break;
+	case VOS_SVC_INT_RESTORE: //svc 7 开中断并切换到用户级别
+		break;
 	default:
 		break;
 	}
@@ -732,7 +740,7 @@ s32 SysCallVOSTaskCreate(StVosSysCallParam *psa)
 	ptask->pstack = ptask->pstack_top - (18 << 2);
 	HW32_REG((ptask->pstack + (16 << 2))) = (unsigned long) VOSTaskEntry;
 	HW32_REG((ptask->pstack + (17 << 2))) = 0x01000000;
-	HW32_REG((ptask->pstack + (1 << 2))) = 0x03;
+	HW32_REG((ptask->pstack + (1 << 2))) = 0x03;//#2:特权+PSP, #3:用户级+PSP
 	HW32_REG((ptask->pstack)) = 0xFFFFFFFDUL;
 
 	//插入到就绪队列
@@ -754,6 +762,18 @@ void VOSTaskSchTabDebug()
 }
 
 
+//检查目前运行在中断上下文还是任务上下文。
+s32 VOSCortexCheck()
+{
+	s32 status;
+	if (VOSRunning) {
+		status = VOSIntNesting ? VOS_RUNNING_BY_INTERRUPTE:VOS_RUNNING_BY_TASK;
+	}
+	else {
+		status = VOS_RUNNING_BY_STARTUP;
+	}
+	return status;
+}
 
 void VOSSysTick()
 {

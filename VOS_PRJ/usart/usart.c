@@ -1,22 +1,10 @@
 #include "sys.h"
-#include "usart.h"	
-
-#pragma import(__use_no_semihosting)             
-
-struct __FILE 
-{ 
-	int handle; 
-}; 
-
-FILE __stdout;       
-
-void _sys_exit(int x) 
-{ 
-	x = x; 
-} 
+#include "vos.h"
+#include "usart.h"
 
 int fputc(int ch, FILE *f)
 { 	
+	USART1->SR = (uint16_t)~0x0040; //解决第一个字节发不出来问题
 	while((USART1->SR&0X40)==0);
 	USART1->DR = (u8) ch;      
 	return ch;
@@ -59,11 +47,10 @@ void uart_init(u32 bound){
 
 
 	NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=3;
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority =3;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=1;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority =2;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
-	
 }
 
 
@@ -92,25 +79,46 @@ void USART1_IRQHandler(void)
 	VOSIntExit ();
 } 
 
+//s32 vgetc(u8 *ch)
+//{
+//	s32 ret = 0;
+//	u32 irq_save;
+//	irq_save = __local_irq_save();
+//	if (gUartRxCnts > 0) {
+//		*ch = gUart1Buf[gUartRxRdIdx++];
+//		gUartRxCnts--;
+//		gUartRxRdIdx %= sizeof(gUart1Buf);
+//		ret = 1;
+//	}
+//	__local_irq_restore(irq_save);
+//
+//	return ret;
+//
+//}
+
 s32 vgetc(u8 *ch)
 {
+	StVosSysCallParam sa = {
+			.call_num = VOS_SYSCALL_GET_CHAR,
+			.u32param0 = (u32)ch,
+	};
+	vos_sys_call(&sa);
+	return (s32)sa.u32param0; //return;
+}
 
+s32 SysCallVOSGetC(StVosSysCallParam *psa)
+{
+	u8 *ch = (u8 *)psa->u32param0;
 	s32 ret = 0;
 
-	u32 irq_save;
-	irq_save = __local_irq_save();
 	if (gUartRxCnts > 0) {
 		*ch = gUart1Buf[gUartRxRdIdx++];
 		gUartRxCnts--;
 		gUartRxRdIdx %= sizeof(gUart1Buf);
 		ret = 1;
 	}
-	__local_irq_restore(irq_save);
-
 	return ret;
-
 }
-
 void vputs(s8 *str, s32 len)
 {
 	u32 irq_save;

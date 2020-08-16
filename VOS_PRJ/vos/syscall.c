@@ -497,7 +497,7 @@ void SysCallVOSTaskSchTabDebug(StVosSysCallParam *psa)
 	kprintf(")]\r\n");
 }
 
-
+s32 SysCallVOSGetC(StVosSysCallParam *psa);
 void VOSSysCall(StVosSysCallParam *psa)
 {
 	u32 ret = 0;
@@ -565,6 +565,8 @@ void VOSSysCall(StVosSysCallParam *psa)
 		SysCallVOSTaskSchTabDebug(psa);
 		ret = 0;
 		break;
+	case VOS_SYSCALL_GET_CHAR:
+		ret = (u32)SysCallVOSGetC(psa);
 	default:
 		break;
 	}

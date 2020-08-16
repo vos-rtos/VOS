@@ -10,11 +10,10 @@
 
 extern struct StVosTask *pRunningTask;
 
-extern volatile u32 VOSIntNesting;
 
 StVOSSemaphore *VOSSemCreate(s32 max_sems, s32 init_sems, s8 *name)
 {
-	if (VOSIntNesting > 0) return 0;
+
 	StVosSysCallParam sa = {
 			.call_num = VOS_SYSCALL_SEM_CREATE,
 			.u32param0 = max_sems,
@@ -28,7 +27,7 @@ StVOSSemaphore *VOSSemCreate(s32 max_sems, s32 init_sems, s8 *name)
 
 s32 VOSSemTryWait(StVOSSemaphore *pSem)
 {
-	if (VOSIntNesting > 0) return 0;
+
 	StVosSysCallParam sa = {
 			.call_num = VOS_SYSCALL_SEM_TRY_WAIT,
 			.u32param0 = (u32)pSem,
@@ -41,7 +40,7 @@ s32 VOSSemTryWait(StVOSSemaphore *pSem)
 
 s32 VOSSemWait(StVOSSemaphore *pSem, u64 timeout_ms)
 {
-	if (VOSIntNesting > 0) return 0;
+
 	s32 ret = 0;
 	StVosSysCallParam sa = {
 			.call_num = VOS_SYSCALL_SEM_WAIT,
@@ -76,7 +75,7 @@ s32 VOSSemWait(StVOSSemaphore *pSem, u64 timeout_ms)
 
 s32 VOSSemRelease(StVOSSemaphore *pSem)
 {
-	if (VOSIntNesting > 0) return 0;
+
 	s32 ret = 0;
 	StVosSysCallParam sa = {
 			.call_num = VOS_SYSCALL_SEM_RELEASE,
@@ -96,7 +95,7 @@ s32 VOSSemRelease(StVOSSemaphore *pSem)
 
 s32 VOSSemDelete(StVOSSemaphore *pSem)
 {
-	if (VOSIntNesting > 0) return 0;
+
 	s32 ret = 0;
 	StVosSysCallParam sa = {
 			.call_num = VOS_SYSCALL_SEM_DELETE,
@@ -112,7 +111,7 @@ s32 VOSSemDelete(StVOSSemaphore *pSem)
 //创建是可以在任务之外创建
 StVOSMutex *VOSMutexCreate(s8 *name)
 {
-	if (VOSIntNesting > 0) return 0;
+
 	StVosSysCallParam sa = {
 			.call_num = VOS_SYSCALL_MUTEX_CREAT,
 			.u32param0 = (u32)name,
@@ -125,7 +124,6 @@ StVOSMutex *VOSMutexCreate(s8 *name)
 
 s32 VOSMutexWait(StVOSMutex *pMutex, s64 timeout_ms)
 {
-	if (VOSIntNesting > 0) return 0;
 	s32 ret = 0;
 	StVosSysCallParam sa = {
 			.call_num = VOS_SYSCALL_MUTEX_WAIT,
@@ -163,7 +161,6 @@ s32 VOSMutexWait(StVOSMutex *pMutex, s64 timeout_ms)
 
 s32 VOSMutexRelease(StVOSMutex *pMutex)
 {
-	if (VOSIntNesting > 0) return 0;
 	s32 ret = 0;
 	StVosSysCallParam sa = {
 			.call_num = VOS_SYSCALL_MUTEX_RELEASE,
@@ -185,7 +182,6 @@ s32 VOSMutexRelease(StVOSMutex *pMutex)
 
 s32 VOSMutexDelete(StVOSMutex *pMutex)
 {
-	if (VOSIntNesting > 0) return 0;
 	s32 ret = 0;
 	StVosSysCallParam sa = {
 			.call_num = VOS_SYSCALL_MUTEX_DELETE,
@@ -200,7 +196,6 @@ s32 VOSMutexDelete(StVOSMutex *pMutex)
 
 s32 VOSEventWait(u32 event_mask, u64 timeout_ms)
 {
-	if (VOSIntNesting > 0) return 0;
 	s32 ret = 0;
 	StVosSysCallParam sa = {
 			.call_num = VOS_SYSCALL_EVENT_WAIT,
@@ -233,7 +228,6 @@ s32 VOSEventWait(u32 event_mask, u64 timeout_ms)
 
 s32 VOSEventSet(s32 task_id, u32 event)
 {
-	if (VOSIntNesting > 0) return 0;
 	s32 ret = 0;
 	StVosSysCallParam sa = {
 			.call_num = VOS_SYSCALL_EVENT_SET,
@@ -254,7 +248,6 @@ s32 VOSEventSet(s32 task_id, u32 event)
 
 u32 VOSEventGet(s32 task_id)
 {
-	if (VOSIntNesting > 0) return 0;
 	s32 ret = 0;
 	StVosSysCallParam sa = {
 			.call_num = VOS_SYSCALL_EVENT_GET,
@@ -269,7 +262,6 @@ u32 VOSEventGet(s32 task_id)
 
 s32 VOSEventClear(s32 task_id, u32 event)
 {
-	if (VOSIntNesting > 0) return 0;
 	s32 ret = 0;
 	StVosSysCallParam sa = {
 			.call_num = VOS_SYSCALL_EVENT_CLEAR,
@@ -284,7 +276,6 @@ s32 VOSEventClear(s32 task_id, u32 event)
 
 StVOSMsgQueue *VOSMsgQueCreate(s8 *pRingBuf, s32 length, s32 msg_size, s8 *name)
 {
-	if (VOSIntNesting > 0) return 0;
 	StVOSMsgQueue * ret = 0;
 	StVosSysCallParam sa = {
 			.call_num = VOS_SYSCALL_MSGQUE_CREAT,
@@ -302,7 +293,6 @@ StVOSMsgQueue *VOSMsgQueCreate(s8 *pRingBuf, s32 length, s32 msg_size, s8 *name)
 //返回添加的个数，成功返回1，表示添加一个消息成功；如果返回0，表示队列满。
 s32 VOSMsgQuePut(StVOSMsgQueue *pMQ, void *pmsg, s32 len)
 {
-	if (VOSIntNesting > 0) return 0;
 	s32 ret = 0;
 	StVosSysCallParam sa = {
 			.call_num = VOS_SYSCALL_MSGQUE_PUT,
@@ -325,7 +315,6 @@ s32 VOSMsgQuePut(StVOSMsgQueue *pMQ, void *pmsg, s32 len)
 //返回添加的个数
 s32 VOSMsgQueGet(StVOSMsgQueue *pMQ, void *pmsg, s32 len, s64 timeout_ms)
 {
-	if (VOSIntNesting > 0) return 0;
 	u8 *phead = 0;
 	s32 ret = 0;
 	StVosSysCallParam sa = {
@@ -370,7 +359,6 @@ s32 VOSMsgQueGet(StVOSMsgQueue *pMQ, void *pmsg, s32 len, s64 timeout_ms)
 
 s32 VOSMsgQueFree(StVOSMsgQueue *pMQ)
 {
-	if (VOSIntNesting > 0) return 0;
 	s32 ret = 0;
 	StVosSysCallParam sa = {
 			.call_num = VOS_SYSCALL_MSGQUE_GET,
@@ -411,7 +399,6 @@ s32 VOSMsgQueFree(StVOSMsgQueue *pMQ)
 //}
 u32 VOSTaskDelay(u32 ms)
 {
-	if (VOSIntNesting > 0) return 0;
 	//如果中断被关闭，系统不进入调度，则直接硬延时
 	//todo
 	//否则进入操作系统的闹钟延时

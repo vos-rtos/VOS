@@ -116,21 +116,13 @@ RunFirstTask:
 	STRB    R1, [R0]
 
 	MRS     R0, CONTROL //设置线程模式)，用户级
-	ORR     R0, R0, #3
+	ORR     R0, R0, #3 //#2:特权+PSP, #3:用户级+PSP
 	MSR     CONTROL, R0
 	ISB
 	//BL		VOSSysTickSet //设置tick间隔
 	//ISB
 	//pop 	{pc}
 
-.text
-.align 2
-.global _set_CONTROL
-.thumb
-.thumb_func
-_set_CONTROL:
-	msr control, r0
-	bx lr
 
 .text
 .align 2
@@ -150,18 +142,6 @@ _set_PSP:
 	msr psp, r0
 	bx lr
 
-
-//.text
-//.align 2
-//.global __local_irq_save
-//.thumb
-//.thumb_func
-//__local_irq_save:
-//    mrs     r0, basepri
-//    mov     r1, #0xff
-//    msr     basepri, r1
-//    bx      lr
-
 .text
 .align 2
 .global __local_irq_save
@@ -171,15 +151,6 @@ __local_irq_save:
     MRS     R0, PRIMASK
     CPSID   I
     BX      LR
-
-//.text
-//.align 2
-//.global __local_irq_restore
-//.thumb
-//.thumb_func
-//__local_irq_restore:
-//    msr     basepri, r0
-//    bx      lr
 
 .text
 .align 2
@@ -233,5 +204,35 @@ loop_1us:
 vos_sys_call:
     svc		5  //VOS_SVC_NUM_SYSCALL
     bx      lr
+
+.text
+.align 2
+.global __task_irq_save
+.thumb
+.thumb_func
+__task_irq_save:
+	svc 	6
+    BX      LR
+
+.text
+.align 2
+.global __task_irq_restore
+.thumb
+.thumb_func
+__task_irq_restore:
+    MSR     PRIMASK, R0
+    BX      LR
+
+.text
+.align 2
+.global __switch_to_svc_mode
+.thumb
+.thumb_func
+__switch_to_svc_mode:
+	MRS     R0, CONTROL //设置线程模式，用户级
+	MOV     R1, #2 //#2:特权+PSP, #3:用户级+PSP
+	MSR     CONTROL, R1
+	ISB
+
 
 

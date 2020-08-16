@@ -41,6 +41,12 @@ typedef void (*task_fun_t)(void *param);
 extern struct StVosTask;
 
 enum {
+	VOS_RUNNING_BY_STARTUP, //系统刚启动，任务调度没执行时，就设置在启动状态
+	VOS_RUNNING_BY_INTERRUPTE, //中断上下文执行代码
+	VOS_RUNNING_BY_TASK, //任务上下文执行代码
+};
+
+enum {
 	VOS_LIST_READY = 0,
 	VOS_LIST_BLOCK,
 };
@@ -100,6 +106,8 @@ void _ISB();
 #define VOS_SVC_NUM_SCHEDULE		(u32)(1) //svc 1 主动调度
 #define VOS_SVC_NUM_DELAY			(u32)(3) //svc 3 系统延时，提高效率
 #define VOS_SVC_NUM_SYSCALL			(u32)(5) //svc 5 进入系统调用例程
+#define VOS_SVC_INT_SAVE			(u32)(6) //svc 6 切换到特权柄并关中断
+#define VOS_SVC_INT_RESTORE			(u32)(7) //svc 7 开中断并切换到用户级别
 
 #define VOS_SYSCALL_MUTEX_CREAT   	(u32)(10)
 #define VOS_SYSCALL_MUTEX_WAIT		(u32)(11)
@@ -127,6 +135,8 @@ void _ISB();
 #define VOS_SYSCALL_TASK_CREATE		(u32)(28)
 
 #define VOS_SYSCALL_SCH_TAB_DEBUG	(u32)(29)
+
+#define VOS_SYSCALL_GET_CHAR		(u32)(30)
 
 typedef struct StVosSysCallParam {
 	u32 call_num; //系统调用号
@@ -316,6 +326,9 @@ void VOSSysTick();
 s32 VOSTaskRaisePrioBeforeBlock(StVosTask *pMutexOwnerTask);
 s32 VOSTaskRestorePrioBeforeRelease();
 
+
+//检查目前运行在中断上下文还是任务上下文。
+s32 VOSCortexCheck();
 
 extern void asm_ctx_switch(); //触发PendSV_Handler中断
 
