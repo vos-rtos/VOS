@@ -1,3 +1,10 @@
+//----------------------------------------------------
+// Copyright (c) 2020, VOS Open source. All rights reserved.
+// Author: 156439848@qq.com; vincent_cws2008@gmail.com
+// History:
+//	     2020-08-01: initial by vincent.
+//------------------------------------------------------
+
 
 //#include "cmsis/stm32f407xx.h"
 #include "../vos/vtype.h"

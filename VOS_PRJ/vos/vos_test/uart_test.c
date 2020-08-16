@@ -14,6 +14,24 @@ s32 vgets(u8 *buf, s32 len)
 	return i;
 }
 
+
+
+s32 data_check(s8 *buf, s32 len)
+{
+	s32 i = 0;
+	static s32 gindex = -1;
+	if (gindex == -1) {
+		gindex = buf[0]-'a';
+	}
+	for (i=0; i < len; i++) {
+		if (buf[i] != 'a'+gindex%26) {
+			kprintf("ERROR: data error!\r\n");
+			while (1);
+		}
+		gindex++;
+	}
+}
+
 s32 vvgets(u8 *buf, s32 len);
 static void task_uartin(void *param)
 {
@@ -30,6 +48,7 @@ static void task_uartin(void *param)
 	while(1) {
 		ret = vgets(buf, sizeof(buf)-1);
 		if (ret > 0){
+			data_check(buf, ret);
 			buf[ret] = 0;
 			counts += ret;
 			if (counts > mark_cnts+5000){

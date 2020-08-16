@@ -44,9 +44,7 @@ s64 VOSGetTicks()
 {
 	s64 ticks;
 	u32 irq_save = 0;
-	//irq_save = __local_irq_save();
 	ticks = gVOSTicks;
-	//__local_irq_restore(irq_save);
 	return ticks;
 }
 
@@ -502,7 +500,7 @@ void task_idle(void *param)
 	while (1) {//禁止空闲任务阻塞
 //		if ((s32)(VOSGetTimeMs()-mark_time) > 1000) {
 //			mark_time = VOSGetTimeMs();
-//			VOSTaskSchTable();
+//			SysCallVOSTaskSchTabDebug();
 //		}
 	}
 }
@@ -629,74 +627,7 @@ void VOSTaskSchedule()
 	__asm volatile ("svc 1\n");
 }
 
-void VOSSysCall(StVosSysCallParam *psa)
-{
-	u32 ret = 0;
-	if (psa==0) return;
-	switch (psa->call_num)
-	{
-	case VOS_SYSCALL_MUTEX_CREAT:
-		ret = (u32)SysCallVOSMutexCreate(psa);
-		break;
-	case VOS_SYSCALL_MUTEX_WAIT:
-		ret = (u32)SysCallVOSMutexWait(psa);
-		break;
-	case VOS_SYSCALL_MUTEX_RELEASE:
-		ret = (u32)SysCallVOSMutexRelease(psa);
-		break;
-	case VOS_SYSCALL_MUTEX_DELETE:
-		ret = (u32)SysCallVOSMutexDelete(psa);
-		break;
-	case VOS_SYSCALL_SEM_CREATE:
-		ret = (u32)SysCallVOSSemCreate(psa);
-		break;
-	case VOS_SYSCALL_SEM_TRY_WAIT:
-		ret = (u32)SysCallVOSSemTryWait(psa);
-		break;
-	case VOS_SYSCALL_SEM_WAIT:
-		ret = (u32)SysCallVOSSemWait(psa);
-		break;
-	case VOS_SYSCALL_SEM_RELEASE:
-		ret =(u32)SysCallVOSSemRelease(psa);
-		break;
-	case VOS_SYSCALL_SEM_DELETE:
-		ret = (u32)SysCallVOSSemDelete(psa);
-		break;
-	case VOS_SYSCALL_EVENT_WAIT:
-		ret = (u32)SysCallVOSEventWait(psa);
-		break;
-	case VOS_SYSCALL_EVENT_SET:
-		ret = (u32)SysCallVOSEventSet(psa);
-		break;
-	case VOS_SYSCALL_EVENT_GET:
-		ret = (u32)SysCallVOSEventGet(psa);
-		break;
-	case VOS_SYSCALL_EVENT_CLEAR:
-		ret = (u32)SysCallVOSEventClear(psa);
-		break;
-	case VOS_SYSCALL_MSGQUE_CREAT:
-		ret = (u32)SysCallVOSMsgQueCreate(psa);
-		break;
-	case VOS_SYSCALL_MSGQUE_PUT:
-		ret = (u32)SysCallVOSMsgQuePut(psa);
-		break;
-	case VOS_SYSCALL_MSGQUE_GET:
-		ret = (u32)SysCallVOSMsgQueGet(psa);
-		break;
-	case VOS_SYSCALL_MSGQUE_FREE:
-		ret = (u32)SysCallVOSMsgQueFree(psa);
-		break;
-//	case VOS_SYSCALL_TASK_DELAY: //效率低，禁用
-//		ret = (u32)SysCallVOSTaskDelay(psa);
-//		break;
-	case VOS_SYSCALL_TASK_CREATE:
-		ret = (u32)SysCallVOSTaskCreate(psa);
-		break;
-	default:
-		break;
-	}
-	psa->u32param0 = ret; //返回值
-}
+
 
 void SVC_Handler_C(u32 *svc_args)
 {
@@ -812,48 +743,17 @@ END_CREATE:
 	return ptask ? ptask->id : -1;
 }
 
-void VOSTaskSchTable()
+void VOSTaskSchTabDebug()
 {
-	s32 prio_mark = -1;
-	u32 irq_save = 0;
-	u32 mark = 0;
-	StVosTask *ptask_prio = 0;
-	struct list_head *list_prio;
-	struct list_head *phead = 0;
-	irq_save = __local_irq_save();
-
-	phead = &gListTaskReady;
-
-	kprintf("[(%d) ", pRunningTask?pRunningTask->id:-1);
-
-	kprintf("(%d) ", pReadyTask?pReadyTask->id:-1);
-
-	//插入队列，必须优先级从高到低有序排列
-	kprintf("(");
-	list_for_each(list_prio, phead) {
-		ptask_prio = list_entry(list_prio, struct StVosTask, list);
-		kprintf("%d", ptask_prio->id);
-		if (list_prio->next != phead) {
-			kprintf("->");
-		}
-	}
-	kprintf(")");
-
-	phead = &gListTaskBlock;
-	//插入队列，必须优先级从高到低有序排列
-	kprintf("(");
-	list_for_each(list_prio, phead) {
-		ptask_prio = list_entry(list_prio, struct StVosTask, list);
-		kprintf("%d", ptask_prio->id);
-		if (list_prio->next != phead) {
-			kprintf("->");
-		}
-	}
-	kprintf(")]\r\n");
-
-	__local_irq_restore(irq_save);
-	return mark;
+	s32 ret = 0;
+	StVosSysCallParam sa = {
+			.call_num = VOS_SYSCALL_SCH_TAB_DEBUG,
+	};
+	vos_sys_call(&sa);
+	//ret = (s32)sa.u32param0; //return;
 }
+
+
 
 void VOSSysTick()
 {

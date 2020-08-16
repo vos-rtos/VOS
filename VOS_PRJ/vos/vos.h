@@ -126,7 +126,7 @@ void _ISB();
 
 #define VOS_SYSCALL_TASK_CREATE		(u32)(28)
 
-
+#define VOS_SYSCALL_SCH_TAB_DEBUG	(u32)(29)
 
 typedef struct StVosSysCallParam {
 	u32 call_num; //系统调用号
