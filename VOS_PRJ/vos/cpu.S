@@ -150,6 +150,10 @@ _set_PSP:
 __local_irq_save:
     MRS     R0, PRIMASK
     CPSID   I
+    ldr 	R1, =vos_dis_irq_counter //计数嵌套层数
+    ldr		R2, [R1]
+    add		R2, #1 //加1
+    str		R2, [R1]
     BX      LR
 
 .text
@@ -158,6 +162,10 @@ __local_irq_save:
 .thumb
 .thumb_func
 __local_irq_restore:
+	ldr 	R1, =vos_dis_irq_counter //计数嵌套层数
+    ldr		R2, [R1]
+    sub		R2, #1 //减1
+    str		R2, [R1]
     MSR     PRIMASK, R0
     BX      LR
 
@@ -207,32 +215,35 @@ vos_sys_call:
 
 .text
 .align 2
-.global __task_irq_save
+.global vos_privileged_save
 .thumb
 .thumb_func
-__task_irq_save:
-	svc 	6
+vos_privileged_save:
+	svc 	6 //VOS_SVC_PRIVILEGED_MODE
     BX      LR
 
 .text
 .align 2
-.global __task_irq_restore
+.global vos_privileged_restore
 .thumb
 .thumb_func
-__task_irq_restore:
-    MSR     PRIMASK, R0
+vos_privileged_restore:
+	MRS		R1, CONTROL //特权模式下获取control
+	ORR		R2, R1, R0
+	MSR     CONTROL, R2
     BX      LR
 
 .text
 .align 2
-.global __switch_to_svc_mode
+.global __switch_privileged_mode
 .thumb
 .thumb_func
-__switch_to_svc_mode:
-	MRS     R0, CONTROL //设置线程模式，用户级
-	MOV     R1, #2 //#2:特权+PSP, #3:用户级+PSP
+__switch_privileged_mode:
+	MRS     R0, CONTROL //只能读出control[0]位，control[1]位拥有是0，因为svn中断模式
+	BIC		R1, R0, #1	//control[0]=0 //特权模式
 	MSR     CONTROL, R1
 	ISB
+	BX		LR
 
 
 

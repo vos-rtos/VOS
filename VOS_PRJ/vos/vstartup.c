@@ -5,15 +5,8 @@
 //	     2020-08-01: initial by vincent.
 //------------------------------------------------------
 
-
-//#include "cmsis/stm32f407xx.h"
 #include "../vos/vtype.h"
 #include "../vos/vos.h"
-
-//#include "stm32f4xx_hal.h"
-//#include "stm32f4xx_hal_uart.h"
-
-
 
 extern unsigned int __data_rw_array_start;
 extern unsigned int __data_rw_array_end;
@@ -95,7 +88,7 @@ vos_start (void)
 
 	VOSTimerInit(); //定时器初始化，依赖信号量，互斥量，不能关中断里执行，因为里面有使用svn中断
 
-	code = VOSTaskInBuild(main, 0, main_stack, sizeof(main_stack), TASK_PRIO_NORMAL, "main");
+	code = VOSTaskCreate(main, 0, main_stack, sizeof(main_stack), TASK_PRIO_NORMAL, "main");
 	VOSStarup();
 
 	_exit (code);

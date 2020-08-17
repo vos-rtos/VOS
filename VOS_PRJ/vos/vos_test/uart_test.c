@@ -1,18 +1,18 @@
 #include "../vos/vtype.h"
 #include "../vos/vos.h"
 
-s32 vgets(u8 *buf, s32 len)
-{
-	u8 ch;
-	int i = 0;
-	for (i=0; i<len; i++) {
-		if (vgetc(&ch))
-			buf[i] = ch;
-		else
-			break;
-	}
-	return i;
-}
+//s32 vgets(u8 *buf, s32 len)
+//{
+//	u8 ch;
+//	int i = 0;
+//	for (i=0; i<len; i++) {
+//		if (vgetc(&ch))
+//			buf[i] = ch;
+//		else
+//			break;
+//	}
+//	return i;
+//}
 
 
 
@@ -36,7 +36,7 @@ s32 vvgets(u8 *buf, s32 len);
 static void task_uartin(void *param)
 {
 	s32 ret = 0;
-	u8 buf[100];
+	u8 buf[1000];
 	u32 counts = 0;
 	u32 mark_cnts = 0;
 	s64 mark_ms = 0;
@@ -47,7 +47,7 @@ static void task_uartin(void *param)
 	while(1) {
 		ret = vgets(buf, sizeof(buf)-1);
 		if (ret > 0){
-			data_check(buf, ret);
+			//data_check(buf, ret);
 			buf[ret] = 0;
 			counts += ret;
 			if (counts > mark_cnts+5000){
@@ -56,7 +56,7 @@ static void task_uartin(void *param)
 				kprintf("speed[%08dms:%08dB:%05dBps]\r\n", time_spend, counts, (s32)((u64)(counts)*1000/time_spend));
 			}
 		}
-		VOSTaskDelay(1);
+		VOSTaskDelay(10);
 	}
 }
 

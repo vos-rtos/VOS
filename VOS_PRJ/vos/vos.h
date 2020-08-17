@@ -106,8 +106,8 @@ void _ISB();
 #define VOS_SVC_NUM_SCHEDULE		(u32)(1) //svc 1 主动调度
 #define VOS_SVC_NUM_DELAY			(u32)(3) //svc 3 系统延时，提高效率
 #define VOS_SVC_NUM_SYSCALL			(u32)(5) //svc 5 进入系统调用例程
-#define VOS_SVC_INT_SAVE			(u32)(6) //svc 6 切换到特权柄并关中断
-#define VOS_SVC_INT_RESTORE			(u32)(7) //svc 7 开中断并切换到用户级别
+#define VOS_SVC_PRIVILEGED_MODE		(u32)(6) //svc 6 切换到特权模式
+
 
 #define VOS_SYSCALL_MUTEX_CREAT   	(u32)(10)
 #define VOS_SYSCALL_MUTEX_WAIT		(u32)(11)
@@ -331,5 +331,8 @@ s32 VOSTaskRestorePrioBeforeRelease();
 s32 VOSCortexCheck();
 
 extern void asm_ctx_switch(); //触发PendSV_Handler中断
+
+u32 __vos_irq_save();
+void __vos_irq_restore(u32 save);
 
 #endif

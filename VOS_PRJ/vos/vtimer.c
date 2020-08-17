@@ -211,7 +211,7 @@ void VOSTimerInit()
 
 	gSemVosTimer = VOSSemCreate(1, 1, "SemVosTimer");//创建一个信号量，做延时和唤醒处理
 
-	s32 task_id = VOSTaskInBuild(VOSTaskTimer, 0, task_timer_stack, sizeof(task_timer_stack), VOS_TASK_TIMER_PRIO, "vos_timer");
+	s32 task_id = VOSTaskCreate(VOSTaskTimer, 0, task_timer_stack, sizeof(task_timer_stack), VOS_TASK_TIMER_PRIO, "vos_timer");
 
 }
 

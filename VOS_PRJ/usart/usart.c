@@ -79,56 +79,60 @@ void USART1_IRQHandler(void)
 	VOSIntExit ();
 } 
 
-//s32 vgetc(u8 *ch)
-//{
-//	s32 ret = 0;
-//	u32 irq_save;
-//	irq_save = __local_irq_save();
-//	if (gUartRxCnts > 0) {
-//		*ch = gUart1Buf[gUartRxRdIdx++];
-//		gUartRxCnts--;
-//		gUartRxRdIdx %= sizeof(gUart1Buf);
-//		ret = 1;
-//	}
-//	__local_irq_restore(irq_save);
-//
-//	return ret;
-//
-//}
-
 s32 vgetc(u8 *ch)
 {
-	StVosSysCallParam sa = {
-			.call_num = VOS_SYSCALL_GET_CHAR,
-			.u32param0 = (u32)ch,
-	};
-	vos_sys_call(&sa);
-	return (s32)sa.u32param0; //return;
-}
-
-s32 SysCallVOSGetC(StVosSysCallParam *psa)
-{
-	u8 *ch = (u8 *)psa->u32param0;
 	s32 ret = 0;
-
+	u32 irq_save;
+	irq_save = __vos_irq_save();
 	if (gUartRxCnts > 0) {
 		*ch = gUart1Buf[gUartRxRdIdx++];
 		gUartRxCnts--;
 		gUartRxRdIdx %= sizeof(gUart1Buf);
 		ret = 1;
 	}
+	__vos_irq_restore(irq_save);
+
 	return ret;
+
 }
+s32 vgets(u8 *buf, s32 len)
+{
+	s32 copy_len;
+	s32 left = 0;
+	u32 irq_save;
+	irq_save = __vos_irq_save();
+	copy_len = gUartRxCnts > len ? len : gUartRxCnts;
+	if (copy_len > 0) {
+		if (sizeof(gUart1Buf) - gUartRxRdIdx >= copy_len) {
+			memcpy(buf, &gUart1Buf[gUartRxRdIdx], copy_len);
+			gUartRxRdIdx += copy_len;
+		}
+		else {
+			left = sizeof(gUart1Buf)-gUartRxRdIdx;
+			memcpy(buf, &gUart1Buf[gUartRxRdIdx], left);
+			copy_len -= left;
+			memcpy(&buf[left], &gUart1Buf[0], copy_len);
+			gUartRxRdIdx = copy_len;
+		}
+		gUartRxRdIdx %= sizeof(gUart1Buf);
+		gUartRxCnts -= copy_len;
+	}
+	__vos_irq_restore(irq_save);
+	return copy_len;
+}
+
+
+
 void vputs(s8 *str, s32 len)
 {
 	u32 irq_save;
 	s32 i;
-	irq_save = __local_irq_save();
+	irq_save = __vos_irq_save();
 	for (i=0; i<len; i++) {
 		USART_SendData(USART1, (u8)str[i]);
 		while(USART_GetFlagStatus(USART1,USART_FLAG_TC)!=SET);
 	}
-	__local_irq_restore(irq_save);
+	__vos_irq_restore(irq_save);
 }
 
 
