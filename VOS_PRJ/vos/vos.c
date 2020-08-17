@@ -533,8 +533,15 @@ void task_idle(void *param)
 
 void VOSStarup()
 {
+	VOSSysTickSet();//设置tick时钟间隔
+	u32 irq_save = 0;
 	if (VOSRunning == 0) { //启动第一个任务时会设置个VOSRunning为1
-		__asm volatile ("svc 0\n");
+		irq_save = __vos_irq_save();
+		//__asm volatile ("svc 0\n");
+		TaskIdleBuild();//创建idle任务
+		__vos_irq_restore(irq_save);
+		RunFirstTask(); //加载第一个任务，这时任务不一定是IDLE任务
+		while (1) ;;//不可能跑到这里
 	}
 }
 
@@ -574,6 +581,7 @@ void VOSTaskSwitch(u32 from)
 {
 	s32 ret = 0;
 	u32 irq_save = 0;
+	if (VOSRunning==0) return; //还没开始就切换直接返回
 	irq_save = __local_irq_save();
 	if (pRunningTask && !list_empty(&gListTaskReady)) {
 		ret = VOSTaskReadyCmpPrioTo(pRunningTask); //比较运行任务优先级跟就绪队列里的任务优先级
@@ -649,7 +657,10 @@ void TaskIdleBuild()
 //但是VOSTaskSwitch必须在特权模式下访问，否则异常。
 void VOSTaskSchedule()
 {
-	__asm volatile ("svc 1\n");
+	u32 irq_save;
+	irq_save = __vos_irq_save();
+	VOSTaskSwitch(TASK_SWITCH_ACTIVE);
+	__vos_irq_restore(irq_save);
 }
 
 void SVC_Handler_C(u32 *svc_args)
@@ -661,23 +672,6 @@ void SVC_Handler_C(u32 *svc_args)
 	irq_save = __local_irq_save();
 	svc_number = ((char *)svc_args[6])[-2];
 	switch(svc_number) {
-	case VOS_SVC_NUM_STARTUP://系统刚初始化完成，启动第一个任务
-		TaskIdleBuild();//创建idle任务
-		RunFirstTask(); //加载第一个任务，这时任务不一定是IDLE任务
-		VOSSysTickSet();//设置tick时钟间隔
-		break;
-	case VOS_SVC_NUM_SCHEDULE://用户任务主动调用切换到更高优先级任务，如果没有则继续用户任务
-		VOSTaskSwitch(TASK_SWITCH_ACTIVE);
-		break;
-	case VOS_SVC_NUM_DELAY: //SVN VOSTaskDelay
-		pRunningTask->ticks_start = gVOSTicks;
-		pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(svc_args[0]);
-		if (pRunningTask->ticks_alert < gMarkTicksNearest) { //如果闹钟结点小于记录的最少值，则更新
-			gMarkTicksNearest = pRunningTask->ticks_alert;//更新为最近的闹钟
-		}
-		pRunningTask->status = VOS_STA_BLOCK; //添加到阻塞队列
-		pRunningTask->block_type |= VOS_BLOCK_DELAY;//指明阻塞类型为自延时
-		break;
 	case VOS_SVC_NUM_SYSCALL: //系统调用
 //		psa = (StVosSysCallParam *)svc_args[0];
 //		VOSSysCall(psa);

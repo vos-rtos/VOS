@@ -90,35 +90,35 @@ INT_ENABLE:
 
 	bx lr //返回后才切换到psp
 
-.text
-.align 2
-.global RunFirstTask
-.thumb
-.thumb_func
-RunFirstTask:
+//.text
+//.align 2
+//.global RunFirstTask
+//.thumb
+//.thumb_func
+//RunFirstTask:
 	//push	{lr}
-    LDR     R0, =VOSRunning //设置系统运行标志
-    MOVS    R1, #1
-    STRB    R1, [R0]
+//    LDR     R0, =VOSRunning //设置系统运行标志
+//  MOVS    R1, #1
+//   STRB    R1, [R0]
 
-	LDR 	R0, =pRunningTask
-	LDR		R1, =SVC_EXC_RETURN
-	LDR		R2, [R0]
-	LDR		R2, [R2] //ptask->pstack
-	LDR		R3, [R2] //*ptask->pstack
-	STR		R3,	[R1] //写SVC中断的LR值
-	MOV		R0, #10
-    LSL		R0, R0, #2 // 10 * 4
-	ADD 	R1, R2, R0
-    MSR		PSP, R1    //设置PSP的值
-	LDR     R0, =0xE000ED22 //设置PendSV_Handler为最低优先级
-	LDR     R1, =0xFF
-	STRB    R1, [R0]
+//	LDR 	R0, =pRunningTask
+//	LDR		R1, =SVC_EXC_RETURN
+//	LDR		R2, [R0]
+//	LDR		R2, [R2] //ptask->pstack
+//	LDR		R3, [R2] //*ptask->pstack
+//	STR		R3,	[R1] //写SVC中断的LR值
+//	MOV		R0, #10
+//    LSL		R0, R0, #2 // 10 * 4
+//	ADD 	R1, R2, R0
+//    MSR		PSP, R1    //设置PSP的值
+//	LDR     R0, =0xE000ED22 //设置PendSV_Handler为最低优先级
+//	LDR     R1, =0xFF
+//	STRB    R1, [R0]
 
-	MRS     R0, CONTROL //设置线程模式)，用户级
-	ORR     R0, R0, #3 //#2:特权+PSP, #3:用户级+PSP
-	MSR     CONTROL, R0
-	ISB
+//	MRS     R0, CONTROL //设置线程模式)，用户级
+//	ORR     R0, R0, #2 //#2:特权+PSP, #3:用户级+PSP, 刚启动，这里需要特权模式
+//	MSR     CONTROL, R0
+//	ISB
 	//BL		VOSSysTickSet //设置tick间隔
 	//ISB
 	//pop 	{pc}
@@ -126,12 +126,51 @@ RunFirstTask:
 
 .text
 .align 2
-.global _ISB
+.global RunFirstTask
 .thumb
 .thumb_func
-_ISB:
+RunFirstTask:
+	//push	{lr}
+	CPSID    I
+
+    //设置PendSV_Handler为最低优先级
+   	LDR     R0, =0xE000ED22
+	LDR     R1, =0xFF
+	STRB    R1, [R0]
+
+	LDR 	R0, =pRunningTask
+	LDR		R1, =SVC_EXC_RETURN
+	LDR		R2, [R0]
+	LDR		R2, [R2] //ptask->pstack
+	LDR		R3, [R2] //*ptask->pstack
+	//STR		R3,	[R1] //写SVC中断的LR值
+	MOV		R0, #10
+    LSL		R0, R0, #2 // 10 * 4
+	ADD 	R1, R2, R0
+    MSR		PSP, R1    //设置PSP的值, PSP指向 r0, r0->r1->r2->r3->r12->lr->pc->xPSR
+
+	MRS     R0, CONTROL //设置线程模式)，用户级
+	ORR     R0, R0, #2 //#2:特权+PSP, #3:用户级+PSP, 刚启动，这里需要特权模式
+	MSR     CONTROL, R0
 	ISB
-	bx lr
+
+	LDMIA   SP!, {R0-R3}
+	LDMIA   SP!, {R12, LR}
+	LDMIA   SP!, {R3, R4} //R4:xPSR, R3: PC
+
+	CPSIE    I
+	//设置回用户模式
+	ORR     R2, R2, #3 //#2:特权+PSP, #3:用户级+PSP, 刚启动，这里需要特权模式
+	MSR     CONTROL, R2
+	ISB
+
+	//设置系统运行标志
+    LDR     R2, =VOSRunning
+    MOVS    R1, #1
+    STRB    R1, [R2]
+
+	//跳转到 任务
+	BX		R3 //R3: PC
 
 .text
 .align 2

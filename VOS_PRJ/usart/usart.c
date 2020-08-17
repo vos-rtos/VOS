@@ -70,6 +70,7 @@ void USART1_IRQHandler(void)
 		irq_save = __local_irq_save();
 		if (gUartRxCnts == sizeof(gUart1Buf)) {
 			gUartRxCnts = 0; //∏≤∏«£¨¥”Õ∑À„∆
+			kprintf("USART1_IRQHandler -----errror\r\n");
 		}
 		gUart1Buf[gUartRxWrIdx++] = Res;
 		gUartRxCnts++;
@@ -127,12 +128,12 @@ void vputs(s8 *str, s32 len)
 {
 	u32 irq_save;
 	s32 i;
-	irq_save = __vos_irq_save();
+	//irq_save = __vos_irq_save();
 	for (i=0; i<len; i++) {
 		USART_SendData(USART1, (u8)str[i]);
 		while(USART_GetFlagStatus(USART1,USART_FLAG_TC)!=SET);
 	}
-	__vos_irq_restore(irq_save);
+	//__vos_irq_restore(irq_save);
 }
 
 
