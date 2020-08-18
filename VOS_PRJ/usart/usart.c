@@ -57,25 +57,48 @@ void uart_init(u32 bound){
 volatile s32 gUartRxCnts = 0;
 volatile s32 gUartRxWrIdx = 0;
 volatile s32 gUartRxRdIdx = 0;
-u8 gUart1Buf[1024];
-
+u8 gUart1Buf[30];
+u8 markxx = 0;
 void USART1_IRQHandler(void)
 {
+	u32 data = 0;
 	u32 irq_save = 0;
 	u8 Res;
 	VOSIntEnter();
+	while (1) {
 	if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)
 	{
 		Res =USART_ReceiveData(USART1);
-		irq_save = __local_irq_save();
-		if (gUartRxCnts == sizeof(gUart1Buf)) {
-			gUartRxCnts = 0; //覆盖，从头算起
-			kprintf("USART1_IRQHandler -----errror\r\n");
+		if (markxx==0) {
+			markxx = Res - 'a';
 		}
-		gUart1Buf[gUartRxWrIdx++] = Res;
-		gUartRxCnts++;
-		gUartRxWrIdx %= sizeof(gUart1Buf);
-		__local_irq_restore(irq_save);
+		else  {
+			markxx++;
+			markxx %= sizeof(gUart1Buf);
+			if ('a'+markxx%26 != Res) {
+				kprintf("?");
+				markxx = 0;
+			}
+			else {
+				kprintf("%c", Res);
+			}
+		}
+//		irq_save = __local_irq_save();
+//		if (gUartRxCnts == sizeof(gUart1Buf)) {
+//			gUartRxCnts = 0; //覆盖，从头算起
+//			kprintf("USART1_IRQHandler -----errror\r\n");
+//		}
+//		gUart1Buf[gUartRxWrIdx++] = Res;
+//		gUartRxCnts++;
+//		gUartRxWrIdx %= sizeof(gUart1Buf);
+//		__local_irq_restore(irq_save);
+	}
+	else {
+		//读SR, 再读DR，清除ORE错误
+		data = (uint16_t)(USART1->SR & (uint16_t)0x01FF);
+		data = (uint16_t)(USART1->DR & (uint16_t)0x01FF);
+		break;
+	}
 	}
 	VOSIntExit ();
 } 

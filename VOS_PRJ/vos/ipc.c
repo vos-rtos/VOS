@@ -78,7 +78,7 @@ s32 VOSSemTryWait(StVOSSemaphore *pSem)
 {
 	s32 ret = -1;
 	u32 irq_save = 0;
-	if (pSem->max == 0) return -1; //信号量可能不存在或者被释放
+	if (pSem==0) return -1; //信号量可能不存在或者被释放
 
 	irq_save = __vos_irq_save();
 
@@ -93,7 +93,7 @@ s32 VOSSemWait(StVOSSemaphore *pSem, u64 timeout_ms)
 {
 	s32 ret = 0;
 	u32 irq_save = 0;
-	if (pSem->max == 0) return -1; //信号量可能不存在或者被释放
+	if (pSem==0) return -1; //信号量可能不存在或者被释放
 
 	irq_save = __vos_irq_save();
 
@@ -101,8 +101,7 @@ s32 VOSSemWait(StVOSSemaphore *pSem, u64 timeout_ms)
 		pSem->left--;
 		//pRunningTask->psyn = pSem; //也要设置指向资源的指针，优先级反转需要用到
 		//bitmap_set(pRunningTask->id, pSem->bitmap);
-		ret = 1;
-	}
+		ret = 1;	}
 	else if (VOSIntNesting==0) {
 		//把当前任务切换到阻塞队列
 		pRunningTask->status = VOS_STA_BLOCK; //添加到阻塞队列
@@ -150,7 +149,7 @@ s32 VOSSemRelease(StVOSSemaphore *pSem)
 {
 	s32 ret = 0;
 	u32 irq_save = 0;
-	if (pSem->max == 0) return -1; //信号量可能不存在或者被释放
+	if (pSem == 0) return -1; //信号量可能不存在或者被释放
 
 	irq_save = __vos_irq_save();
 
@@ -177,7 +176,7 @@ s32 VOSSemDelete(StVOSSemaphore *pSem)
 	s32 ret = -1;
 	u32 irq_save = 0;
 
-	if (VOSIntNesting != 0) return -1;
+	if (pSem==0) return -1; //信号量可能不存在或者被释放
 
 	irq_save = __vos_irq_save();
 	if (!list_empty(&gListSemaphore)) {

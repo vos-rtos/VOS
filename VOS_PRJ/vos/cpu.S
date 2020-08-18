@@ -5,6 +5,7 @@
 //	     2020-08-01: initial by vincent.
 //------------------------------------------------------
 
+#include "vconf.h"
 
 .syntax         unified
 .thumb
@@ -125,11 +126,12 @@ RunFirstTask:
 	LDMIA   SP!, {R3, R4} //R4:xPSR, R3: PC
 
 	CPSIE    I
+#if (TASK_LEVEL)
 	//设置回用户模式
 	ORR     R2, R2, #3 //#2:特权+PSP, #3:用户级+PSP, 刚启动，这里需要特权模式
 	MSR     CONTROL, R2
 	ISB
-
+#endif
 	//设置系统运行标志
     LDR     R2, =VOSRunning
     MOVS    R1, #1

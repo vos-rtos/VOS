@@ -39,9 +39,12 @@ long long stack_idle[1024];
 u32 VOSUserIRQSave();
 void VOSUserIRQRestore(u32 save);
 
+
+
 u32 __vos_irq_save()
 {
 	u32 vos_save;
+#if (TASK_LEVEL)
 	u32 pri_save = 0;
 	u32 irq_save = 0;
 	if (vos_dis_irq_counter == 0 && VOSIntNesting == 0) {
@@ -49,14 +52,21 @@ u32 __vos_irq_save()
 	}
 	irq_save = __local_irq_save();
 	vos_save = (pri_save<<1) | (irq_save<<0);
+#else
+	vos_save = __local_irq_save();
+#endif
 	return vos_save;
 }
 void __vos_irq_restore(u32 save)
 {
+#if (TASK_LEVEL)
 	__local_irq_restore(save&0x01);
 	if (vos_dis_irq_counter == 0 && VOSIntNesting == 0) {
 		vos_privileged_restore(save>>1);//这里不能禁止中断前调用
 	}
+#else
+	__local_irq_restore(save);
+#endif
 }
 
 
@@ -357,7 +367,11 @@ s32 VOSTaskCreate(void (*task_fun)(void *param), void *param,
 	ptask->pstack = ptask->pstack_top - (18 << 2);
 	HW32_REG((ptask->pstack + (16 << 2))) = (unsigned long) VOSTaskEntry;
 	HW32_REG((ptask->pstack + (17 << 2))) = 0x01000000;
+#if (TASK_LEVEL)
 	HW32_REG((ptask->pstack + (1 << 2))) = 0x03; //#2:特权+PSP, #3:用户级+PSP
+#else
+	HW32_REG((ptask->pstack + (1 << 2))) = 0x02; //#2:特权+PSP, #3:用户级+PSP
+#endif
 	HW32_REG((ptask->pstack)) = 0xFFFFFFFDUL;
 
 	//插入到就绪队列
@@ -529,7 +543,7 @@ void task_idle(void *param)
 
 void VOSStarup()
 {
-	VOSSysTickSet();//设置tick时钟间隔
+	//VOSSysTickSet();//设置tick时钟间隔
 	u32 irq_save = 0;
 	if (VOSRunning == 0) { //启动第一个任务时会设置个VOSRunning为1
 		irq_save = __vos_irq_save();

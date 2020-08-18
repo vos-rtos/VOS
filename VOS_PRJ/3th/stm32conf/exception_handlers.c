@@ -348,6 +348,7 @@ void __attribute__ ((section(".after_vectors"),weak,naked))
 HardFault_Handler (void)
 {
   asm volatile(
+		  "b .\n"
 		  "bx lr\n"
       " tst lr,#4       \n"
       " ite eq          \n"

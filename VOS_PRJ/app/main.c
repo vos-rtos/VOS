@@ -14,32 +14,12 @@ void schedule_test();
 void uart_test();
 void timer_test();
 
-
-void test()
-{
-	u32 save = 0;
-
-	save = __vos_irq_save();
-	kprintf("abc!\r\n");
-	__vos_irq_restore(save);
-}
-
 void main(void *param)
 {
-	s32 len;
-	s32 t;
-
-
 	u32 save = 0;
-
-//	save = __vos_irq_save();
-//	test();
-//	__vos_irq_restore(save);
-
-
 	kprintf("main function!\r\n");
 	//event_test();
-	sem_test();
+	//sem_test();
 	//mq_test();
 	//mutex_test();
 	//delay_test();
