@@ -94,7 +94,6 @@ s32 VOSSemWait(StVOSSemaphore *pSem, u64 timeout_ms)
 	s32 ret = 0;
 	u32 irq_save = 0;
 	if (pSem->max == 0) return -1; //信号量可能不存在或者被释放
-	if (VOSIntNesting != 0) return -1;
 
 	irq_save = __vos_irq_save();
 
@@ -104,7 +103,8 @@ s32 VOSSemWait(StVOSSemaphore *pSem, u64 timeout_ms)
 		//bitmap_set(pRunningTask->id, pSem->bitmap);
 		ret = 1;
 	}
-	else {//把当前任务切换到阻塞队列
+	else if (VOSIntNesting==0) {
+		//把当前任务切换到阻塞队列
 		pRunningTask->status = VOS_STA_BLOCK; //添加到阻塞队列
 
 		//信号量阻塞类型
@@ -117,10 +117,11 @@ s32 VOSSemWait(StVOSSemaphore *pSem, u64 timeout_ms)
 			gMarkTicksNearest = pRunningTask->ticks_alert;//更新为最近的闹钟
 		}
 		pRunningTask->block_type |= VOS_BLOCK_DELAY;//指明阻塞类型为自延时
-
 		//VOSTaskRaisePrioBeforeBlock(pRunningTask); //阻塞前处理优先级反转问题，提升就绪队列里的任务优先级
 	}
-
+	if (VOSIntNesting) {//在中断上下文里,直接返回-1
+		ret = -1;
+	}
 	__vos_irq_restore(irq_save);
 
 	if (ret==0) { //没信号量，进入阻塞队列
@@ -150,7 +151,6 @@ s32 VOSSemRelease(StVOSSemaphore *pSem)
 	s32 ret = 0;
 	u32 irq_save = 0;
 	if (pSem->max == 0) return -1; //信号量可能不存在或者被释放
-	if (VOSIntNesting != 0) return -1;
 
 	irq_save = __vos_irq_save();
 
@@ -162,7 +162,7 @@ s32 VOSSemRelease(StVOSSemaphore *pSem)
 		ret = 1;
 	}
 	__vos_irq_restore(irq_save);
-	if (ret == 1) {
+	if (VOSIntNesting == 0 && ret == 1) { //如果在中断上下文调用(VOSIntNesting!=0),不用主动调度
 		//唤醒后，立即调用任务调度，万一唤醒的任务优先级高于当前任务，则切换,
 		//但不能用VOSTaskSwitch(TASK_SWITCH_USER);这是必须在特权模式下使用。
 		VOSTaskSchedule();

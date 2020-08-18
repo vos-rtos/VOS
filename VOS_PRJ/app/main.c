@@ -32,19 +32,19 @@ void main(void *param)
 
 	u32 save = 0;
 
-	save = __vos_irq_save();
-	test();
-	__vos_irq_restore(save);
+//	save = __vos_irq_save();
+//	test();
+//	__vos_irq_restore(save);
 
 
 	kprintf("main function!\r\n");
 	//event_test();
-	//sem_test();
+	sem_test();
 	//mq_test();
 	//mutex_test();
 	//delay_test();
 	//schedule_test();
-	uart_test();
+	//uart_test();
 	//timer_test();
 	while (1) {
 		VOSTaskDelay(1*1000);

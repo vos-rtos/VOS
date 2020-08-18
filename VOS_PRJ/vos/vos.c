@@ -672,7 +672,6 @@ void SVC_Handler_C(u32 *svc_args, s32 is_psp)
 	}
 	irq_save = __local_irq_save();
 	svc_number = ((char *)svc_args[6+offset])[-2]; //+1是汇编里把lr也push一个，所以这里要加1
-	s32 aaa = ((char *)svc_args[6])[-2];
 	switch(svc_number) {
 	case VOS_SVC_NUM_SYSCALL: //系统调用
 //		psa = (StVosSysCallParam *)svc_args[0+offset];

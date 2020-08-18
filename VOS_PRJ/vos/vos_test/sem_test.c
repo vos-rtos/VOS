@@ -47,16 +47,45 @@ static void task2(void *param)
 	}
 }
 
-static long long task0_stack[1024], task1_stack[1024], task2_stack[1024];
+StVOSSemaphore *sem_int = 0;
+static void task0_int(void *param)
+{
+	int cnts = 0;
+	kprintf("%s start ...\r\n", __FUNCTION__);
+	s64 mark_time = VOSGetTimeMs()/1000;
+	kprintf("mark_time: %d\r\n", (u32)mark_time);
+
+	sem_int = VOSSemCreate(1, 1, "sem_int");
+	while (1) {
+		if (sem_int) {
+			VOSSemWait(sem_int, 2000*1000);
+			kprintf("%s cnts=%d\r\n", __FUNCTION__, cnts++);
+		}
+	}
+}
+
+void timer_hardware_process(){
+	if (sem_int){
+		VOSSemRelease(sem_int);
+	}
+}
+
+
+static long long task0_stack[1024], task1_stack[1024], task2_stack[1024], task0_stack_int[1024];
 void sem_test()
 {
 	kprintf("test sem!\r\n");
+
 	s32 task_id;
-	task_id = VOSTaskCreate(task0, 0, task0_stack, sizeof(task0_stack), TASK_PRIO_NORMAL, "task0");
-	task_id = VOSTaskCreate(task1, 0, task1_stack, sizeof(task1_stack), TASK_PRIO_HIGH, "task1");
-	task_id = VOSTaskCreate(task2, 0, task2_stack, sizeof(task2_stack), TASK_PRIO_LOW, "task2");
+	task_id = VOSTaskCreate(task0_int, 0, task0_stack_int, sizeof(task0_stack_int), TASK_PRIO_NORMAL, "task0_int");
+
+//	s32 task_id;
+//	task_id = VOSTaskCreate(task0, 0, task0_stack, sizeof(task0_stack), TASK_PRIO_NORMAL, "task0");
+//	task_id = VOSTaskCreate(task1, 0, task1_stack, sizeof(task1_stack), TASK_PRIO_HIGH, "task1");
+//	task_id = VOSTaskCreate(task2, 0, task2_stack, sizeof(task2_stack), TASK_PRIO_LOW, "task2");
 	while (1) {
 		VOSTaskDelay(1*1000);
 	}
 }
+
 
