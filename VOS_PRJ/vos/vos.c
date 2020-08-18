@@ -25,8 +25,6 @@ volatile s64  gVOSTicks = 0;
 
 volatile s64 gMarkTicksNearest = MAX_SIGNED_VAL_64; //记录最近闹钟响
 
-u32 SVC_EXC_RETURN; //SVC进入后保存，然后返回时要用到 (cortex m4)
-
 volatile u32 VOSIntNesting = 0;
 
 volatile u32 VOSRunning = 0;
@@ -41,13 +39,11 @@ long long stack_idle[1024];
 u32 VOSUserIRQSave();
 void VOSUserIRQRestore(u32 save);
 
-
-
 u32 __vos_irq_save()
 {
 	u32 vos_save;
-	u32 pri_save;
-	u32 irq_save;
+	u32 pri_save = 0;
+	u32 irq_save = 0;
 	if (vos_dis_irq_counter == 0 && VOSIntNesting == 0) {
 		pri_save = vos_privileged_save(); //这里不能禁止中断前调用
 	}
@@ -663,25 +659,33 @@ void VOSTaskSchedule()
 	__vos_irq_restore(irq_save);
 }
 
-void SVC_Handler_C(u32 *svc_args)
+void SVC_Handler_C(u32 *svc_args, s32 is_psp)
 {
+
 	VOSIntEnter();
 	StVosSysCallParam *psa;
 	u8 svc_number;
 	u32 irq_save;
+	u32 offset = 0;
+	if (!is_psp) {
+		offset = 1;//+1是汇编里把lr也push一个到msp，所以这里要加1
+	}
 	irq_save = __local_irq_save();
-	svc_number = ((char *)svc_args[6])[-2];
+	svc_number = ((char *)svc_args[6+offset])[-2]; //+1是汇编里把lr也push一个，所以这里要加1
+	s32 aaa = ((char *)svc_args[6])[-2];
 	switch(svc_number) {
 	case VOS_SVC_NUM_SYSCALL: //系统调用
-//		psa = (StVosSysCallParam *)svc_args[0];
+//		psa = (StVosSysCallParam *)svc_args[0+offset];
 //		VOSSysCall(psa);
 		break;
 
 	case VOS_SVC_PRIVILEGED_MODE: //svc 6 切换到特权并关中断
-		svc_args[0] = __switch_privileged_mode();//返回切换前的control[0]状态
+		svc_args[0+offset] = __switch_privileged_mode();//返回切换前的control[0]状态
 		break;
 
 	default:
+		kprintf("ERROR: SVC_Handler_C!\r\n");
+		while (1) ;
 		break;
 	}
 

@@ -10,24 +10,23 @@
 .thumb
 .file   "cpu.S"
 
-.global SVC_EXC_RETURN
-
 .text
 .align 2
 .global SVC_Handler
 .thumb
 .thumb_func
 SVC_Handler:
+	push {lr} //注意这里如果是刚启动时，是压栈到MSP, 如果任务调用，是压栈到psp
 	tst	lr, #4
 	ite	eq
 	mrseq	r0, msp
 	mrsne	r0, psp
-	ldr	r1, =SVC_EXC_RETURN
-	str	lr, [r1]
+	//这里是比较当前进入svn是是哪个栈，传递给SVC_Handler_C的第二个参数
+	mrs		r1, msp
+	SUB		r1, r0
+	//调用C语言的SVC
 	bl	SVC_Handler_C
-	ldr	r1, =SVC_EXC_RETURN
-	ldr	lr, [r1]
-	bx	lr
+	pop  {pc}
 
 .text
 .align 2
@@ -90,39 +89,6 @@ INT_ENABLE:
 
 	bx lr //返回后才切换到psp
 
-//.text
-//.align 2
-//.global RunFirstTask
-//.thumb
-//.thumb_func
-//RunFirstTask:
-	//push	{lr}
-//    LDR     R0, =VOSRunning //设置系统运行标志
-//  MOVS    R1, #1
-//   STRB    R1, [R0]
-
-//	LDR 	R0, =pRunningTask
-//	LDR		R1, =SVC_EXC_RETURN
-//	LDR		R2, [R0]
-//	LDR		R2, [R2] //ptask->pstack
-//	LDR		R3, [R2] //*ptask->pstack
-//	STR		R3,	[R1] //写SVC中断的LR值
-//	MOV		R0, #10
-//    LSL		R0, R0, #2 // 10 * 4
-//	ADD 	R1, R2, R0
-//    MSR		PSP, R1    //设置PSP的值
-//	LDR     R0, =0xE000ED22 //设置PendSV_Handler为最低优先级
-//	LDR     R1, =0xFF
-//	STRB    R1, [R0]
-
-//	MRS     R0, CONTROL //设置线程模式)，用户级
-//	ORR     R0, R0, #2 //#2:特权+PSP, #3:用户级+PSP, 刚启动，这里需要特权模式
-//	MSR     CONTROL, R0
-//	ISB
-	//BL		VOSSysTickSet //设置tick间隔
-	//ISB
-	//pop 	{pc}
-
 
 .text
 .align 2
@@ -139,7 +105,7 @@ RunFirstTask:
 	STRB    R1, [R0]
 
 	LDR 	R0, =pRunningTask
-	LDR		R1, =SVC_EXC_RETURN
+	//LDR		R1, =SVC_EXC_RETURN
 	LDR		R2, [R0]
 	LDR		R2, [R2] //ptask->pstack
 	LDR		R3, [R2] //*ptask->pstack
@@ -171,15 +137,6 @@ RunFirstTask:
 
 	//跳转到 任务
 	BX		R3 //R3: PC
-
-.text
-.align 2
-.global _set_PSP
-.thumb
-.thumb_func
-_set_PSP:
-	msr psp, r0
-	bx lr
 
 .text
 .align 2

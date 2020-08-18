@@ -58,37 +58,30 @@ abort(void)
   _exit(1);
 }
 
-
+void misc_init ();
 void __attribute__ ((section(".after_vectors")))
 vos_start (void)
 {
 	int code = 0;
-	local_irq_disable();
-	//hardware_early();
-	SystemInit();
-	init_data_and_bss ();
-	//hw_init_clock();
+	u32 irq_save = 0;
 
+	SystemInit();
+	init_data_and_bss (); //这里由于清除全局变量，不用被包含到__vos_irq_save里，里面有使用全局变量计数
+
+	irq_save = __vos_irq_save();
 	VOSSemInit();
 	VOSMutexInit();
 	VOSMsgQueInit();
 	VOSTaskInit();
-
-
-
-	//SCB->CCR |= SCB_CCR_STKALIGN_Msk;
-	//MX_USART1_UART_Init();
-
-	//HAL_NVIC_SetPriority(SVCall_IRQn, 2, 0U);
-	//NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
-	//uart_init(115200);
-	void misc_init ();
 	misc_init ();
-	local_irq_enable();
 
 	VOSTimerInit(); //定时器初始化，依赖信号量，互斥量，不能关中断里执行，因为里面有使用svn中断
 
 	code = VOSTaskCreate(main, 0, main_stack, sizeof(main_stack), TASK_PRIO_NORMAL, "main");
+
+	__vos_irq_restore(irq_save);
+
+
 	VOSStarup();
 
 	_exit (code);
