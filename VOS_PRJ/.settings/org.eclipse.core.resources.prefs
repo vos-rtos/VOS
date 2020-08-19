@@ -1,3 +1,4 @@
 eclipse.preferences.version=1
 encoding//app/main.c=UTF-8
+encoding//usart/dma_uart.c=UTF-8
 encoding//vos/stm32.c=UTF-8

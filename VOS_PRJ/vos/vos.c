@@ -387,7 +387,7 @@ END_CREATE:
 	//这里注意，可能任务被新优先级的任务抢了，执行更高优先级后才切换到这里继续执行。
 	return ptask ? ptask->id : -1;
 }
-
+#define BLOCK_SUB_MASK (VOS_BLOCK_SEMP|VOS_BLOCK_MUTEX|VOS_BLOCK_EVENT|VOS_BLOCK_MSGQUE)
 //唤醒阻塞队列里的任务, 就是把阻塞队列符合条件的任务添加到就绪队列
 void VOSTaskBlockWaveUp()
 {
@@ -400,8 +400,6 @@ void VOSTaskBlockWaveUp()
 	//遍历阻塞队列，把符合条件的添加到就绪队列
 	list_for_each_safe(list_block, list_temp, &gListTaskBlock) {
 		ptask_block = list_entry(list_block, struct StVosTask, list);
-		if (ptask_block->block_type == 0) {
-		}
 		//处理定时或超时唤醒时间，这个超时可以跟信号量，互斥锁，事件同时发生。
 		if (ptask_block->block_type & VOS_BLOCK_DELAY) { //自定义延时阻塞类型
 			if (gVOSTicks >= ptask_block->ticks_alert) {//检查超时
@@ -422,97 +420,113 @@ void VOSTaskBlockWaveUp()
 		}
 		//除了上面延时可以同时设置，下面的阻塞事件都是单独的。
 		//处理信号量唤醒事件
-		if (ptask_block->block_type & VOS_BLOCK_SEMP) { //自定义信号量阻塞类型
-			StVOSSemaphore *pSem = (StVOSSemaphore *)ptask_block->psyn;
-			if (pSem->left > 0 || pSem->distory == 1) {//有至少一个信号量 或者信号量被删除
-				if (pSem->left > 0) pSem->left--;
-				//断开当前阻塞队列
-				list_del(&ptask_block->list);
-				//修改状态
-				ptask_block->status = VOS_STA_READY;
-				ptask_block->block_type = 0;
-				ptask_block->ticks_start = 0;
-				ptask_block->ticks_alert = 0;
-				//ptask_block->psyn = 0;
-				if (pSem->distory == 0) {
-					ptask_block->wakeup_from = VOS_WAKEUP_FROM_SEM;
+		switch (ptask_block->block_type & BLOCK_SUB_MASK) {
+			case VOS_BLOCK_SEMP: //自定义信号量阻塞类型
+			{
+				StVOSSemaphore *pSem = (StVOSSemaphore *)ptask_block->psyn;
+				if (pSem->left > 0 || pSem->distory == 1) {//有至少一个信号量 或者信号量被删除
+					if (pSem->left > 0) pSem->left--;
+					//断开当前阻塞队列
+					list_del(&ptask_block->list);
+					//修改状态
+					ptask_block->status = VOS_STA_READY;
+					ptask_block->block_type = 0;
+					ptask_block->ticks_start = 0;
+					ptask_block->ticks_alert = 0;
+					//ptask_block->psyn = 0;
+					if (pSem->distory == 0) {
+						ptask_block->wakeup_from = VOS_WAKEUP_FROM_SEM;
+					}
+					else {
+						ptask_block->wakeup_from = VOS_WAKEUP_FROM_SEM_DEL;
+					}
+					//添加到就绪队列
+					VOSTaskListPrioInsert(ptask_block, VOS_LIST_READY);
 				}
-				else {
-					ptask_block->wakeup_from = VOS_WAKEUP_FROM_SEM_DEL;
-				}
-				//添加到就绪队列
-				VOSTaskListPrioInsert(ptask_block, VOS_LIST_READY);
+				break;
 			}
-		}
-		//处理互斥锁唤醒事件
-		else if (ptask_block->block_type & VOS_BLOCK_MUTEX) { //自定义互斥锁阻塞类型
-			StVOSMutex *pMutex = (StVOSMutex *)ptask_block->psyn;
-			if (pMutex->counter > 0 || pMutex->distory == 1) {//有至少一个信号量 或者互斥锁被删除
-				if (pMutex->counter > 0) {
-					pMutex->counter--;
-					pMutex->ptask_owner = ptask_block;
+			//处理互斥锁唤醒事件
+			case VOS_BLOCK_MUTEX: //自定义互斥锁阻塞类型
+			{
+				StVOSMutex *pMutex = (StVOSMutex *)ptask_block->psyn;
+				if (pMutex->counter > 0 || pMutex->distory == 1) {//有至少一个信号量 或者互斥锁被删除
+					if (pMutex->counter > 0) {
+						pMutex->counter--;
+						pMutex->ptask_owner = ptask_block;
+					}
+					//断开当前阻塞队列
+					list_del(&ptask_block->list);
+					//修改状态
+					ptask_block->status = VOS_STA_READY;
+					ptask_block->block_type = 0;
+					ptask_block->ticks_start = 0;
+					ptask_block->ticks_alert = 0;
+					//ptask_block->psyn = 0;
+					if (pMutex->distory == 0) {
+						ptask_block->wakeup_from = VOS_WAKEUP_FROM_MUTEX;
+					}
+					else {
+						ptask_block->wakeup_from = VOS_WAKEUP_FROM_MUTEX_DEL;
+					}
+					//添加到就绪队列
+					VOSTaskListPrioInsert(ptask_block, VOS_LIST_READY);
 				}
-				//断开当前阻塞队列
-				list_del(&ptask_block->list);
-				//修改状态
-				ptask_block->status = VOS_STA_READY;
-				ptask_block->block_type = 0;
-				ptask_block->ticks_start = 0;
-				ptask_block->ticks_alert = 0;
-				//ptask_block->psyn = 0;
-				if (pMutex->distory == 0) {
-					ptask_block->wakeup_from = VOS_WAKEUP_FROM_MUTEX;
-				}
-				else {
-					ptask_block->wakeup_from = VOS_WAKEUP_FROM_MUTEX_DEL;
-				}
-				//添加到就绪队列
-				VOSTaskListPrioInsert(ptask_block, VOS_LIST_READY);
+				break;
 			}
-		}
-		//处理事件唤醒事件
-		else if (ptask_block->block_type & VOS_BLOCK_EVENT) { //自定义互斥锁阻塞类型
-			if (ptask_block->event_mask == 0 || //如果event_mask为0，则接受任何事件
-					ptask_block->event_mask & ptask_block->event) { //或者设置的事件被mask到就触发操作
-				//断开当前阻塞队列
-				list_del(&ptask_block->list);
-				//修改状态
-				ptask_block->status = VOS_STA_READY;
-				ptask_block->block_type = 0;
-				ptask_block->ticks_start = 0;
-				ptask_block->ticks_alert = 0;
-				ptask_block->event = 0;
-				ptask_block->event_mask = 0;
-				ptask_block->wakeup_from = VOS_WAKEUP_FROM_EVENT;
-				//添加到就绪队列
-				VOSTaskListPrioInsert(ptask_block, VOS_LIST_READY);
+			//处理事件唤醒事件
+			case VOS_BLOCK_EVENT:
+			{ //自定义互斥锁阻塞类型
+				if (ptask_block->event_mask == 0 || //如果event_mask为0，则接受任何事件
+						ptask_block->event_mask & ptask_block->event) { //或者设置的事件被mask到就触发操作
+					//断开当前阻塞队列
+					list_del(&ptask_block->list);
+					//修改状态
+					ptask_block->status = VOS_STA_READY;
+					ptask_block->block_type = 0;
+					ptask_block->ticks_start = 0;
+					ptask_block->ticks_alert = 0;
+					ptask_block->event = 0;
+					ptask_block->event_mask = 0;
+					ptask_block->wakeup_from = VOS_WAKEUP_FROM_EVENT;
+					//添加到就绪队列
+					VOSTaskListPrioInsert(ptask_block, VOS_LIST_READY);
+				}
+				break;
 			}
-		}
-		//处理消息队列唤醒事件
-		//处理互斥锁唤醒事件
-		else if (ptask_block->block_type & VOS_BLOCK_MSGQUE) { //自定义互斥锁阻塞类型
-			StVOSMsgQueue *pMsgQue = (StVOSMsgQueue *)ptask_block->psyn;
-			if (pMsgQue->msg_cnts > 0 || pMsgQue->distory == 1) {//有至少一个信号量 或者互斥锁被删除
-				if (pMsgQue->msg_cnts > 0) {
-					//
+			//处理消息队列唤醒事件
+			//处理互斥锁唤醒事件
+			case VOS_BLOCK_MSGQUE:
+			{//自定义互斥锁阻塞类型
+				StVOSMsgQueue *pMsgQue = (StVOSMsgQueue *)ptask_block->psyn;
+				if (pMsgQue->msg_cnts > 0 || pMsgQue->distory == 1) {//有至少一个信号量 或者互斥锁被删除
+					if (pMsgQue->msg_cnts > 0) {
+						//
+					}
+					//断开当前阻塞队列
+					list_del(&ptask_block->list);
+					//修改状态
+					ptask_block->status = VOS_STA_READY;
+					ptask_block->block_type = 0;
+					ptask_block->ticks_start = 0;
+					ptask_block->ticks_alert = 0;
+					//ptask_block->psyn = 0;
+					if (pMsgQue->distory == 0) {
+						ptask_block->wakeup_from = VOS_WAKEUP_FROM_MSGQUE;
+					}
+					else {
+						ptask_block->wakeup_from = VOS_WAKEUP_FROM_MSGQUE_DEL;
+					}
+					//添加到就绪队列
+					VOSTaskListPrioInsert(ptask_block, VOS_LIST_READY);
 				}
-				//断开当前阻塞队列
-				list_del(&ptask_block->list);
-				//修改状态
-				ptask_block->status = VOS_STA_READY;
-				ptask_block->block_type = 0;
-				ptask_block->ticks_start = 0;
-				ptask_block->ticks_alert = 0;
-				//ptask_block->psyn = 0;
-				if (pMsgQue->distory == 0) {
-					ptask_block->wakeup_from = VOS_WAKEUP_FROM_MSGQUE;
-				}
-				else {
-					ptask_block->wakeup_from = VOS_WAKEUP_FROM_MSGQUE_DEL;
-				}
-				//添加到就绪队列
-				VOSTaskListPrioInsert(ptask_block, VOS_LIST_READY);
+				break;
 			}
+			case 0: //只有延时VOS_BLOCK_DELAY的情况
+				break;
+			default:
+				kprintf("ERROR: CAN NOT BE HERE!\r\n");
+				while(1) ;
+				break;
 		}
 	}
 	gMarkTicksNearest = latest_ticks;
@@ -557,6 +571,7 @@ void VOSStarup()
 
 static void VOSCortexSwitch()
 {
+	u32 irq_save = 0;
 	if (pReadyTask) {
 		return ;
 	}
@@ -567,19 +582,31 @@ static void VOSCortexSwitch()
 		return;
 	}
 
-	if (pRunningTask->status == VOS_STA_FREE) {//回收到空闲链表
-		list_add_tail(&pRunningTask->list, &gListTaskFree);
-	}
-	else if (pRunningTask->status == VOS_STA_BLOCK) { //添加到阻塞队列
-		if (pRunningTask->block_type == 0) {
-			kprintf("fuck");
-		}
-		VOSTaskListPrioInsert(pRunningTask, VOS_LIST_BLOCK);
-	}
-	else {//添加到就绪队列，这是因为遇到更高优先级，或者相同优先级时，把当前任务切换出去
-		VOSTaskListPrioInsert(pRunningTask, VOS_LIST_READY);
-	}
 
+	irq_save = __local_irq_save();
+	switch(pRunningTask->status) {
+		case VOS_STA_FREE: //回收到空闲链表
+		{
+			//__local_irq_restore(irq_save);
+			list_add_tail(&pRunningTask->list, &gListTaskFree);
+			//irq_save = __local_irq_save();
+			break;
+		}
+		case VOS_STA_BLOCK: //添加到阻塞队列
+		{
+			__local_irq_restore(irq_save);
+			VOSTaskListPrioInsert(pRunningTask, VOS_LIST_BLOCK);
+			irq_save = __local_irq_save();
+			break;
+		}
+		default://添加到就绪队列，这是因为遇到更高优先级，或者相同优先级时，把当前任务切换出去
+		{	__local_irq_restore(irq_save);
+			VOSTaskListPrioInsert(pRunningTask, VOS_LIST_READY);
+			irq_save = __local_irq_save();
+			break;
+		}
+	}
+	__local_irq_restore(irq_save);
 	//SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk; //触发上下文切换中断
 	asm_ctx_switch();
 }
@@ -595,29 +622,41 @@ void VOSTaskSwitch(u32 from)
 	irq_save = __local_irq_save();
 	if (pRunningTask && !list_empty(&gListTaskReady)) {
 		ret = VOSTaskReadyCmpPrioTo(pRunningTask); //比较运行任务优先级跟就绪队列里的任务优先级
-		if (from == TASK_SWITCH_ACTIVE) {//主动切换任务，不需要判断时间片等内容，直接切换
-			if (ret <= 0 || //正在运行的任务优先级相同或更低，需要任务切换
-				pRunningTask->status == VOS_STA_FREE || //任务状态如果是FREE状态，也需要切换
-				pRunningTask->status == VOS_STA_BLOCK //任务添加到阻塞队列
-				) {
-				VOSCortexSwitch();
-			}
-		}
-		else if (from == TASK_SWITCH_PASSIVE) {//系统定时切换，被动切换
-			if (ret < 0 || //ret < 0: 就绪队列有更高优先级，强制切换
-				pRunningTask->status == VOS_STA_FREE || //被释放掉的任务强制切换
-				pRunningTask->status == VOS_STA_BLOCK || //任务需要添加到阻塞队列
-				(ret == 0 && pRunningTask->ticks_timeslice == 0 )//ret == 0 && ticks_timeslice==0:时间片用完，同时就绪队列有相同优先级，也得切换
-			)
+		switch(from)
+		{
+			case TASK_SWITCH_ACTIVE://主动切换任务，不需要判断时间片等内容，直接切换
 			{
-				VOSCortexSwitch();
+				if (ret <= 0 || //正在运行的任务优先级相同或更低，需要任务切换
+					pRunningTask->status == VOS_STA_FREE || //任务状态如果是FREE状态，也需要切换
+					pRunningTask->status == VOS_STA_BLOCK //任务添加到阻塞队列
+					) {
+					__local_irq_restore(irq_save);
+					VOSCortexSwitch();
+					irq_save = __local_irq_save();
+				}
+				break;
 			}
-			if (pRunningTask->ticks_timeslice > 0) { //时间片不能为负数，万一有相同优先级后来进入就绪队列，就可以立即切换
-				pRunningTask->ticks_timeslice--;
+			case TASK_SWITCH_PASSIVE://系统定时切换，被动切换
+			{
+				if (ret < 0 || //ret < 0: 就绪队列有更高优先级，强制切换
+					pRunningTask->status == VOS_STA_FREE || //被释放掉的任务强制切换
+					pRunningTask->status == VOS_STA_BLOCK || //任务需要添加到阻塞队列
+					(ret == 0 && pRunningTask->ticks_timeslice == 0 )//ret == 0 && ticks_timeslice==0:时间片用完，同时就绪队列有相同优先级，也得切换
+				)
+				{
+					__local_irq_restore(irq_save);
+					VOSCortexSwitch();
+					irq_save = __local_irq_save();
+				}
+				if (pRunningTask->ticks_timeslice > 0) { //时间片不能为负数，万一有相同优先级后来进入就绪队列，就可以立即切换
+					pRunningTask->ticks_timeslice--;
+				}
+				break;
 			}
-		}
-		else {//不支持，输出错误信息
-
+			default: //不支持，输出错误信息
+				kprintf("ERROR: VOSTaskSwitch\r\n");
+				while(1) ;
+				break;
 		}
 	}
 	__local_irq_restore(irq_save);
@@ -642,9 +681,9 @@ void  VOSIntExit ()
     if (VOSRunning) {
     	irq_save = __local_irq_save();
         if (VOSIntNesting) VOSIntNesting--;
+        //__local_irq_restore(irq_save);
         if (VOSIntNesting == 0) {
         	VOSTaskSwitch(TASK_SWITCH_PASSIVE);
-        	//asm_ctx_switch();
         }
         __local_irq_restore(irq_save);
     }
@@ -667,10 +706,10 @@ void TaskIdleBuild()
 //但是VOSTaskSwitch必须在特权模式下访问，否则异常。
 void VOSTaskSchedule()
 {
-	u32 irq_save;
-	irq_save = __vos_irq_save();
+	//u32 irq_save;
+	//irq_save = __vos_irq_save();
 	VOSTaskSwitch(TASK_SWITCH_ACTIVE);
-	__vos_irq_restore(irq_save);
+	//__vos_irq_restore(irq_save);
 }
 
 void SVC_Handler_C(u32 *svc_args, s32 is_psp)

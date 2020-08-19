@@ -17,6 +17,8 @@ void timer_test();
 void main(void *param)
 {
 	u32 save = 0;
+
+	dma_printf("hello world!\r\n");
 	kprintf("main function!\r\n");
 	//event_test();
 	//sem_test();
@@ -24,7 +26,7 @@ void main(void *param)
 	//mutex_test();
 	//delay_test();
 	//schedule_test();
-	//uart_test();
+	uart_test();
 	//timer_test();
 	while (1) {
 		VOSTaskDelay(1*1000);

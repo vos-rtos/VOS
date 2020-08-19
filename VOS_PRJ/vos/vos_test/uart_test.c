@@ -11,8 +11,6 @@ s32 data_check(s8 *buf, s32 len)
 	}
 	for (i=0; i < len; i++) {
 		if (buf[i] != 'a'+gindex%26) {
-			//kprintf("ERROR: data error!\r\n");
-			//while (1);
 			gindex = -1;
 			kprintf("#");
 			break;
@@ -24,7 +22,7 @@ s32 data_check(s8 *buf, s32 len)
 static void task_uartin(void *param)
 {
 	s32 ret = 0;
-	u8 buf[500];
+	u8 buf[512];
 	u32 counts = 0;
 	u32 mark_cnts = 0;
 	s64 mark_ms = 0;
@@ -35,7 +33,8 @@ static void task_uartin(void *param)
 	while(1) {
 		ret = vgets(buf, sizeof(buf)-1);
 		if (ret > 0){
-			data_check(buf, ret);
+			//kprintf("ret=%d!\r\n", ret);
+			//data_check(buf, ret);
 			buf[ret] = 0;
 			counts += ret;
 			if (counts > mark_cnts+5000){
