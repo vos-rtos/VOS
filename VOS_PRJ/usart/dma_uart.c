@@ -120,6 +120,7 @@ void DMA_USART1_Tx_Init(u8 *dma_buf, s32 len)
 
 void DMA_USART1_Rx_Init(u8 *dma_buf, s32 len)
 {
+    NVIC_InitTypeDef NVIC_InitStructure;
     DMA_InitTypeDef DMA_InitStructure;
 
     /* 1.使能DMA2时钟 */
@@ -137,7 +138,7 @@ void DMA_USART1_Rx_Init(u8 *dma_buf, s32 len)
     DMA_InitStructure.DMA_MemoryInc           = DMA_MemoryInc_Enable;         	/* 内存地址是否自增 */
     DMA_InitStructure.DMA_PeripheralDataSize  = DMA_MemoryDataSize_Byte;      	/* 目的数据带宽 */
     DMA_InitStructure.DMA_MemoryDataSize      = DMA_MemoryDataSize_Byte;      	/* 源数据宽度 */
-    DMA_InitStructure.DMA_Mode                = DMA_Mode_Normal;              	/* 单次传输模式/循环传输模式 */
+    DMA_InitStructure.DMA_Mode                = DMA_Mode_Circular;              	/* 单次传输模式/循环传输模式 */
     DMA_InitStructure.DMA_Priority            = DMA_Priority_VeryHigh;        	/* DMA优先级 */
     DMA_InitStructure.DMA_FIFOMode            = DMA_FIFOMode_Disable;          	/* FIFO模式/直接模式 */
     DMA_InitStructure.DMA_FIFOThreshold       = DMA_FIFOThreshold_HalfFull; 	/* FIFO大小 */
@@ -148,11 +149,18 @@ void DMA_USART1_Rx_Init(u8 *dma_buf, s32 len)
     DMA_Init(DMA2_Stream2, &DMA_InitStructure);
 
     /* 4.由于接收不需要DMA中断，故不设置DMA中断 */
+    /* 4.使能DMA中断 */
+    DMA_ITConfig(DMA2_Stream2, DMA_IT_HT, ENABLE);
 
     /* 5.使能串口的DMA接收 */
     USART_DMACmd(USART1,USART_DMAReq_Rx,ENABLE);
 
-    /* 6. 由于接收不需要DMA中断，故不能配置DMA中断优先级 */
+    /* 6. 配置DMA中断优先级 */
+    NVIC_InitStructure.NVIC_IRQChannel                   = DMA2_Stream2_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority        = 2;
+    NVIC_InitStructure.NVIC_IRQChannelCmd                = ENABLE;
+    NVIC_Init(&NVIC_InitStructure);
 
     /* 7.使能DMA */
     DMA_Cmd(DMA2_Stream2,ENABLE);
@@ -172,6 +180,7 @@ void DMA2_Stream7_IRQHandler(void)
     }
 	VOSIntExit ();
 }
+
 
 void MYDMA_Enable(DMA_Stream_TypeDef *DMA_Streamx,u16 ndtr)
 {

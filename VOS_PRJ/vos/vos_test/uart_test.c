@@ -34,7 +34,7 @@ static void task_uartin(void *param)
 		ret = vgets(buf, sizeof(buf)-1);
 		if (ret > 0){
 			//kprintf("ret=%d!\r\n", ret);
-			//data_check(buf, ret);
+			data_check(buf, ret);
 			buf[ret] = 0;
 			counts += ret;
 			if (counts > mark_cnts+5000){

@@ -11,8 +11,8 @@ int fputc(int ch, FILE *f)
 	USART1->DR = (u8) ch;      
 	return ch;
 }
-#define SEND_BUF_SIZE 1024
-#define RECV_BUF_SIZE 1024
+#define SEND_BUF_SIZE 512
+#define RECV_BUF_SIZE 512
 u8 SendBuff[SEND_BUF_SIZE];
 u8 RecvBuff[RECV_BUF_SIZE];
 
@@ -166,24 +166,22 @@ void USART1_IRQHandler(void)
     	data = USART1->SR;
     	data = USART1->DR;
 
+        irq_save = __local_irq_save();
         DMA_Cmd(DMA2_Stream2,DISABLE);
-        DMA_ClearFlag(DMA2_Stream2,DMA_FLAG_TCIF2);
+        //DMA_ClearFlag(DMA2_Stream2,DMA_FLAG_TCIF2);
 
         len = RECV_BUF_SIZE - DMA_GetCurrDataCounter(DMA2_Stream2);
-
-        irq_save = __local_irq_save();
-        if (gRingBuf) {
+        if (gRingBuf && len > 0) {
         	ret = VOSRingBufSet(gRingBuf, RecvBuff, len);
-        	kprintf("%d\r\n", ret);
+        	//kprintf("%d\r\n", ret);
         	if (ret != len) {
         		kprintf("%s: ringbuf overflow!\r\n", __FUNCTION__);
         	}
         }
-        __local_irq_restore(irq_save);
         //data_check(RecvBuff, len);
-
         DMA_SetCurrDataCounter(DMA2_Stream2,RECV_BUF_SIZE);
         DMA_Cmd(DMA2_Stream2,ENABLE);
+        __local_irq_restore(irq_save);
     }
     else {
     	/* 清各种标志 */
@@ -211,6 +209,32 @@ void USART1_IRQHandler(void)
 #endif
 	VOSIntExit ();
 } 
+
+void DMA2_Stream2_IRQHandler(void)
+{
+	s32 ret;
+	s32 len;
+	s32 irq_save;
+
+	VOSIntEnter();
+	if(DMA_GetFlagStatus(DMA2_Stream2,DMA_IT_HTIF2)!=RESET)
+	{
+        irq_save = __local_irq_save();
+		DMA_Cmd(DMA2_Stream2,DISABLE);
+        DMA_ClearFlag(DMA2_Stream2,DMA_IT_HTIF2);
+        len = RECV_BUF_SIZE - DMA_GetCurrDataCounter(DMA2_Stream2);
+        if (gRingBuf && len>0) {
+        	ret = VOSRingBufSet(gRingBuf, RecvBuff, len);
+        	if (ret != len) {
+        		kprintf("%s: ringbuf overflow!\r\n", __FUNCTION__);
+        	}
+        }
+        DMA_SetCurrDataCounter(DMA2_Stream2,RECV_BUF_SIZE);
+        DMA_Cmd(DMA2_Stream2,ENABLE);
+		__local_irq_restore(irq_save);
+	}
+	VOSIntExit ();
+}
 
 s32 vgetc(u8 *ch)
 {
