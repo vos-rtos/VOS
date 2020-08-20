@@ -1,4 +1,4 @@
-#include "../vos.h"
+#include "vos.h"
 
 StVOSSemaphore *sem_hdl = 0;
 static void task0(void *param)

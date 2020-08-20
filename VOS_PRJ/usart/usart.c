@@ -1,8 +1,8 @@
-#include "sys.h"
-#include "vos.h"
 #include "usart.h"
-
+#include "vos.h"
 #include "vringbuf.h"
+
+#define USART_RX_USE_DMA	1
 
 int fputc(int ch, FILE *f)
 { 	
@@ -68,28 +68,116 @@ void uart_init(u32 bound){
  	gRingBuf = VOSRingBufFormat(gRxRingBuf, sizeof(gRxRingBuf));
 }
 
-//s32 USART1_DMA_Send(u8 *data, s32 len)
-//{
-//	s32 ret = 0;
-//	s32 min = len < SEND_BUF_SIZE ? len : SEND_BUF_SIZE;
-//	memcpy(SendBuff, data, min);
-//
-//
-//	USART_DMACmd(USART1,USART_DMAReq_Tx,ENABLE);
-//    MYDMA_Enable(DMA2_Stream7,min);
-//
-//	while(1)
-//	{
-//		if(DMA_GetFlagStatus(DMA2_Stream7,DMA_FLAG_TCIF7)!=RESET)
-//		{
-//			DMA_ClearFlag(DMA2_Stream7,DMA_FLAG_TCIF7);
-//			break;
-//		}
-//		ret = DMA_GetCurrDataCounter(DMA2_Stream7);
-//	}
-//	return ret;
-//}
+void DMA_USART1_Tx_Init(u8 *dma_buf, s32 len)
+{
+    NVIC_InitTypeDef NVIC_InitStructure;
+    DMA_InitTypeDef DMA_InitStructure;
 
+
+    /* 1.使能DMA2时钟 */
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2, ENABLE);
+
+    /* 2.配置使用DMA发送数据 */
+    DMA_DeInit(DMA2_Stream7);
+
+    DMA_InitStructure.DMA_Channel             = DMA_Channel_4;               /* 配置DMA通道 */
+    DMA_InitStructure.DMA_PeripheralBaseAddr  = (uint32_t)(&(USART1->DR));   /* 目的 */
+    DMA_InitStructure.DMA_Memory0BaseAddr     = (uint32_t)dma_buf;             /* 源 */
+    DMA_InitStructure.DMA_DIR                 = DMA_DIR_MemoryToPeripheral;    /* 方向 */
+    DMA_InitStructure.DMA_BufferSize          = len;                    		/* 长度 */
+    DMA_InitStructure.DMA_PeripheralInc       = DMA_PeripheralInc_Disable;    /* 外设地址是否自增 */
+    DMA_InitStructure.DMA_MemoryInc           = DMA_MemoryInc_Enable;         /* 内存地址是否自增 */
+    DMA_InitStructure.DMA_PeripheralDataSize  = DMA_MemoryDataSize_Byte;      /* 目的数据带宽 */
+    DMA_InitStructure.DMA_MemoryDataSize      = DMA_MemoryDataSize_Byte;      /* 源数据宽度 */
+    DMA_InitStructure.DMA_Mode                = DMA_Mode_Normal;              /* 单次传输模式/循环传输模式 */
+    DMA_InitStructure.DMA_Priority            = DMA_Priority_High;             /* DMA优先级 */
+    DMA_InitStructure.DMA_FIFOMode            = DMA_FIFOMode_Disable;          /* FIFO模式/直接模式 */
+    DMA_InitStructure.DMA_FIFOThreshold       = DMA_FIFOThreshold_HalfFull; /* FIFO大小 */
+    DMA_InitStructure.DMA_MemoryBurst         = DMA_MemoryBurst_Single;       /* 单次传输 */
+    DMA_InitStructure.DMA_PeripheralBurst     = DMA_PeripheralBurst_Single;
+
+    /* 3. 配置DMA */
+    DMA_Init(DMA2_Stream7, &DMA_InitStructure);
+
+    /* 4.使能DMA中断 */
+    DMA_ITConfig(DMA2_Stream7, DMA_IT_TC, ENABLE);
+
+    /* 5.使能串口的DMA发送接口 */
+    USART_DMACmd(USART1, USART_DMAReq_Tx, ENABLE);
+
+    /* 6. 配置DMA中断优先级 */
+    NVIC_InitStructure.NVIC_IRQChannel                   = DMA2_Stream7_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority        = 3;
+    NVIC_InitStructure.NVIC_IRQChannelCmd                = ENABLE;
+    NVIC_Init(&NVIC_InitStructure);
+
+    /* 7.不使能DMA */
+    DMA_Cmd(DMA2_Stream7, DISABLE);
+}
+
+void DMA_USART1_Rx_Init(u8 *dma_buf, s32 len)
+{
+    NVIC_InitTypeDef NVIC_InitStructure;
+    DMA_InitTypeDef DMA_InitStructure;
+
+    /* 1.使能DMA2时钟 */
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2, ENABLE);
+
+    /* 2.配置使用DMA接收数据 */
+    DMA_DeInit(DMA2_Stream2);
+
+    DMA_InitStructure.DMA_Channel             = DMA_Channel_4;               	/* 配置DMA通道 */
+    DMA_InitStructure.DMA_PeripheralBaseAddr  = (uint32_t)(&(USART1->DR));   	/* 源 */
+    DMA_InitStructure.DMA_Memory0BaseAddr     = (uint32_t)dma_buf;             	/* 目的 */
+    DMA_InitStructure.DMA_DIR                 = DMA_DIR_PeripheralToMemory;    	/* 方向 */
+    DMA_InitStructure.DMA_BufferSize          = len;                    		/* 长度 */
+    DMA_InitStructure.DMA_PeripheralInc       = DMA_PeripheralInc_Disable;    	/* 外设地址是否自增 */
+    DMA_InitStructure.DMA_MemoryInc           = DMA_MemoryInc_Enable;         	/* 内存地址是否自增 */
+    DMA_InitStructure.DMA_PeripheralDataSize  = DMA_MemoryDataSize_Byte;      	/* 目的数据带宽 */
+    DMA_InitStructure.DMA_MemoryDataSize      = DMA_MemoryDataSize_Byte;      	/* 源数据宽度 */
+    DMA_InitStructure.DMA_Mode                = DMA_Mode_Circular;              	/* 单次传输模式/循环传输模式 */
+    DMA_InitStructure.DMA_Priority            = DMA_Priority_VeryHigh;        	/* DMA优先级 */
+    DMA_InitStructure.DMA_FIFOMode            = DMA_FIFOMode_Disable;          	/* FIFO模式/直接模式 */
+    DMA_InitStructure.DMA_FIFOThreshold       = DMA_FIFOThreshold_HalfFull; 	/* FIFO大小 */
+    DMA_InitStructure.DMA_MemoryBurst         = DMA_MemoryBurst_Single;       	/* 单次传输 */
+    DMA_InitStructure.DMA_PeripheralBurst     = DMA_PeripheralBurst_Single;
+
+    /* 3. 配置DMA */
+    DMA_Init(DMA2_Stream2, &DMA_InitStructure);
+
+    /* 4.由于接收不需要DMA中断，故不设置DMA中断 */
+    /* 4.使能DMA中断 */
+    DMA_ITConfig(DMA2_Stream2, DMA_IT_HT, ENABLE);
+
+    /* 5.使能串口的DMA接收 */
+    USART_DMACmd(USART1,USART_DMAReq_Rx,ENABLE);
+
+    /* 6. 配置DMA中断优先级 */
+    NVIC_InitStructure.NVIC_IRQChannel                   = DMA2_Stream2_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority        = 2;
+    NVIC_InitStructure.NVIC_IRQChannelCmd                = ENABLE;
+    NVIC_Init(&NVIC_InitStructure);
+
+    /* 7.使能DMA */
+    DMA_Cmd(DMA2_Stream2,ENABLE);
+}
+
+void DMA2_Stream7_IRQHandler(void)
+{
+	VOSIntEnter();
+    if(DMA_GetITStatus(DMA2_Stream7,DMA_IT_TCIF7) != RESET)
+    {
+        /* 清除标志位 */
+        DMA_ClearFlag(DMA2_Stream7,DMA_IT_TCIF7);
+        /* 关闭DMA */
+        DMA_Cmd(DMA2_Stream7,DISABLE);
+        /* 打开发送完成中断,确保最后一个字节发送成功 */
+        //USART_ITConfig(USART1,USART_IT_TC,ENABLE);
+    }
+	VOSIntExit ();
+}
 
 s32 USART1_DMA_Send(u8 *data, s32 len)
 {
@@ -109,45 +197,7 @@ s32 USART1_DMA_Send(u8 *data, s32 len)
     return ret;
 }
 
-//volatile s32 gUartRxCnts = 0;
-//volatile s32 gUartRxWrIdx = 0;
-//volatile s32 gUartRxRdIdx = 0;
-//u8 gUart1Buf[1024];
-//u8 markxx = -1;
 
-//s32 RingBufSet(u8 *buf, s32 len)
-//{
-//	s32 free_size = sizeof(gUart1Buf)-gUartRxCnts;
-//	s32 copy_len = len < free_size ? len : free_size;
-//	s32 left_size = 0;
-//	if (copy_len > 0) {
-//		if (gUartRxWrIdx >= gUartRxRdIdx) {
-//			left_size = sizeof(gUart1Buf)-gUartRxWrIdx;
-//			if (copy_len > left_size) {
-//				memcpy(&gUart1Buf[gUartRxWrIdx], buf, left_size);
-//				gUartRxRdIdx = copy_len-left_size;
-//				memcpy(gUart1Buf, &buf[left_size], gUartRxRdIdx);
-//			}
-//			else {
-//				memcpy(&gUart1Buf[gUartRxWrIdx], buf, copy_len);
-//				gUartRxRdIdx += copy_len;
-//			}
-//		}
-//		else {
-//			left_size = gUartRxRdIdx-gUartRxWrIdx;
-//			copy_len = copy_len < left_size ? copy_len : left_size;
-//			memcpy(&gUart1Buf[gUartRxWrIdx], buf, copy_len);
-//			gUartRxWrIdx += copy_len;
-//		}
-//	}
-//	gUartRxCnts += copy_len;
-//	gUartRxWrIdx %= sizeof(gUart1Buf);
-//	return 0;
-//}
-
-
-
-#define USART_RX_USE_DMA	1
 
 void USART1_IRQHandler(void)
 {

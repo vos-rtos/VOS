@@ -1,5 +1,5 @@
-#include "../vos/vtype.h"
-#include "../vos/vos.h"
+#include "vtype.h"
+#include "vos.h"
 
 
 StVOSTimer *VOSTimerCreate(s32 type, u32 delay_ms, VOS_TIMER_CB callback, void *arg, s8 *name);

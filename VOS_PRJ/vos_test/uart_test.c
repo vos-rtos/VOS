@@ -1,5 +1,5 @@
-#include "../vos/vtype.h"
-#include "../vos/vos.h"
+#include "vtype.h"
+#include "vos.h"
 
 
 s32 data_check(s8 *buf, s32 len)

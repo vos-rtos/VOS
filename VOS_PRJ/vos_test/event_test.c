@@ -1,4 +1,4 @@
-#include "../vos.h"
+#include "vos.h"
 
 s32 VOSEventWait(u32 event_mask, u64 timeout_ms);
 

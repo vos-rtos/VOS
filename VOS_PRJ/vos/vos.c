@@ -809,7 +809,10 @@ void VOSSysTick()
 u32 VOSTaskDelay(u32 ms)
 {
 	//如果中断被关闭，系统不进入调度，则直接硬延时
-	//todo
+	if (VOSIntNesting > 0) {
+		VOSDelayUs(ms*1000);
+		return 0;
+	}
 	//否则进入操作系统的闹钟延时
 	u32 irq_save = 0;
 

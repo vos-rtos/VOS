@@ -1,19 +1,29 @@
-#include "../vos.h"
+#include "vos.h"
 
-static StVOSMutex *gMutexPtr;
+typedef struct StMsgBlock{
+	u32 id;
+}StMsgBlock;
+
+StVOSMsgQueue *gMsgQuePtr;
+
+#define MAX_MSG_NUM 10
+
+StMsgBlock arr_msg[MAX_MSG_NUM];
 
 static void task0(void *param)
 {
 	int cnts = 0;
+	StMsgBlock tmp;
 	kprintf("%s start ...\r\n", __FUNCTION__);
 	s64 mark_time = VOSGetTimeMs()/1000;
 	kprintf("mark_time: %d\r\n", (u32)mark_time);
 
-	gMutexPtr = VOSMutexCreate("mutex test");
+	gMsgQuePtr = VOSMsgQueCreate(arr_msg, sizeof(arr_msg), sizeof(StMsgBlock), "msg test");
 
 	while (1) {
-		if (gMutexPtr) {
-			VOSMutexRelease(gMutexPtr);
+		if (gMsgQuePtr) {
+			tmp.id = cnts++;
+			VOSMsgQuePut(gMsgQuePtr, &tmp, sizeof(tmp));
 			VOSTaskDelay(5*1000);
 		}
 	}
@@ -21,16 +31,16 @@ static void task0(void *param)
 static void task1(void *param)
 {
 	s32 ret = 0;
-
+	StMsgBlock tmp;
 	kprintf("%s start ...\r\n", __FUNCTION__);
 	while(1) {
-		if (gMutexPtr) {
-			ret = VOSMutexWait(gMutexPtr, 1000);
+		if (gMsgQuePtr) {
+			ret = VOSMsgQueGet(gMsgQuePtr, &tmp, sizeof(tmp), 1000);
 			if (ret < 0) {
-				kprintf("error: VOSMutexWait timeout!\r\n");
+				kprintf("error: VOSMsgQueGet timeout!\r\n");
 			}
 			else {
-				kprintf("info: VOSMutexWait OK!\r\n");
+				kprintf("info: VOSMsgQueGet tmp.id=%d!\r\n", tmp.id);
 			}
 		}
 		else {
@@ -41,9 +51,9 @@ static void task1(void *param)
 
 
 static long long task0_stack[1024], task1_stack[1024];
-void mutex_test()
+void mq_test()
 {
-	kprintf("test mutex!\r\n");
+	kprintf("test msg queue!\r\n");
 	s32 task_id;
 	task_id = VOSTaskCreate(task0, 0, task0_stack, sizeof(task0_stack), TASK_PRIO_NORMAL, "task0");
 	task_id = VOSTaskCreate(task1, 0, task1_stack, sizeof(task1_stack), TASK_PRIO_HIGH, "task1");
@@ -51,3 +61,4 @@ void mutex_test()
 		VOSTaskDelay(1*1000);
 	}
 }
+

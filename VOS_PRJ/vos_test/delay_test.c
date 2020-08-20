@@ -1,4 +1,4 @@
-#include "../vos.h"
+#include "vos.h"
 
 extern void VOSDelayUs(u32 us);
 
