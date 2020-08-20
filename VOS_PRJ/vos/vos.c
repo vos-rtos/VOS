@@ -7,7 +7,7 @@
 
 #include "vtype.h"
 #include "vos.h"
-#include "list.h"
+#include "vlist.h"
 
 struct StVosTask gArrVosTask[MAX_VOSTASK_NUM]; //任务数组，占用空间
 

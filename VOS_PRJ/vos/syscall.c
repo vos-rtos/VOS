@@ -8,7 +8,7 @@
 //
 //#include "vconf.h"
 //#include "vos.h"
-//#include "list.h"
+//#include "vlist.h"
 //
 //extern struct StVosTask *pRunningTask;
 //extern volatile s64  gVOSTicks;

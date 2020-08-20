@@ -9,22 +9,14 @@
 #ifndef __VOS_H__
 #define __VOS_H__
 
+#include "vconf.h"
 #include "vtype.h"
-#include "list.h"
+#include "vlist.h"
 
 
 
 typedef void (*task_fun_t)(void *param);
 
-
-
-
-
-#define MCU_FREQUENCY_HZ (u32)(168000000)
-
-#define MAX_SIGNED_VAL_64 (0x7FFFFFFFFFFFFFFF)
-
-#define VOS_TASK_NOT_INHERITANCE   (0)  //默认是优先级继承来处理优先级反转问题，如果定义为1，则不处理反转问题
 
 #if VOS_TASK_NOT_INHERITANCE
 #define VOSTaskRestorePrioBeforeRelease
@@ -49,21 +41,7 @@ enum {
 	TASK_SWITCH_PASSIVE,
 };
 
-
-void _set_PSP(u32 psp);
-void _ISB();
-
-#define MAX_CPU_NUM 1
-#define MAX_VOSTASK_NUM  10
-
-#define TICKS_INTERVAL_MS 1 //systick的间隔，1ms
-
-#define MAKE_TICKS(ms) (((ms)+TICKS_INTERVAL_MS-1)/(TICKS_INTERVAL_MS))
-#define MAKE_TIME_MS(ticks) (TICKS_INTERVAL_MS*(ticks))
-
 #define HW32_REG(ADDRESS) (*((volatile unsigned long *)(ADDRESS)))
-
-#define MAX_TICKS_TIMESLICE 10
 
 
 #define VOS_WAKEUP_FROM_SEM			(u32)(0)
@@ -211,9 +189,6 @@ enum {
 	VOS_TIMER_STA_STOPPED,
 };
 
-#define MAX_VOS_TIEMR_NUM 10
-#define VOS_TASK_TIMER_PRIO  10
-
 typedef  void (*VOS_TIMER_CB)(void *ptimer, void *parg);
 
 typedef struct StVOSTimer{
@@ -254,32 +229,16 @@ s32 VOSSemTryWait(StVOSSemaphore *pSem);
 s32 VOSSemRelease(StVOSSemaphore *pSem);
 s32 VOSSemDelete(StVOSSemaphore *pSem);
 
-StVOSSemaphore *VOSSemCreateSysCall(StVosSysCallParam *psa);
-s32 SysCallVOSSemTryWait(StVosSysCallParam *psa);
-s32 SysCallVOSSemWait(StVosSysCallParam *psa);
-s32 SysCallVOSSemRelease(StVosSysCallParam *psa);
-
 void VOSMutexInit();
 StVOSMutex *VOSMutexCreate(s8 *name);
 s32 VOSMutexWait(StVOSMutex *pMutex, s64 timeout_ms);
 s32 VOSMutexRelease(StVOSMutex *pMutex);
 s32 VOSMutexDelete(StVOSMutex *pMutex);
-s32 SysCallVOSSemDelete(StVosSysCallParam *psa);
-
-StVOSMutex *SysCallVOSMutexCreate(StVosSysCallParam *psa);
-s32 SysCallVOSMutexWait(StVosSysCallParam *psa);
-s32 SysCallVOSMutexRelease(StVosSysCallParam *psa);
-s32 SysCallVOSMutexDelete(StVosSysCallParam *psa);
 
 s32 VOSEventWait(u32 event_mask, u64 timeout_ms);
 s32 VOSEventSet(s32 task_id, u32 event);
 u32 VOSEventGet(s32 task_id);
 s32 VOSEventClear(s32 task_id, u32 event);
-
-s32 SysCallVOSEventWait(StVosSysCallParam *psa);
-s32 SysCallVOSEventSet(StVosSysCallParam *psa);
-u32 SysCallVOSEventGet(StVosSysCallParam *psa);
-s32 SysCallVOSEventClear(StVosSysCallParam *psa);
 
 void VOSMsgQueInit();
 StVOSMsgQueue *VOSMsgQueCreate(s8 *pRingBuf, s32 length, s32 msg_size, s8 *name);
@@ -287,13 +246,7 @@ s32 VOSMsgQuePut(StVOSMsgQueue *pMQ, void *pmsg, s32 len);
 s32 VOSMsgQueGet(StVOSMsgQueue *pMQ, void *pmsg, s32 len, s64 timeout_ms);
 s32 VOSMsgQueFree(StVOSMsgQueue *pMQ);
 
-StVOSMsgQueue *SysCallVOSMsgQueCreate(StVosSysCallParam *psa);
-s32 SysCallVOSMsgQuePut(StVosSysCallParam *psa);
-s32 SysCallVOSMsgQueGet(StVosSysCallParam *psa);
-s32 SysCallVOSMsgQueFree(StVosSysCallParam *psa);
-
 u32 VOSTaskDelay(u32 ms);
-u32 SysCallVOSTaskDelay(StVosSysCallParam *psa);
 
 s64 VOSGetTicks();
 s64 VOSGetTimeMs();
@@ -301,7 +254,6 @@ s64 VOSGetTimeMs();
 //任务上下文使用VOSTaskCreate
 s32 VOSTaskCreate(void (*task_fun)(void *param), void *param,
 		void *pstack, u32 stack_size, s32 prio, s8 *task_nm);
-s32 SysCallVOSTaskCreate(StVosSysCallParam *psa);
 
 //创建任务，不能在任务上下文创建(任务上下文使用VOSTaskCreate)
 s32 VOSTaskInBuild(void (*task_fun)(void *param), void *param,

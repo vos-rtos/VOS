@@ -1,3 +1,10 @@
+//----------------------------------------------------
+// Copyright (c) 2020, VOS Open source. All rights reserved.
+// Author: 156439848@qq.com; vincent_cws2008@gmail.com
+// History:
+//	     2020-08-20: initial by vincent.
+//------------------------------------------------------
+
 #ifndef __V_BITMAP_H__
 #define __V_BITMAP_H__
 /*

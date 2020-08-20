@@ -7,7 +7,7 @@
 
 #include "vconf.h"
 #include "vos.h"
-#include "list.h"
+#include "vlist.h"
 
 extern volatile s64  gVOSTicks;
 

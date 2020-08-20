@@ -7,7 +7,7 @@
 
 #include "vconf.h"
 #include "vos.h"
-#include "list.h"
+#include "vlist.h"
 
 #ifndef MAX_VOS_SEMAPHONRE_NUM
 #define MAX_VOS_SEMAPHONRE_NUM  2
@@ -566,12 +566,14 @@ s32 VOSMsgQueGet(StVOSMsgQueue *pMQ, void *pmsg, s32 len, s64 timeout_ms)
 			ret = -1;
 			break;
 		case VOS_WAKEUP_FROM_MSGQUE: //正常的有消息，获取消息
+			irq_save = __vos_irq_save();
 			phead = pMQ->pdata + pMQ->pos_head * pMQ->msg_size;
 			len = (len <= pMQ->msg_size) ? len : pMQ->msg_size;
 			memcpy(pmsg, phead, len);
 			pMQ->pos_head++;
 			pMQ->pos_head = pMQ->pos_head % pMQ->msg_maxs;
 			pMQ->msg_cnts--;
+			__vos_irq_restore(irq_save);
 			ret = 1;
 			break;
 		case VOS_WAKEUP_FROM_MSGQUE_DEL:
