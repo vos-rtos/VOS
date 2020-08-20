@@ -97,3 +97,31 @@ s32 VOSRingBufGet(StVOSRingBuf *ring, u8 *buf, s32 len)
 	}
 	return copy_len;
 }
+
+s32 VOSRingBufPeekGet(StVOSRingBuf *ring, u8 *buf, s32 len)
+{
+	s32 right_size = 0;
+	s32 left_size = 0;
+	s32 copy_len = 0;
+
+	if (ring==0) return -1;
+
+	copy_len = len < ring->cnts ? len : ring->cnts;
+
+	if (copy_len > 0) {
+		if (ring->max - ring->idx_rd >= copy_len) {
+			memcpy(buf, &ring->buf[ring->idx_rd], copy_len);
+			//ring->idx_rd += copy_len;
+		}
+		else {
+			right_size = ring->max - ring->idx_rd;
+			memcpy(buf, &ring->buf[ring->idx_rd], right_size);
+			left_size = copy_len - right_size;
+			memcpy(&buf[right_size], ring->buf, left_size);
+			//ring->idx_rd = left_size;
+		}
+		//ring->idx_rd %= ring->max;
+		//ring->cnts -= copy_len;
+	}
+	return copy_len;
+}

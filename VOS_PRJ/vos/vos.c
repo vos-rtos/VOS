@@ -387,7 +387,7 @@ END_CREATE:
 	//这里注意，可能任务被新优先级的任务抢了，执行更高优先级后才切换到这里继续执行。
 	return ptask ? ptask->id : -1;
 }
-#define BLOCK_SUB_MASK (VOS_BLOCK_SEMP|VOS_BLOCK_MUTEX|VOS_BLOCK_EVENT|VOS_BLOCK_MSGQUE)
+
 //唤醒阻塞队列里的任务, 就是把阻塞队列符合条件的任务添加到就绪队列
 void VOSTaskBlockWaveUp()
 {
@@ -531,9 +531,6 @@ void VOSTaskBlockWaveUp()
 	}
 	gMarkTicksNearest = latest_ticks;
 
-
-	/**/
-
 	__local_irq_restore(irq_save);
 }
 
@@ -557,7 +554,6 @@ void task_idle(void *param)
 
 void VOSStarup()
 {
-	//VOSSysTickSet();//设置tick时钟间隔
 	u32 irq_save = 0;
 	if (VOSRunning == 0) { //启动第一个任务时会设置个VOSRunning为1
 		irq_save = __vos_irq_save();
@@ -668,7 +664,7 @@ void  VOSIntEnter()
     if (VOSRunning) {
     	irq_save = __local_irq_save();
         if (VOSIntNesting < 0xFFFFFFFFU) {
-        	VOSIntNesting++;                      /* Increment ISR nesting level                        */
+        	VOSIntNesting++;
         }
         __local_irq_restore(irq_save);
     }
@@ -711,40 +707,6 @@ void VOSTaskSchedule()
 	VOSTaskSwitch(TASK_SWITCH_ACTIVE);
 	//__vos_irq_restore(irq_save);
 }
-
-void SVC_Handler_C(u32 *svc_args, s32 is_psp)
-{
-
-	VOSIntEnter();
-	StVosSysCallParam *psa;
-	u8 svc_number;
-	u32 irq_save;
-	u32 offset = 0;
-	if (!is_psp) {
-		offset = 1;//+1是汇编里把lr也push一个到msp，所以这里要加1
-	}
-	irq_save = __local_irq_save();
-	svc_number = ((char *)svc_args[6+offset])[-2]; //+1是汇编里把lr也push一个，所以这里要加1
-	switch(svc_number) {
-	case VOS_SVC_NUM_SYSCALL: //系统调用
-//		psa = (StVosSysCallParam *)svc_args[0+offset];
-//		VOSSysCall(psa);
-		break;
-
-	case VOS_SVC_PRIVILEGED_MODE: //svc 6 切换到特权并关中断
-		svc_args[0+offset] = __switch_privileged_mode();//返回切换前的control[0]状态
-		break;
-
-	default:
-		kprintf("ERROR: SVC_Handler_C!\r\n");
-		while (1) ;
-		break;
-	}
-
-	__local_irq_restore(irq_save);
-	VOSIntExit ();
-}
-
 
 void VOSTaskSchTabDebug()
 {

@@ -20,6 +20,23 @@ u8 RecvBuff[RECV_BUF_SIZE];
 u8 gRxRingBuf[RX_RINGBUF_SIZE];
 StVOSRingBuf *gRingBuf = 0;
 
+
+enum {
+	EVENT_UART_RECV = 0,
+};
+
+typedef struct StMapEvtTask{
+	s32 event;
+	s32 task_id;
+}StMapEvtTask;
+
+StMapEvtTask gArrUart[1];
+void RegistUartEvent(s32 event, s32 task_id)
+{
+	gArrUart[0].event = event;
+	gArrUart[0].task_id = task_id;
+}
+
 void uart_init(u32 bound){
 
 	GPIO_InitTypeDef GPIO_InitStructure;
@@ -231,6 +248,9 @@ void USART1_IRQHandler(void)
         //data_check(RecvBuff, len);
         DMA_SetCurrDataCounter(DMA2_Stream2,RECV_BUF_SIZE);
         DMA_Cmd(DMA2_Stream2,ENABLE);
+        if (gArrUart[0].event != 0) {
+        	VOSEventSet(gArrUart[0].task_id, gArrUart[0].event);
+        }
         __local_irq_restore(irq_save);
     }
     else {
@@ -310,6 +330,19 @@ s32 vgets(u8 *buf, s32 len)
 	__vos_irq_restore(irq_save);
 	return ret;
 }
+
+s32 peek_vgets(u8 *buf, s32 len)
+{
+	s32 ret = 0;
+	s32 irq_save;
+	irq_save = __vos_irq_save();
+	if (gRingBuf) {
+		ret = VOSRingBufPeekGet(gRingBuf, buf, len);
+	}
+	__vos_irq_restore(irq_save);
+	return ret;
+}
+
 
 void vputs(s8 *str, s32 len)
 {

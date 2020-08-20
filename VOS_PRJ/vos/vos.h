@@ -14,6 +14,7 @@
 #include "vlist.h"
 
 
+#define EVENT_USART1_RECV	(1<<0)
 
 typedef void (*task_fun_t)(void *param);
 
@@ -66,6 +67,8 @@ enum {
 #define VOS_BLOCK_MUTEX			(u32)(1<<3) //互斥阻塞
 #define VOS_BLOCK_MSGQUE		(u32)(1<<4) //消息队列阻塞
 
+#define BLOCK_SUB_MASK (VOS_BLOCK_SEMP|VOS_BLOCK_MUTEX|VOS_BLOCK_EVENT|VOS_BLOCK_MSGQUE)
+
 #define TASK_PRIO_INVALID		(s32)(-1) //次优先级分配给IDLE
 #define TASK_PRIO_REAL			(s32)(100)
 #define TASK_PRIO_HIGH			(s32)(130)
@@ -78,36 +81,6 @@ enum {
 #define VOS_SVC_NUM_DELAY			(u32)(3) //svc 3 系统延时，提高效率
 #define VOS_SVC_NUM_SYSCALL			(u32)(5) //svc 5 进入系统调用例程
 #define VOS_SVC_PRIVILEGED_MODE		(u32)(6) //svc 6 切换到特权模式
-
-
-#define VOS_SYSCALL_MUTEX_CREAT   	(u32)(10)
-#define VOS_SYSCALL_MUTEX_WAIT		(u32)(11)
-#define VOS_SYSCALL_MUTEX_RELEASE	(u32)(12)
-#define VOS_SYSCALL_MUTEX_DELETE	(u32)(13)
-
-#define VOS_SYSCALL_SEM_CREATE		(u32)(14)
-#define VOS_SYSCALL_SEM_WAIT		(u32)(15)
-#define VOS_SYSCALL_SEM_TRY_WAIT	(u32)(16)
-#define VOS_SYSCALL_SEM_RELEASE		(u32)(17)
-#define VOS_SYSCALL_SEM_DELETE		(u32)(18)
-
-#define VOS_SYSCALL_EVENT_WAIT		(u32)(19)
-#define VOS_SYSCALL_EVENT_SET		(u32)(20)
-#define VOS_SYSCALL_EVENT_GET		(u32)(21)
-#define VOS_SYSCALL_EVENT_CLEAR		(u32)(22)
-
-#define VOS_SYSCALL_MSGQUE_CREAT	(u32)(23)
-#define VOS_SYSCALL_MSGQUE_PUT		(u32)(24)
-#define VOS_SYSCALL_MSGQUE_GET		(u32)(25)
-#define VOS_SYSCALL_MSGQUE_FREE		(u32)(26)
-
-#define VOS_SYSCALL_TASK_DELAY   	(u32)(27)
-
-#define VOS_SYSCALL_TASK_CREATE		(u32)(28)
-
-#define VOS_SYSCALL_SCH_TAB_DEBUG	(u32)(29)
-
-#define VOS_SYSCALL_GET_CHAR		(u32)(30)
 
 typedef struct StVosSysCallParam {
 	u32 call_num; //系统调用号

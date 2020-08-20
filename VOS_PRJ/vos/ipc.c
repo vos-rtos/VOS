@@ -349,7 +349,7 @@ s32 VOSEventWait(u32 event_mask, u64 timeout_ms)
 	s32 ret = 0;
 	u32 irq_save = 0;
 
-	if (VOSIntNesting != 0) return -1;
+	if (VOSIntNesting != 0) return -1; //中断上下文，直接返回-1
 
 	irq_save = __vos_irq_save();
 
@@ -394,8 +394,6 @@ s32 VOSEventSet(s32 task_id, u32 event)
 	s32 ret = -1;
 	u32 irq_save = 0;
 
-	if (VOSIntNesting != 0) return -1;
-
 	irq_save = __vos_irq_save();
 	StVosTask *pTask = VOSGetTaskFromId(task_id);
 	if (pTask) {
@@ -405,7 +403,7 @@ s32 VOSEventSet(s32 task_id, u32 event)
 	}
 	__vos_irq_restore(irq_save);
 
-	if (ret == 1) {
+	if (VOSIntNesting == 0 && ret == 1) {
 		//唤醒后，立即调用任务调度，万一唤醒的任务优先级高于当前任务，则切换,
 		//但不能用VOSTaskSwitch(TASK_SWITCH_USER);这是必须在特权模式下使用。
 		VOSTaskSchedule();
