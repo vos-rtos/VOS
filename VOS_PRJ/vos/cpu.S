@@ -58,6 +58,10 @@ PendSV_Handler:
 	beq  INT_ENABLE
 	cmp r2, #0
 	beq  INT_ENABLE
+	//任务准备切换出去，这里统计cpu占用率
+	push {lr}
+	bl	HookTaskSwitchOut
+	pop {lr}
 
 	mrs	r0, psp //保存当前上下文
 	tst	lr, #0x10 //测试浮点是否需要压栈
@@ -83,6 +87,11 @@ PendSV_Handler:
 	it eq
 	vldmiaeq r0!, {s16-s31}
 	msr psp, r0
+
+	//最高优先级任务已经切换进来，这里统计cpu占用率
+	push {lr}
+	bl	HookTaskSwitchIn
+	pop {lr}
 
 INT_ENABLE:
 	pop {r0}

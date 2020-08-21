@@ -28,6 +28,7 @@ void main(void *param)
 	//schedule_test();
 	//uart_test();
 	//timer_test();
+	while (1) ;
 	while (1) {
 		VOSTaskDelay(1*1000);
 	}

@@ -2,13 +2,6 @@
 // Copyright (c) 2020, VOS Open source. All rights reserved.
 // Author: 156439848@qq.com; vincent_cws2008@gmail.com
 // History:
-//	     2020-08-15: initial by vincent.
-//------------------------------------------------------
-
-//----------------------------------------------------
-// Copyright (c) 2020, VOS Open source. All rights reserved.
-// Author: 156439848@qq.com; vincent_cws2008@gmail.com
-// History:
 //	     2020-08-21: initial by vincent.
 //------------------------------------------------------
 
@@ -46,6 +39,18 @@ void VSHELL_FUN_NOTE(bbb, "this is function for test!")(s8 **parr, s32 cnts)
 		kprintf("param[%d]:%s\r\n", i, parr[i]);
 	}
 }
+void CaluTasksCpuUsedRateStart();
+s32 CaluTasksCpuUsedRateEnded(struct StTaskInfo *arr, s32 cnts);
+void VSHELL_FUN_NOTE(task, "list tasks infomation.")(s8 **parr, s32 cnts)
+{
+	s32 ret = 0;
+	s32 i = 0;
+	struct StTaskInfo arr[MAX_VOSTASK_NUM];
+	CaluTasksCpuUsedRateStart();
+	VOSTaskDelay(1000);
+	ret = CaluTasksCpuUsedRateEnded(arr, MAX_VOSTASK_NUM);
+}
+
 
 typedef void (*VSHELL_FUN)(s8 **parr, s32 cnts);
 extern unsigned int vshell_name_start;
@@ -146,9 +151,6 @@ void VOSTaskShell(void *param)
 			ret = vgets(cmd, sizeof(cmd)-1);
 			if (strlen(cmd)) kprintf("\r\n");
 			cnts = VOSShellPaserLine(cmd, parr, sizeof(parr)/sizeof(parr[0]));
-//			for (i=0; i<cnts; i++) {
-//				kprintf("param[%d]:%s\r\n", i, parr[i]);
-//			}
 			//Ö´ÐÐÃüÁîÐÐ
 			vshell_do(parr, cnts);
 

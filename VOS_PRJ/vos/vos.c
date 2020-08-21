@@ -40,6 +40,150 @@ u32 VOSUserIRQSave();
 void VOSUserIRQRestore(u32 save);
 
 
+volatile u32 flag_cpu_used_rate = 0;
+
+//目前这个函数用于统计任务使用cpu占用率计算
+//当前任务准备切换出去前，
+void HookTaskSwitchOut()
+{
+	if (VOSRunning && pRunningTask->ticks_used_start != -1) {
+		if (gVOSTicks - pRunningTask->ticks_used_start > 0) {
+			pRunningTask->ticks_used_cnts += gVOSTicks - pRunningTask->ticks_used_start;
+		}
+	}
+}
+//目前这个函数用于统计任务使用cpu占用率计算
+void HookTaskSwitchIn()
+{
+	if (VOSRunning && pRunningTask->ticks_used_start != -1) {
+		pRunningTask->ticks_used_start = gVOSTicks;
+	}
+}
+
+void CaluTasksCpuUsedRateStart()
+{
+	u32 irq_save = 0;
+
+	StVosTask *ptask_prio = 0;
+	struct list_head *list_prio;
+	struct list_head *phead = 0;
+
+	if (VOSRunning==0) return;
+
+	irq_save = __local_irq_save();
+
+	//正在与运行的任务也要计算算
+	pRunningTask->ticks_used_start = gVOSTicks;
+
+	phead = &gListTaskReady;
+	//插入队列，必须优先级从高到低有序排列
+	list_for_each(list_prio, phead) {
+		ptask_prio = list_entry(list_prio, struct StVosTask, list);
+		ptask_prio->ticks_used_start = gVOSTicks;
+	}
+	phead = &gListTaskBlock;
+	//插入队列，必须优先级从高到低有序排列
+	list_for_each(list_prio, phead) {
+		ptask_prio = list_entry(list_prio, struct StVosTask, list);
+		ptask_prio->ticks_used_start = gVOSTicks;
+	}
+	__local_irq_restore(irq_save);
+}
+
+
+s32 CaluTasksCpuUsedRateEnded(struct StTaskInfo *arr, s32 cnts)
+{
+	u32 irq_save = 0;
+	s32 i = 0;
+	s32 j = 0;
+	s32 ret = 0;
+	s32 ticks_totals = 0;
+	StVosTask *ptask_prio = 0;
+	struct list_head *list_prio;
+	struct list_head *phead = 0;
+	//把数组全部元素的id设置为-1
+	for (i=0; i<cnts; i++) {
+		arr[i].id = -1;
+	}
+
+	irq_save = __local_irq_save();
+
+	i = 0;
+	//正在与运行的任务也要计算
+	if (i < cnts) {
+		arr[i].id = pRunningTask->id;
+		arr[i].ticks = pRunningTask->ticks_used_cnts;
+		arr[i].prio = pRunningTask->prio_base;
+		arr[i].stack_top = pRunningTask->pstack_top;
+		arr[i].stack_size = pRunningTask->stack_size;
+		arr[i].name = pRunningTask->name;
+		ticks_totals += arr[i].ticks;
+		pRunningTask->ticks_used_start = -1;
+		pRunningTask->ticks_used_cnts = 0;
+	}
+
+	phead = &gListTaskReady;
+	//插入队列，必须优先级从高到低有序排列
+	list_for_each(list_prio, phead) {
+		ptask_prio = list_entry(list_prio, struct StVosTask, list);
+		i++;
+		if (i < cnts) {
+			arr[i].id = ptask_prio->id;
+			arr[i].ticks = ptask_prio->ticks_used_cnts;
+			arr[i].prio = ptask_prio->prio_base;
+			arr[i].stack_top = ptask_prio->pstack_top;
+			arr[i].stack_size = ptask_prio->stack_size;
+			arr[i].name = ptask_prio->name;
+			ticks_totals += arr[i].ticks;
+			ptask_prio->ticks_used_start = -1;
+			ptask_prio->ticks_used_cnts = 0;
+		}
+		else {//跳出
+			break;
+		}
+	}
+	phead = &gListTaskBlock;
+	//插入队列，必须优先级从高到低有序排列
+	list_for_each(list_prio, phead) {
+		ptask_prio = list_entry(list_prio, struct StVosTask, list);
+		i++;
+		if (i < cnts) {
+			arr[i].id = ptask_prio->id;
+			arr[i].ticks = ptask_prio->ticks_used_cnts;
+			arr[i].prio = ptask_prio->prio_base;
+			arr[i].stack_top = ptask_prio->pstack_top;
+			arr[i].stack_size = ptask_prio->stack_size;
+			arr[i].name = ptask_prio->name;
+			ticks_totals += arr[i].ticks;
+			ptask_prio->ticks_used_start = -1;
+			ptask_prio->ticks_used_cnts = 0;
+		}
+		else {//跳出
+			break;
+		}
+	}
+	__local_irq_restore(irq_save);
+
+	ret = i;
+
+	//print all task infomations
+	//按任务号排序，待优化，任务id唯一，直接从0开始找
+	kprintf("任务号\t优先级\tCPU(百分比)\t栈顶地址\t栈总尺寸\t任务名\r\n");
+	for (i=0; i<MAX_VOSTASK_NUM; i++) {
+		for (j=0; j<cnts; j++) {
+			if (arr[j].id == i) {
+				u32 xxx = (u32)(arr[j].ticks*100/ticks_totals);
+				//打印任务信息
+				kprintf("%04d\t%03d\t\t%03d\t0x%08x\t0x%08x\t%s\r\n",
+						arr[j].id, arr[j].prio, (u32)(arr[j].ticks*100/ticks_totals), arr[j].stack_top, arr[j].stack_size, arr[j].name);
+				break;
+			}
+		}
+	}
+
+	return ret;
+}
+
 
 u32 __vos_irq_save()
 {
@@ -360,6 +504,8 @@ s32 VOSTaskCreate(void (*task_fun)(void *param), void *param,
 	ptask->psyn = 0;
 
 	ptask->block_type = 0;//没任何阻塞
+
+	ptask->ticks_used_start = -1; //禁止统计cpu使用率
 
 	ptask->list.pTask = ptask;
 

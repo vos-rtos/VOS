@@ -165,9 +165,20 @@ typedef struct StVosTask {
 	u32 wakeup_from; //唤醒同步信号的来源，
 	u32 event_mask;  //事件类型，32位事件
 	u32 event;  //事件类型，32位事件
-
+	s64 ticks_used_start; //每次进入cpu,记录开始时间，等待切换出去时，把当前时间减去这个时间然后累加到ticks_used_cnts
+	s64 ticks_used_cnts; //统计cpu使用率
 	struct list_head list;//空闲链表和优先级任务链表,优先级高的排第头，优先级低的排尾
 }StVosTask;
+
+
+typedef struct StTaskInfo {
+	s32 id;
+	s32 prio;
+	s64 ticks;
+	s32 stack_top;
+	s32 stack_size;
+	s8 *name;
+}StTaskInfo;
 
 
 enum {
