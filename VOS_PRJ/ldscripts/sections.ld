@@ -107,20 +107,20 @@ SECTIONS
     sec_shell : ALIGN(4)
     {
         FILL(0xFF)
-        shell_name_start = . ;
-        KEEP(*(.shell_name))
-        KEEP(*(.shell_name.*))
-        shell_name_end = . ; 
+        vshell_name_start = . ;
+        KEEP(*(.vshell_name))
+        KEEP(*(.vshell_name.*))
+        vshell_name_end = . ; 
         
-       	shell_fun_start = . ;
-        KEEP(*(.shell_fun))
-        KEEP(*(.shell_fun.*))
-        shell_fun_end = . ;
+       	vshell_fun_start = . ;
+        KEEP(*(.vshell_fun))
+        KEEP(*(.vshell_fun.*))
+        vshell_fun_end = . ;
         
-        shell_note_start = . ;
-        KEEP(*(.shell_note))
-        KEEP(*(.shell_note.*))
-        shell_note_end = . ;
+        vshell_note_start = . ;
+        KEEP(*(.vshell_note))
+        KEEP(*(.vshell_note.*))
+        vshell_note_end = . ;
        
     } >FLASH
 
