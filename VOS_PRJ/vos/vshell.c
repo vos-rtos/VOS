@@ -5,45 +5,73 @@
 //	     2020-08-15: initial by vincent.
 //------------------------------------------------------
 
+//----------------------------------------------------
+// Copyright (c) 2020, VOS Open source. All rights reserved.
+// Author: 156439848@qq.com; vincent_cws2008@gmail.com
+// History:
+//	     2020-08-21: initial by vincent.
+//------------------------------------------------------
+
 #include "vconf.h"
 #include "vos.h"
 #include "vlist.h"
 
-SHELL_FUN(vincent)(s8 *fun_name)
+void SHELL_FUN(vincent)(s8 *fun_name)
 {
 	kprintf("vincent--%s--\r\n", fun_name);
 }
-SHELL_FUN(abc)(s8 *fun_name)
+void SHELL_FUN(abc)(s8 *fun_name)
 {
 	kprintf("abc--%s--\r\n", fun_name);
 }
 
-SHELL_FUN(aaa)(s8 *fun_name)
+void SHELL_FUN(aaa)(s8 *fun_name)
 {
 	kprintf("aaa--%s--\r\n", fun_name);
 }
-SHELL_FUN(bbb)(s8 *fun_name)
+//
+void SHELL_FUN_NOTE(bbb, "this is function for test!")(s8 *fun_name)
 {
 	kprintf("bbb--%s--\r\n", fun_name);
 }
 
-
-typedef void (*SHELL_FUN)(u8*);
+typedef void (*SHELL_FUN)(s8*);
 extern unsigned int shell_name_start;
 extern unsigned int shell_name_end;
 extern unsigned int shell_fun_start;
 extern unsigned int shell_fun_end;
+extern unsigned int shell_note_start;
+extern unsigned int shell_note_end;
 
-void shell_do(u8 *fun_name)
+
+void SHELL_FUN(help)(s8 *fun_name)
+{
+	s32 i = 0;
+	u32 *pfname = 0;
+	u32 *pfnote = 0;
+	s8 *name = 0;
+	s8 *note = 0;
+	kprintf("cmd name: %s\r\n", fun_name);
+
+	for (pfname = &shell_name_start, pfnote = &shell_note_start; pfname < &shell_name_end; pfname++,pfnote++){
+		name = (unsigned int *)(*pfname);
+		note = (unsigned int *)(*pfnote);
+
+		kprintf("%02d. %s\t\t%s\r\n", i++, name, note?note:"");
+	}
+}
+
+
+void shell_do(s8 *fun_name)
 {
 	u32 *pfname = 0;
 	u32 *pfun = 0;
-	u8 *name = 0;
+	s8 *name = 0;
 	SHELL_FUN fun = 0;
 	for (pfname = &shell_name_start, pfun = &shell_fun_start; pfname < &shell_name_end; pfname++, pfun++){
 		name = (unsigned int *)(*pfname);
-		fun = (SHELL_FUN)(*pfun);
 		if (strcmp(name, fun_name)==0){
+			fun = (SHELL_FUN)(*pfun);
 			fun(name);
 			break;
 		}
@@ -58,21 +86,21 @@ void VOSTaskShell(void *param)
 {
 	s32 i =  0;
 	s32 ret = 0;
-	u8 buf[100];
+	u8  cmd[100];
 	while(VOSEventWait(EVENT_USART1_RECV, TIMEOUT_INFINITY_U32)) {
-		ret = peek_vgets(buf, sizeof(buf)-1);
-		if (ret > 0 && (buf[ret-1]=='\r'||buf[ret-1]=='\n')) {
-			ret = vgets(buf, sizeof(buf)-1);
+		ret = peek_vgets(cmd, sizeof(cmd)-1);
+		if (ret > 0 && (cmd[ret-1]=='\r'||cmd[ret-1]=='\n')) {
+			ret = vgets(cmd, sizeof(cmd)-1);
 			for (i=0; i<ret; i++) {
-				if (buf[i]=='\r'||buf[i]=='\n') {
-					buf[i]=0;
+				if (cmd[i]=='\r'||cmd[i]=='\n') {
+					cmd[i]=0;
 					break;
 				}
 			}
-			if (i==ret) buf[ret] = 0;
+			if (i==ret) cmd[ret] = 0;
 			kprintf("VOSTaskShell Get Uart Data:");
-			kprintf("\"%s\"\r\n", buf);
-			shell_do(buf);
+			kprintf("\"%s\"\r\n", cmd);
+			shell_do(cmd);
 		}
 	}
 }

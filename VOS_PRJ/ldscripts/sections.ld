@@ -116,6 +116,11 @@ SECTIONS
         KEEP(*(.shell_fun))
         KEEP(*(.shell_fun.*))
         shell_fun_end = . ;
+        
+        shell_note_start = . ;
+        KEEP(*(.shell_note))
+        KEEP(*(.shell_note.*))
+        shell_note_end = . ;
        
     } >FLASH
 

@@ -17,14 +17,24 @@
 #define EVENT_USART1_RECV	(1<<0)
 
 typedef void (*task_fun_t)(void *param);
-//extern void __attribute__ ((section(".shell_fun"),noload, used)) (f)(s8*);\
-//const void *f##_shell __attribute__((section(".shell_name"),noload,used))= (void*)f;
+
+//定义shell函数声明
 #define SHELL_FUN(f) \
+	f(s8*);\
 	const char *f##_name __attribute__((section(".shell_name"),noload,used))=#f; \
+	const char *f##_note __attribute__((section(".shell_note"),noload,used))=0; \
 	extern void f(s8*);\
-	void *f##_shell __attribute__((section(".shell_fun"),noload,used))=(void*)f;\
+	void *f##_fun __attribute__((section(".shell_fun"),noload,used))=(void*)f;\
 	void (f) \
 
+//定义shell函数声明, ins添加声明
+#define SHELL_FUN_NOTE(f,note) \
+	f(s8*);\
+	const char *f##_name __attribute__((section(".shell_name"),noload,used))=#f; \
+	const char *f##_note __attribute__((section(".shell_note"),noload,used))=#note; \
+	extern void f(s8*);\
+	void *f##_fun __attribute__((section(".shell_fun"),noload,used))=(void*)f;\
+	void (f) \
 
 #if VOS_TASK_NOT_INHERITANCE
 #define VOSTaskRestorePrioBeforeRelease
