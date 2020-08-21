@@ -103,6 +103,21 @@ SECTIONS
         *(.after_vectors .after_vectors.*)	/* Startup code and ISR */
 
     } >FLASH
+    
+    sec_shell : ALIGN(4)
+    {
+        FILL(0xFF)
+        shell_name_start = . ;
+        KEEP(*(.shell_name))
+        KEEP(*(.shell_name.*))
+        shell_name_end = . ; 
+        
+       	shell_fun_start = . ;
+        KEEP(*(.shell_fun))
+        KEEP(*(.shell_fun.*))
+        shell_fun_end = . ;
+       
+    } >FLASH
 
     .inits : ALIGN(4)
     {

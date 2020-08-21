@@ -14,10 +14,10 @@ void schedule_test();
 void uart_test();
 void timer_test();
 
+
 void main(void *param)
 {
 	u32 save = 0;
-
 	dma_printf("hello world!\r\n");
 	kprintf("main function!\r\n");
 	//event_test();

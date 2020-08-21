@@ -17,6 +17,13 @@
 #define EVENT_USART1_RECV	(1<<0)
 
 typedef void (*task_fun_t)(void *param);
+//extern void __attribute__ ((section(".shell_fun"),noload, used)) (f)(s8*);\
+//const void *f##_shell __attribute__((section(".shell_name"),noload,used))= (void*)f;
+#define SHELL_FUN(f) \
+	const char *f##_name __attribute__((section(".shell_name"),noload,used))=#f; \
+	extern void f(s8*);\
+	void *f##_shell __attribute__((section(".shell_fun"),noload,used))=(void*)f;\
+	void (f) \
 
 
 #if VOS_TASK_NOT_INHERITANCE

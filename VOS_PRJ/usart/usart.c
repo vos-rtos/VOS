@@ -349,6 +349,7 @@ void vputs(s8 *str, s32 len)
 	u32 irq_save;
 	s32 i;
 	//irq_save = __vos_irq_save();
+	USART_GetFlagStatus(USART1, USART_FLAG_TC);
 	for (i=0; i<len; i++) {
 		USART_SendData(USART1, (u8)str[i]);
 		while(USART_GetFlagStatus(USART1,USART_FLAG_TC)!=SET);
