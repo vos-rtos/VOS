@@ -103,8 +103,10 @@ s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode)
 	s32 ret = 0;
 	s32 ticks_totals = 0;
 	StVosTask *ptask_prio = 0;
+	s8 stack_status[16];
 	struct list_head *list_prio;
 	struct list_head *phead = 0;
+	s32 stack_left = 0;
 	//把数组全部元素的id设置为-1
 	for (i=0; i<cnts; i++) {
 		arr[i].id = -1;
@@ -125,6 +127,7 @@ s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode)
 		arr[i].prio = pRunningTask->prio_base;
 		arr[i].stack_top = pRunningTask->pstack_top;
 		arr[i].stack_size = pRunningTask->stack_size;
+		arr[i].stack_ptr = pRunningTask->pstack;
 		arr[i].name = pRunningTask->name;
 		ticks_totals += arr[i].ticks;
 		if (mode==0) {//结束
@@ -144,6 +147,7 @@ s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode)
 			arr[i].prio = ptask_prio->prio_base;
 			arr[i].stack_top = ptask_prio->pstack_top;
 			arr[i].stack_size = ptask_prio->stack_size;
+			arr[i].stack_ptr = ptask_prio->pstack;
 			arr[i].name = ptask_prio->name;
 			ticks_totals += arr[i].ticks;
 			if (mode==0) {//结束
@@ -166,6 +170,7 @@ s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode)
 			arr[i].prio = ptask_prio->prio_base;
 			arr[i].stack_top = ptask_prio->pstack_top;
 			arr[i].stack_size = ptask_prio->stack_size;
+			arr[i].stack_ptr = ptask_prio->pstack;
 			arr[i].name = ptask_prio->name;
 			ticks_totals += arr[i].ticks;
 			if (mode==0) {//结束
@@ -186,14 +191,27 @@ s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode)
 
 	//打印所有任务信息
 	//按任务号排序，待优化，任务id唯一，直接从0开始找
-	kprintf("任务号\t优先级\tCPU(百分比)\t栈顶地址\t栈总尺寸\t任务名\r\n");
+	kprintf("任务号\t优先级\tCPU(百分比)\t栈顶地址\t栈当前地址\t栈总尺寸\t栈剩余尺寸\t栈状态\t任务名\r\n");
 	for (i=0; i<MAX_VOSTASK_NUM; i++) {
 		for (j=0; j<cnts; j++) {
 			if (arr[j].id == i) {
 				//打印任务信息
+				memset(stack_status, 0, sizeof(stack_status));
+				strcpy(stack_status, "正常");
+				if (arr[j].stack_ptr <= arr[j].stack_top - arr[j].stack_size) {
+					stack_left = 0;
+				}
+				else {//正常
+					stack_left = arr[j].stack_size - (arr[j].stack_top - arr[j].stack_ptr);
+				}
+				//检查栈是否被修改或溢出, 检查栈底是否0x64被修改
+				if (*(u32*)(arr[j].stack_top - arr[j].stack_size) != 0x64646464) {
+					strcpy(stack_status, "破坏"); //可能是被自己破坏或者被自己下面的变量破坏
+				}
 				if (ticks_totals==0) ticks_totals = 1; //除法分母不能为0
-				kprintf("%04d\t%03d\t\t%03d\t0x%08x\t0x%08x\t%s\r\n",
-						arr[j].id, arr[j].prio, (u32)(arr[j].ticks*100/ticks_totals), arr[j].stack_top, arr[j].stack_size, arr[j].name);
+				kprintf("%04d\t%03d\t\t%03d\t%08x\t%08x\t%08x\t%08x\t%s\t%s\r\n",
+						arr[j].id, arr[j].prio, (u32)(arr[j].ticks*100/ticks_totals), arr[j].stack_top,
+						arr[j].stack_ptr, arr[j].stack_size, stack_left, stack_status, arr[j].name);
 				break;
 			}
 		}
@@ -201,7 +219,6 @@ s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode)
 
 	return ret;
 }
-
 
 u32 __vos_irq_save()
 {
@@ -512,8 +529,11 @@ s32 VOSTaskCreate(void (*task_fun)(void *param), void *param,
 
 	ptask->stack_size = stack_size;
 
-	ptask->pstack_top = (u8*)pstack + stack_size;
+	ptask->pstack_top = (u32*)((u8*)pstack + stack_size);
 
+	if (pstack && stack_size) {
+		memset(pstack, 0x64, stack_size); //初始化栈内容为064, 栈检测使用
+	}
 	ptask->name = task_nm;
 
 	ptask->param = param;
@@ -530,16 +550,30 @@ s32 VOSTaskCreate(void (*task_fun)(void *param), void *param,
 
 	ptask->list.pTask = ptask;
 
-	//初始化栈内容
-	ptask->pstack = ptask->pstack_top - (18 << 2);
-	HW32_REG((ptask->pstack + (16 << 2))) = (unsigned long) VOSTaskEntry;
-	HW32_REG((ptask->pstack + (17 << 2))) = 0x01000000;
+	//初始化栈内容,至少18个u32大小
+	ptask->pstack = ptask->pstack_top;
+	*(--ptask->pstack) = 0x01000000; //xPSR
+	*(--ptask->pstack) = (u32) VOSTaskEntry; //xPSR
+	*(--ptask->pstack) = 0; //LR
+	*(--ptask->pstack) = 0; //R12
+	*(--ptask->pstack) = 0; //R3
+	*(--ptask->pstack) = 0; //R2
+	*(--ptask->pstack) = 0; //R1
+	*(--ptask->pstack) = 0; //R0
+	*(--ptask->pstack) = 0; //R11
+	*(--ptask->pstack) = 0; //R10
+	*(--ptask->pstack) = 0; //R9
+	*(--ptask->pstack) = 0; //R8
+	*(--ptask->pstack) = 0; //R7
+	*(--ptask->pstack) = 0; //R6
+	*(--ptask->pstack) = 0; //R5
+	*(--ptask->pstack) = 0; //R4
 #if (TASK_LEVEL)
-	HW32_REG((ptask->pstack + (1 << 2))) = 0x03; //#2:特权+PSP, #3:用户级+PSP
+	*(--ptask->pstack) = 0x03; //CONTROL //#2:特权+PSP, #3:用户级+PSP
 #else
-	HW32_REG((ptask->pstack + (1 << 2))) = 0x02; //#2:特权+PSP, #3:用户级+PSP
+	*(--ptask->pstack) = 0x02; //CONTROL //#2:特权+PSP, #3:用户级+PSP
 #endif
-	HW32_REG((ptask->pstack)) = 0xFFFFFFFDUL;
+	*(--ptask->pstack) = 0xFFFFFFFDUL; //EXC_RETURN
 
 	//插入到就绪队列
 	VOSTaskListPrioInsert(ptask, VOS_LIST_READY);

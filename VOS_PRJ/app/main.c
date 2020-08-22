@@ -15,6 +15,7 @@ void uart_test();
 void timer_test();
 
 void shell_test();
+void stack_test();
 
 void main(void *param)
 {
@@ -26,10 +27,11 @@ void main(void *param)
 	//mq_test();
 	//mutex_test();
 	//delay_test();
-	//schedule_test();
+	schedule_test();
 	//uart_test();
 	//timer_test();
 	//shell_test();
+	//stack_test();
 	while (1) {
 		VOSTaskDelay(1*1000);
 	}

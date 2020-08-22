@@ -146,9 +146,9 @@ typedef struct StVOSMsgQueue {
 }StVOSMsgQueue;
 
 typedef struct StVosTask {
-	u8 *pstack; //指向任务自己的栈指针, 必须放到结构体第一个位置，汇编里要使用这个成员
+	u32 *pstack; //指向任务自己的栈指针, 必须放到结构体第一个位置，汇编里要使用这个成员
 
-	u8 *pstack_top; //栈顶指针
+	u32 *pstack_top; //栈顶指针
 	u32 stack_size; //栈最大size
 	s32 prio; //任务优先级，值越低，优先级越高
 	s32 prio_base; //原始优先级。
@@ -177,6 +177,7 @@ typedef struct StTaskInfo {
 	s64 ticks;
 	s32 stack_top;
 	s32 stack_size;
+	s32 stack_ptr;//当前指向的位置
 	s8 *name;
 }StTaskInfo;
 

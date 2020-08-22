@@ -64,7 +64,6 @@ void VSHELL_FUN_NOTE(task, "list tasks infomation: task [time_ms]")(s8 **parr, s
 	ret = CaluTasksCpuUsedRateShow(arr, MAX_VOSTASK_NUM, mode);
 }
 
-
 typedef void (*VSHELL_FUN)(s8 **parr, s32 cnts);
 extern unsigned int vshell_name_start;
 extern unsigned int vshell_name_end;
@@ -87,7 +86,7 @@ void VSHELL_FUN(help)(s8 **parr, s32 cnts)
 		name = (unsigned int *)(*pfname);
 		note = (unsigned int *)(*pfnote);
 
-		kprintf("%02d. %s\t\t%s\r\n", i++, name, note?note:"");
+		kprintf("%02d. %s\t%s\r\n", i++, name, note?note:"");
 	}
 }
 
@@ -131,9 +130,9 @@ void vshell_do(s8 **parr, s32 cnts, s32 is_bg)
 			break;
 		}
 	}
-	if (pfname == &vshell_name_end) {
-		kprintf("\r\ninfo: use \"help\" to list all command!\r\n");
-	}
+//	if (pfname == &vshell_name_end) {
+//		kprintf("\r\ninfo: use \"help\" to list all command!\r\n");
+//	}
 }
 void RegistUartEvent(s32 event, s32 task_id);
 //is_bg, 获取是否后台运行
