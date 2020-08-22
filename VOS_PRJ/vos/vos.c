@@ -40,7 +40,7 @@ u32 VOSUserIRQSave();
 void VOSUserIRQRestore(u32 save);
 
 
-volatile u32 flag_cpu_used_rate = 0;
+volatile u32 flag_cpu_collect = 0; //是否在采集cpu占用率
 
 //目前这个函数用于统计任务使用cpu占用率计算
 //当前任务准备切换出去前，
@@ -68,7 +68,7 @@ void CaluTasksCpuUsedRateStart()
 	struct list_head *list_prio;
 	struct list_head *phead = 0;
 
-	if (VOSRunning==0) return;
+	if (VOSRunning==0 || flag_cpu_collect) return;
 
 	irq_save = __local_irq_save();
 
@@ -87,11 +87,15 @@ void CaluTasksCpuUsedRateStart()
 		ptask_prio = list_entry(list_prio, struct StVosTask, list);
 		ptask_prio->ticks_used_start = gVOSTicks;
 	}
+
+	flag_cpu_collect = 1; //设置采集标志
+
 	__local_irq_restore(irq_save);
 }
 
-
-s32 CaluTasksCpuUsedRateEnded(struct StTaskInfo *arr, s32 cnts)
+//mode: 0; 立即结束。
+//mode: 1; 不结束，时间累加采集。
+s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode)
 {
 	u32 irq_save = 0;
 	s32 i = 0;
@@ -106,6 +110,11 @@ s32 CaluTasksCpuUsedRateEnded(struct StTaskInfo *arr, s32 cnts)
 		arr[i].id = -1;
 	}
 
+	if (flag_cpu_collect==0) {
+		CaluTasksCpuUsedRateStart();
+		flag_cpu_collect = 1;
+	}
+
 	irq_save = __local_irq_save();
 
 	i = 0;
@@ -118,8 +127,10 @@ s32 CaluTasksCpuUsedRateEnded(struct StTaskInfo *arr, s32 cnts)
 		arr[i].stack_size = pRunningTask->stack_size;
 		arr[i].name = pRunningTask->name;
 		ticks_totals += arr[i].ticks;
-		pRunningTask->ticks_used_start = -1;
-		pRunningTask->ticks_used_cnts = 0;
+		if (mode==0) {//结束
+			pRunningTask->ticks_used_start = -1;
+			pRunningTask->ticks_used_cnts = 0;
+		}
 	}
 
 	phead = &gListTaskReady;
@@ -135,8 +146,10 @@ s32 CaluTasksCpuUsedRateEnded(struct StTaskInfo *arr, s32 cnts)
 			arr[i].stack_size = ptask_prio->stack_size;
 			arr[i].name = ptask_prio->name;
 			ticks_totals += arr[i].ticks;
-			ptask_prio->ticks_used_start = -1;
-			ptask_prio->ticks_used_cnts = 0;
+			if (mode==0) {//结束
+				ptask_prio->ticks_used_start = -1;
+				ptask_prio->ticks_used_cnts = 0;
+			}
 		}
 		else {//跳出
 			break;
@@ -155,25 +168,30 @@ s32 CaluTasksCpuUsedRateEnded(struct StTaskInfo *arr, s32 cnts)
 			arr[i].stack_size = ptask_prio->stack_size;
 			arr[i].name = ptask_prio->name;
 			ticks_totals += arr[i].ticks;
-			ptask_prio->ticks_used_start = -1;
-			ptask_prio->ticks_used_cnts = 0;
+			if (mode==0) {//结束
+				ptask_prio->ticks_used_start = -1;
+				ptask_prio->ticks_used_cnts = 0;
+			}
 		}
 		else {//跳出
 			break;
 		}
 	}
+	if (mode==0) {//立即结束采集
+		flag_cpu_collect = 0;
+	}
 	__local_irq_restore(irq_save);
 
 	ret = i;
 
-	//print all task infomations
+	//打印所有任务信息
 	//按任务号排序，待优化，任务id唯一，直接从0开始找
 	kprintf("任务号\t优先级\tCPU(百分比)\t栈顶地址\t栈总尺寸\t任务名\r\n");
 	for (i=0; i<MAX_VOSTASK_NUM; i++) {
 		for (j=0; j<cnts; j++) {
 			if (arr[j].id == i) {
-				u32 xxx = (u32)(arr[j].ticks*100/ticks_totals);
 				//打印任务信息
+				if (ticks_totals==0) ticks_totals = 1; //除法分母不能为0
 				kprintf("%04d\t%03d\t\t%03d\t0x%08x\t0x%08x\t%s\r\n",
 						arr[j].id, arr[j].prio, (u32)(arr[j].ticks*100/ticks_totals), arr[j].stack_top, arr[j].stack_size, arr[j].name);
 				break;
@@ -248,6 +266,9 @@ u32 VOSTaskInit()
 		//gArrVosTask[i].prio = TASK_PRIO_INVALID;
 	}
 	__local_irq_restore(irq_save);
+
+	TaskIdleBuild();//创建idle任务
+
 	return 0;
 }
 
@@ -700,12 +721,7 @@ void task_idle(void *param)
 
 void VOSStarup()
 {
-	u32 irq_save = 0;
 	if (VOSRunning == 0) { //启动第一个任务时会设置个VOSRunning为1
-		irq_save = __vos_irq_save();
-		//__asm volatile ("svc 0\n");
-		TaskIdleBuild();//创建idle任务
-		__vos_irq_restore(irq_save);
 		RunFirstTask(); //加载第一个任务，这时任务不一定是IDLE任务
 		while (1) ;;//不可能跑到这里
 	}
@@ -723,8 +739,6 @@ static void VOSCortexSwitch()
 	if (pReadyTask==0) {
 		return;
 	}
-
-
 	irq_save = __local_irq_save();
 	switch(pRunningTask->status) {
 		case VOS_STA_FREE: //回收到空闲链表

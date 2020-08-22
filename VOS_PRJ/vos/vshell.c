@@ -40,15 +40,28 @@ void VSHELL_FUN_NOTE(bbb, "this is function for test!")(s8 **parr, s32 cnts)
 	}
 }
 void CaluTasksCpuUsedRateStart();
-s32 CaluTasksCpuUsedRateEnded(struct StTaskInfo *arr, s32 cnts);
-void VSHELL_FUN_NOTE(task, "list tasks infomation.")(s8 **parr, s32 cnts)
+s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode);
+void VSHELL_FUN_NOTE(task, "list tasks infomation: task [time_ms]")(s8 **parr, s32 cnts)
 {
 	s32 ret = 0;
+	s32 mode = 0;
 	s32 i = 0;
+	s32 timeout = 1000;//采集时间为1秒
 	struct StTaskInfo arr[MAX_VOSTASK_NUM];
+
+	if (cnts > 1) {
+		timeout = atoi(parr[1]);//第一个参数是表示采集时间，默认一秒，
+						  //注意：这个参数如果是0，就一直采集，不结束。
+	}
 	CaluTasksCpuUsedRateStart();
-	VOSTaskDelay(1000);
-	ret = CaluTasksCpuUsedRateEnded(arr, MAX_VOSTASK_NUM);
+
+	if (timeout==0) {
+		mode = 1; //一直采集，可以一直显示
+	}
+	else {
+		VOSTaskDelay(timeout);
+	}
+	ret = CaluTasksCpuUsedRateShow(arr, MAX_VOSTASK_NUM, mode);
 }
 
 
