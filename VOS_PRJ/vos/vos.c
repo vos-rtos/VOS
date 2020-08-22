@@ -422,7 +422,7 @@ StVosTask *VOSTaskReadyCutPriorest()
 void VOSTaskEntry(void *param)
 {
 	if (pRunningTask) {
-		pRunningTask->task_fun(param);
+		pRunningTask->task_fun(pRunningTask->param);
 	}
 	//将任务回收到空闲任务链表中
 	pRunningTask->status = VOS_STA_FREE;
@@ -743,6 +743,7 @@ static void VOSCortexSwitch()
 	switch(pRunningTask->status) {
 		case VOS_STA_FREE: //回收到空闲链表
 		{
+			//按任务的id编号从小到大插入
 			//__local_irq_restore(irq_save);
 			list_add_tail(&pRunningTask->list, &gListTaskFree);
 			//irq_save = __local_irq_save();

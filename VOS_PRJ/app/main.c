@@ -14,6 +14,7 @@ void schedule_test();
 void uart_test();
 void timer_test();
 
+void shell_test();
 
 void main(void *param)
 {
@@ -28,10 +29,7 @@ void main(void *param)
 	//schedule_test();
 	//uart_test();
 	//timer_test();
-	while (1) {
-		VOSDelayUs(100*1000);
-		VOSTaskDelay(100);
-	}
+	//shell_test();
 	while (1) {
 		VOSTaskDelay(1*1000);
 	}

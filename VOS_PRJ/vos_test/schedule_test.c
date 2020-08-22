@@ -57,6 +57,7 @@ static void task_high(void *param)
 		while (1) VOSTaskDelay(1*1000);
 	}
 }
+
 static void task_normal(void *param)
 {
 	int cnts = 0;
@@ -72,6 +73,7 @@ static void task_normal(void *param)
 		while (1) VOSTaskDelay(1*1000);
 	}
 }
+
 
 
 static long long task_low_stack[1024], task_high_stack[1024], task_normal_stack[1024];

@@ -92,17 +92,42 @@ void VSHELL_FUN(help)(s8 **parr, s32 cnts)
 }
 
 
-void vshell_do(s8 **parr, s32 cnts)
+typedef struct StTaskShellExeInfo{
+	VSHELL_FUN fun;
+	s8 **parr;
+	s32 cnts;
+}StTaskShellExeInfo;
+
+void task_shell_bg(void *param)
+{
+	StTaskShellExeInfo *p = (StTaskShellExeInfo*)param;
+	if (p->fun) {
+		p->fun(p->parr, p->cnts);
+	}
+}
+
+
+long long stack_shell_bg[1024];
+void vshell_do(s8 **parr, s32 cnts, s32 is_bg)
 {
 	u32 *pfname = 0;
 	u32 *pfun = 0;
 	s8 *name = 0;
 	VSHELL_FUN fun = 0;
+	static StTaskShellExeInfo temp;
 	for (pfname = &vshell_name_start, pfun = &vshell_fun_start; pfname < &vshell_name_end; pfname++, pfun++){
 		name = (unsigned int *)(*pfname);
 		if (strcmp(name, parr[0])==0){
 			fun = (VSHELL_FUN)(*pfun);
-			fun(parr, cnts);
+			if (is_bg == 1) {
+				temp.parr = parr;
+				temp.cnts = cnts;
+				temp.fun = fun;
+				VOSTaskCreate(task_shell_bg, &temp, stack_shell_bg, sizeof(stack_shell_bg), TASK_PRIO_NORMAL, name);
+			}
+			else {//shell 任务执行
+				fun(parr, cnts);
+			}
 			break;
 		}
 	}
@@ -111,8 +136,8 @@ void vshell_do(s8 **parr, s32 cnts)
 	}
 }
 void RegistUartEvent(s32 event, s32 task_id);
-
-s32 VOSShellPaserLine(s8 *line, s8 **parr, s32 max)
+//is_bg, 获取是否后台运行
+s32 VOSShellPaserLine(s8 *line, s8 **parr, s32 max, s32 *is_bg)
 {
 	s32 i = 0;
 	s8 *p = line;
@@ -120,7 +145,10 @@ s32 VOSShellPaserLine(s8 *line, s8 **parr, s32 max)
 	s32 len = strlen(line);
 
 	for (i=0; i<len; i++) {
-		if (line[i]=='\r'||line[i]=='\n') {
+		if (line[i]=='\r'||line[i]=='\n'||line[i]=='&') { // & 后台开个新任务执行该函数。
+			if (line[i]=='&' && is_bg) {
+				*is_bg = 1;
+			}
 			line[i] = 0;
 			if (*p) {
 				parr[cnts] = p;
@@ -147,12 +175,15 @@ s32 VOSShellPaserLine(s8 *line, s8 **parr, s32 max)
 void VOSTaskShell(void *param)
 {
 	s32 i =  0;
+	s32 is_bg = 0;
 	s8 *parr[10] = {0};
 	s32 ret = 0;
 	s32 cnts = 0;
 	u8  cmd[100];
 	u8 echo[100];
 	s32 mark = 0;
+
+
 	while(VOSEventWait(EVENT_USART1_RECV, TIMEOUT_INFINITY_U32)) {
 		ret = peek_vgets(echo, sizeof(echo)-1);
 		if (ret > 0) { //echo
@@ -163,9 +194,10 @@ void VOSTaskShell(void *param)
 		if (ret > 0 && (echo[ret-1]=='\r'||echo[ret-1]=='\n')) {
 			ret = vgets(cmd, sizeof(cmd)-1);
 			if (strlen(cmd)) kprintf("\r\n");
-			cnts = VOSShellPaserLine(cmd, parr, sizeof(parr)/sizeof(parr[0]));
+			is_bg = 0;
+			cnts = VOSShellPaserLine(cmd, parr, sizeof(parr)/sizeof(parr[0]), &is_bg);
 			//执行命令行
-			vshell_do(parr, cnts);
+			vshell_do(parr, cnts, is_bg); //直接shell任务执行
 
 			mark = 0;
 			ret = 0;
@@ -181,7 +213,7 @@ void VOSShellInit()
 {
 	s32 i = 0;
 
-	s32 task_id = VOSTaskCreate(VOSTaskShell, 0, task_vshell_stack, sizeof(task_vshell_stack), VOS_TASK_VSHELL_PRIO, "vos_shell");
+	s32 task_id = VOSTaskCreate(VOSTaskShell, 0, task_vshell_stack, sizeof(task_vshell_stack), VOS_TASK_VSHELL_PRIO, "vshell");
 
 	RegistUartEvent(EVENT_USART1_RECV, task_id);
 
