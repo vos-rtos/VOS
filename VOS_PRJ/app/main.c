@@ -32,7 +32,9 @@ void main(void *param)
 	//timer_test();
 	//shell_test();
 	//stack_test();
+	//bitmap_test() ;
 	while (1) {
 		VOSTaskDelay(1*1000);
+		//kprintf("main function!\r\n");
 	}
 }

@@ -57,8 +57,8 @@ enum {
 };
 
 enum {
-	TASK_SWITCH_ACTIVE = 0,
-	TASK_SWITCH_PASSIVE,
+	TASK_SWITCH_TASK = 0,
+	TASK_SWITCH_ISR,
 };
 
 #define HW32_REG(ADDRESS) (*((volatile unsigned long *)(ADDRESS)))
@@ -78,7 +78,7 @@ enum {
 #define	VOS_STA_FREE 			(u32)(0) //空闲队列回收
 #define VOS_STA_READY			(u32)(1) //就绪队列
 #define VOS_STA_BLOCK			(u32)(2) //就绪队列
-
+#define VOS_STA_RUNNING			(u32)(3) //就绪队列
 
 #define VOS_BLOCK_DELAY			(u32)(1<<0) //自延时引起阻塞
 #define VOS_BLOCK_SEMP			(u32)(1<<1) //信号量阻塞
@@ -120,6 +120,7 @@ typedef struct StVOSSemaphore {
 	u8 bitmap[(MAX_VOSTASK_NUM+sizeof(u8)-1)/sizeof(u8)];//每位特的偏移数就是被占用任务的id.
 	s32 distory; //删除互斥锁标志，需要把就绪队列里的所有等待该锁的阻塞任务添加到就绪队列
 	struct list_head list;
+	struct list_head list_task;//阻塞任务链表
 }StVOSSemaphore;
 
 //互斥锁跟信号量实现基本一样
@@ -129,6 +130,7 @@ typedef struct StVOSMutex {
 	s32 distory; //删除互斥锁标志，需要把就绪队列里的所有等待该锁的阻塞任务添加到就绪队列
 	struct StVosTask *ptask_owner; //指向某个任务拥有这个锁，只有一个任务拥有这个锁
 	struct list_head list;
+	struct list_head list_task;//阻塞任务链表
 }StVOSMutex;
 
 //消息队列都固定size的item，环形缓冲实现消息队列
@@ -143,6 +145,7 @@ typedef struct StVOSMsgQueue {
 	s32 msg_size; //每个消息的大小（字节）
 	s32 distory; //删除互斥锁标志，需要把就绪队列里的所有等待该锁的阻塞任务添加到就绪队列
 	struct list_head list;
+	struct list_head list_task;//阻塞任务链表
 }StVOSMsgQueue;
 
 typedef struct StVosTask {
@@ -168,6 +171,7 @@ typedef struct StVosTask {
 	s64 ticks_used_start; //每次进入cpu,记录开始时间，等待切换出去时，把当前时间减去这个时间然后累加到ticks_used_cnts
 	s64 ticks_used_cnts; //统计cpu使用率
 	struct list_head list;//空闲链表和优先级任务链表,优先级高的排第头，优先级低的排尾
+	struct list_head list_delay;//定时任务列表，注意这里包括单独延时也包括信号量超时任务。
 }StVosTask;
 
 
@@ -207,6 +211,9 @@ typedef struct StVOSTimer{
 	struct list_head list;
 } StVOSTimer;
 
+
+u32 VOSTaskBlockListInsert(StVosTask *pInsertTask, struct list_head *phead);
+u32 VOSTaskBlockListRelease(StVosTask *pReleaseTask);
 
 void VOSTimerInit();
 StVOSTimer *VOSTimerCreate(s32 type, u32 delay_ms, VOS_TIMER_CB callback, void *arg, s8 *name);
@@ -272,7 +279,8 @@ void VOSTaskBlockWaveUp();
 void VOSStarup();
 void VOSTaskSchedule();
 void VOSSysTick();
-s32 VOSTaskRaisePrioBeforeBlock(StVosTask *pMutexOwnerTask);
+//s32 VOSTaskRaisePrioBeforeBlock(StVosTask *pMutexOwnerTask);
+s32 VOSTaskRaisePrioBeforeBlock(StVOSMutex *pMutex);
 s32 VOSTaskRestorePrioBeforeRelease();
 
 

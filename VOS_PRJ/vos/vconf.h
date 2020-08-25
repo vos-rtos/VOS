@@ -15,6 +15,10 @@
 #define MAX_VOS_MUTEX_NUM   10
 #define MAX_VOS_MSG_QUE_NUM   10
 
+//#define MAX_VOS_TASK_PRIO	255U // 0-255优先级，0最高，255最低
+#define MAX_VOS_TASK_PRIO_NUM	256U // 0-255优先级，共266个， 0最高，255最低
+#define MAX_VOS_TASK_PRIO_IDLE	(MAX_VOS_TASK_PRIO_NUM-1) // 0-255优先级，0最高，255最低
+
 
 #define MCU_FREQUENCY_HZ (u32)(168000000)
 
@@ -29,6 +33,8 @@
 
 #define VOS_TASK_NOT_INHERITANCE   (0)  //默认是优先级继承来处理优先级反转问题，如果定义为1，则不处理反转问题
 
+
+#define MAX_VOS_TASK_ID	(u8)(0xFF-1) //0xFF表示无效ID
 
 #define MAX_CPU_NUM 1
 #define MAX_VOSTASK_NUM  10

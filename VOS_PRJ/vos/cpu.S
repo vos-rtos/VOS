@@ -49,19 +49,15 @@ PendSV_Handler:
     MRS     r0, PRIMASK //关中断
     CPSID   I
     push  {r0}
-	//判断pRunningTask和pReadyTask指针是否为0，如果为0就不切换
-    ldr r1, =pRunningTask
-    ldr r2, =pReadyTask
-	ldr r1, [r1]
-	ldr r2, [r2]
-	cmp r1, #0
-	beq  INT_ENABLE
-	cmp r2, #0
-	beq  INT_ENABLE
-	//任务准备切换出去，这里统计cpu占用率
+
 	push {lr}
+	//任务准备切换出去，这里统计cpu占用率
 	bl	HookTaskSwitchOut
+	//找到最高优先级并设置给pReadyTask,返回0则不合法直接退出
+	bl PrepareForCortexSwitch
 	pop {lr}
+	cmp r0, #0
+    beq INT_ENABLE
 
 	mrs	r0, psp //保存当前上下文
 	tst	lr, #0x10 //测试浮点是否需要压栈
@@ -96,6 +92,11 @@ PendSV_Handler:
 INT_ENABLE:
 	pop {r0}
 	MSR PRIMASK, R0
+
+	//清标志VOSCtxSwtFlag
+	mov r0, #0
+	ldr r1, =VOSCtxSwtFlag
+	str r0, [r1]
 
 	bx lr //返回后才切换到psp
 
