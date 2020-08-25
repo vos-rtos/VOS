@@ -16,11 +16,7 @@ struct StVosTask gArrVosTask[MAX_VOSTASK_NUM]; //任务数组，占用空间
 
 struct list_head gListTaskDelay;//各种定时任务被连接到这个链表中
 
-//struct list_head gListTaskReady;//就绪队列里的任务
-
 struct list_head gListTaskFree;//空闲任务，可以继续申请分配
-
-//struct list_head gListTaskBlock;//阻塞任务队列
 
 struct StVosTask *pRunningTask; //正在运行的任务
 
@@ -50,32 +46,54 @@ u8  gArrPrio2Taskid[MAX_VOS_TASK_PRIO_NUM]; //通过优先级查找第一个相同优先级的链
 
 volatile u32 flag_cpu_collect = 0; //是否在采集cpu占用率
 
+//遍历位图任务
+StVosTask *tasks_bitmap_iterate(void **iter)
+{
+	u32 pos = (u32)*iter;
+	u8 *p8 = (u8*)gArrPrioBitMap;
+	while (pos < sizeof(gArrPrioBitMap) * 8) {
+		if ((pos & 0x7) == 0 && p8[pos>>3] == 0) {//处理一个字节
+			pos += 8;
+		}
+		else {//处理8bit
+			do {
+				if (p8[pos>>3] & 1 << (pos & 0x7)) {
+					*iter = (void*)(pos + 1);
+					goto END_ITERATE;
+				}
+				pos++;
+			} while (pos & 0x7);
+		}
+	}
+	return 0;
+
+END_ITERATE:
+	return &gArrVosTask[gArrPrio2Taskid[pos]];
+}
+
+
 
 //目前这个函数用于统计任务使用cpu占用率计算
 //当前任务准备切换出去前，
 void HookTaskSwitchOut()
 {
-#if 0
 	if (VOSRunning && pRunningTask->ticks_used_start != -1) {
 		if (gVOSTicks - pRunningTask->ticks_used_start > 0) {
 			pRunningTask->ticks_used_cnts += gVOSTicks - pRunningTask->ticks_used_start;
 		}
 	}
-#endif
 }
 //目前这个函数用于统计任务使用cpu占用率计算
 void HookTaskSwitchIn()
 {
-#if 0
 	if (VOSRunning && pRunningTask->ticks_used_start != -1) {
 		pRunningTask->ticks_used_start = gVOSTicks;
 	}
-#endif
 }
 
 void CaluTasksCpuUsedRateStart()
 {
-#if 0
+
 	u32 irq_save = 0;
 
 	StVosTask *ptask_prio = 0;
@@ -89,13 +107,13 @@ void CaluTasksCpuUsedRateStart()
 	//正在与运行的任务也要计算算
 	pRunningTask->ticks_used_start = gVOSTicks;
 
-	phead = &gListTaskReady;
-	//插入队列，必须优先级从高到低有序排列
-	list_for_each(list_prio, phead) {
-		ptask_prio = list_entry(list_prio, struct StVosTask, list);
+	//优先级表使用位图
+	void *iter = 0; //从头遍历
+	while (ptask_prio = tasks_bitmap_iterate(&iter)) {
 		ptask_prio->ticks_used_start = gVOSTicks;
 	}
-	phead = &gListTaskBlock;
+
+	phead = &gListTaskDelay; //阻塞的任务全部都会在延时链表中
 	//插入队列，必须优先级从高到低有序排列
 	list_for_each(list_prio, phead) {
 		ptask_prio = list_entry(list_prio, struct StVosTask, list);
@@ -105,14 +123,13 @@ void CaluTasksCpuUsedRateStart()
 	flag_cpu_collect = 1; //设置采集标志
 
 	__local_irq_restore(irq_save);
-#endif
+
 }
 
 //mode: 0; 立即结束。
 //mode: 1; 不结束，时间累加采集。
 s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode)
 {
-#if 0
 	u32 irq_save = 0;
 	s32 i = 0;
 	s32 j = 0;
@@ -152,10 +169,8 @@ s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode)
 		}
 	}
 
-	phead = &gListTaskReady;
-	//插入队列，必须优先级从高到低有序排列
-	list_for_each(list_prio, phead) {
-		ptask_prio = list_entry(list_prio, struct StVosTask, list);
+	void *iter = 0; //从头遍历
+	while (ptask_prio = tasks_bitmap_iterate(&iter)) {
 		i++;
 		if (i < cnts) {
 			arr[i].id = ptask_prio->id;
@@ -175,7 +190,8 @@ s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode)
 			break;
 		}
 	}
-	phead = &gListTaskBlock;
+
+	phead = &gListTaskDelay; //阻塞的任务全部都会在延时链表中
 	//插入队列，必须优先级从高到低有序排列
 	list_for_each(list_prio, phead) {
 		ptask_prio = list_entry(list_prio, struct StVosTask, list);
@@ -234,7 +250,7 @@ s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode)
 	}
 
 	return ret;
-#endif
+
 }
 
 u32 __vos_irq_save()
@@ -314,23 +330,7 @@ StVosTask *VOSGetTaskFromId(s32 task_id)
 	if (task_id < 0 || task_id >= MAX_VOSTASK_NUM) return 0;
 	return &gArrVosTask[task_id];
 }
-//void VOSReadyTaskPrioSet(StVosTask *pInsertTask)
-//{
-//	StVosTask *ptask = 0;
-//	u32 irq_save = 0;
-//	irq_save = __local_irq_save();
-//	if (bitmap_get(pInsertTask->prio, gArrPrioBitMap)) {//已经有设置这位，插入到尾部
-//		ptask = &gArrVosTask[gArrPrio2Taskid[pInsertTask->id]];
-//		//都是相同优先级，不用判断，直接插入到最后
-//		list_add_tail(&pInsertTask->list, &ptask->list);
-//	}
-//	else {//没设置此优先级位，直接设置位并更新gArrPrioBitMap表格对应的位置为任务的task id
-//		bitmap_set(pInsertTask->prio, gArrPrioBitMap); //优先级表位图置位
-//		gArrPrio2Taskid[pInsertTask->prio] = pInsertTask->id; //设置任务ID
-//		INIT_LIST_HEAD(&pInsertTask->list); //初始化列表自己指向自己
-//	}
-//	__local_irq_restore(irq_save);
-//}
+
 //就绪队列表，取出某个任务
 StVosTask *VOSTaskReadyListCutTask(StVosTask *pCutTask)
 {
@@ -674,77 +674,6 @@ void VOSTaskEntry(void *param)
 	VOSTaskSchedule();
 }
 
-u32 VOSTaskCheck()
-{
-#if 0
-	s32 prio_mark = -1;
-	u32 irq_save = 0;
-	u32 mark = 0;
-	StVosTask *ptask_prio = 0;
-	struct list_head *list_prio;
-	struct list_head *phead = 0;
-	irq_save = __local_irq_save();
-
-	phead = &gListTaskReady;
-
-	//插入队列，必须优先级从高到低有序排列
-	list_for_each(list_prio, phead) {
-		ptask_prio = list_entry(list_prio, struct StVosTask, list);
-		if (ptask_prio->id == 2) {
-			mark++;
-			break;
-		}
-	}
-	phead = &gListTaskBlock;
-	//插入队列，必须优先级从高到低有序排列
-	list_for_each(list_prio, phead) {
-		ptask_prio = list_entry(list_prio, struct StVosTask, list);
-		if (ptask_prio->id == 2) {
-			mark++;
-			break;
-		}
-	}
-	__local_irq_restore(irq_save);
-	return mark;
-#endif
-}
-
-void VOSTaskPrtList(s32 which_list)
-{
-#if 0
-	s32 prio_mark = -1;
-	u32 irq_save = 0;
-	StVosTask *ptask_prio = 0;
-	struct list_head *list_prio;
-	struct list_head *phead = 0;
-	irq_save = __vos_irq_save();
-	switch (which_list) {
-	case VOS_LIST_READY:
-		phead = &gListTaskReady;
-		kprintf("Ready List Infomation: \r\n");
-		break;
-	case VOS_LIST_BLOCK:
-		phead = &gListTaskBlock;
-		kprintf("Block List Infomation: \r\n");
-		break;
-	}
-	//插入队列，必须优先级从高到低有序排列
-	list_for_each(list_prio, phead) {
-		ptask_prio = list_entry(list_prio, struct StVosTask, list);
-
-		if (prio_mark != ptask_prio->prio) {
-			if (prio_mark != -1) kprintf("]");
-			else kprintf("[");
-		}
-		kprintf("(id:%d,n:\"%s\",p:%d,s:%d,b:%d,ds:%d,de:%d)", ptask_prio->id, ptask_prio->name, ptask_prio->prio,
-					ptask_prio->status, ptask_prio->block_type, (u32)ptask_prio->ticks_start, (u32)ptask_prio->ticks_alert);
-		prio_mark = ptask_prio->prio;
-	}
-	if (!list_empty(phead)) kprintf("]\r\n");
-	__vos_irq_restore(irq_save);
-#endif
-}
-
 //创建任务，不能在任务上下文创建(任务上下文使用VOSTaskCreate)
 s32 VOSTaskCreate(void (*task_fun)(void *param), void *param,
 		void *pstack, u32 stack_size, s32 prio, s8 *task_nm)
@@ -821,153 +750,6 @@ END_CREATE:
 	//这里注意，可能任务被新优先级的任务抢了，执行更高优先级后才切换到这里继续执行。
 	return ptask ? ptask->id : -1;
 }
-#if 0
-//唤醒阻塞队列里的任务, 就是把阻塞队列符合条件的任务添加到就绪队列
-void VOSTaskBlockWaveUp()
-{
-	StVosTask *ptask_block = 0;
-	struct list_head *list_block;
-	struct list_head *list_temp;
-	u32 irq_save = 0;
-	s64 latest_ticks = MAX_SIGNED_VAL_64; //最近的闹钟
-	irq_save = __local_irq_save();
-	//遍历阻塞队列，把符合条件的添加到就绪队列
-	list_for_each_safe(list_block, list_temp, &gListTaskBlock) {
-		ptask_block = list_entry(list_block, struct StVosTask, list);
-		//处理定时或超时唤醒时间，这个超时可以跟信号量，互斥锁，事件同时发生。
-		if (ptask_block->block_type & VOS_BLOCK_DELAY) { //自定义延时阻塞类型
-			if (gVOSTicks >= ptask_block->ticks_alert) {//检查超时
-				//断开当前阻塞队列
-				list_del(&ptask_block->list);
-				//修改状态
-				ptask_block->status = VOS_STA_READY;
-				ptask_block->block_type = 0;
-				ptask_block->ticks_start = 0;
-				ptask_block->ticks_alert = 0;
-				ptask_block->wakeup_from = VOS_WAKEUP_FROM_DELAY;
-				//添加到就绪队列
-				VOSTaskListPrioInsert(ptask_block, VOS_LIST_READY);
-			}
-			else if (ptask_block->ticks_alert < latest_ticks){//排除已经超时的闹钟，把没有超时的闹钟最近的记录下来
-				latest_ticks = ptask_block->ticks_alert;
-			}
-		}
-		//除了上面延时可以同时设置，下面的阻塞事件都是单独的。
-		//处理信号量唤醒事件
-		switch (ptask_block->block_type & BLOCK_SUB_MASK) {
-			case VOS_BLOCK_SEMP: //自定义信号量阻塞类型
-			{
-				StVOSSemaphore *pSem = (StVOSSemaphore *)ptask_block->psyn;
-				if (pSem->left > 0 || pSem->distory == 1) {//有至少一个信号量 或者信号量被删除
-					if (pSem->left > 0) pSem->left--;
-					//断开当前阻塞队列
-					list_del(&ptask_block->list);
-					//修改状态
-					ptask_block->status = VOS_STA_READY;
-					ptask_block->block_type = 0;
-					ptask_block->ticks_start = 0;
-					ptask_block->ticks_alert = 0;
-					//ptask_block->psyn = 0;
-					if (pSem->distory == 0) {
-						ptask_block->wakeup_from = VOS_WAKEUP_FROM_SEM;
-					}
-					else {
-						ptask_block->wakeup_from = VOS_WAKEUP_FROM_SEM_DEL;
-					}
-					//添加到就绪队列
-					VOSTaskListPrioInsert(ptask_block, VOS_LIST_READY);
-				}
-				break;
-			}
-			//处理互斥锁唤醒事件
-			case VOS_BLOCK_MUTEX: //自定义互斥锁阻塞类型
-			{
-				StVOSMutex *pMutex = (StVOSMutex *)ptask_block->psyn;
-				if (pMutex->counter > 0 || pMutex->distory == 1) {//有至少一个信号量 或者互斥锁被删除
-					if (pMutex->counter > 0) {
-						pMutex->counter--;
-						pMutex->ptask_owner = ptask_block;
-					}
-					//断开当前阻塞队列
-					list_del(&ptask_block->list);
-					//修改状态
-					ptask_block->status = VOS_STA_READY;
-					ptask_block->block_type = 0;
-					ptask_block->ticks_start = 0;
-					ptask_block->ticks_alert = 0;
-					//ptask_block->psyn = 0;
-					if (pMutex->distory == 0) {
-						ptask_block->wakeup_from = VOS_WAKEUP_FROM_MUTEX;
-					}
-					else {
-						ptask_block->wakeup_from = VOS_WAKEUP_FROM_MUTEX_DEL;
-					}
-					//添加到就绪队列
-					VOSTaskListPrioInsert(ptask_block, VOS_LIST_READY);
-				}
-				break;
-			}
-			//处理事件唤醒事件
-			case VOS_BLOCK_EVENT:
-			{ //自定义互斥锁阻塞类型
-				if (ptask_block->event_mask == 0 || //如果event_mask为0，则接受任何事件
-						ptask_block->event_mask & ptask_block->event) { //或者设置的事件被mask到就触发操作
-					//断开当前阻塞队列
-					list_del(&ptask_block->list);
-					//修改状态
-					ptask_block->status = VOS_STA_READY;
-					ptask_block->block_type = 0;
-					ptask_block->ticks_start = 0;
-					ptask_block->ticks_alert = 0;
-					ptask_block->event = 0;
-					ptask_block->event_mask = 0;
-					ptask_block->wakeup_from = VOS_WAKEUP_FROM_EVENT;
-					//添加到就绪队列
-					VOSTaskListPrioInsert(ptask_block, VOS_LIST_READY);
-				}
-				break;
-			}
-			//处理消息队列唤醒事件
-			//处理互斥锁唤醒事件
-			case VOS_BLOCK_MSGQUE:
-			{//自定义互斥锁阻塞类型
-				StVOSMsgQueue *pMsgQue = (StVOSMsgQueue *)ptask_block->psyn;
-				if (pMsgQue->msg_cnts > 0 || pMsgQue->distory == 1) {//有至少一个信号量 或者互斥锁被删除
-					if (pMsgQue->msg_cnts > 0) {
-						//
-					}
-					//断开当前阻塞队列
-					list_del(&ptask_block->list);
-					//修改状态
-					ptask_block->status = VOS_STA_READY;
-					ptask_block->block_type = 0;
-					ptask_block->ticks_start = 0;
-					ptask_block->ticks_alert = 0;
-					//ptask_block->psyn = 0;
-					if (pMsgQue->distory == 0) {
-						ptask_block->wakeup_from = VOS_WAKEUP_FROM_MSGQUE;
-					}
-					else {
-						ptask_block->wakeup_from = VOS_WAKEUP_FROM_MSGQUE_DEL;
-					}
-					//添加到就绪队列
-					VOSTaskListPrioInsert(ptask_block, VOS_LIST_READY);
-				}
-				break;
-			}
-			case 0: //只有延时VOS_BLOCK_DELAY的情况
-				break;
-			default:
-				kprintf("ERROR: CAN NOT BE HERE!\r\n");
-				while(1) ;
-				break;
-		}
-	}
-	gMarkTicksNearest = latest_ticks;
-
-	__local_irq_restore(irq_save);
-}
-#endif
 
 void task_idle(void *param)
 {
@@ -979,10 +761,10 @@ void task_idle(void *param)
 	static s64 mark_time=0;
 	mark_time = VOSGetTimeMs();
 	while (1) {//禁止空闲任务阻塞
-//		if ((s32)(VOSGetTimeMs()-mark_time) > 1000) {
-//			mark_time = VOSGetTimeMs();
-//			SysCallVOSTaskSchTabDebug();
-//		}
+		if ((s32)(VOSGetTimeMs()-mark_time) > 1000) {
+			mark_time = VOSGetTimeMs();
+			VOSTaskSchTabDebug();
+		}
 	}
 }
 
@@ -994,99 +776,7 @@ void VOSStarup()
 		while (1) ;;//不可能跑到这里
 	}
 }
-#if 0
-static void VOSCortexSwitch()
-{
-	u32 irq_save = 0;
-	if (pReadyTask) {
-		return ;
-	}
 
-	pReadyTask = VOSTaskReadyCutPriorest();
-
-	if (pReadyTask==0) {
-		return;
-	}
-	irq_save = __local_irq_save();
-	switch(pRunningTask->status) {
-		case VOS_STA_FREE: //回收到空闲链表
-		{
-			//按任务的id编号从小到大插入
-			//__local_irq_restore(irq_save);
-			list_add_tail(&pRunningTask->list, &gListTaskFree);
-			//irq_save = __local_irq_save();
-			break;
-		}
-		case VOS_STA_BLOCK: //添加到阻塞队列
-		{
-			__local_irq_restore(irq_save);
-			//VOSTaskListPrioInsert(pRunningTask, VOS_LIST_BLOCK);
-			irq_save = __local_irq_save();
-			break;
-		}
-		default://添加到就绪队列，这是因为遇到更高优先级，或者相同优先级时，把当前任务切换出去
-		{	__local_irq_restore(irq_save);
-			VOSTaskListPrioInsert(pRunningTask, VOS_LIST_READY);
-			irq_save = __local_irq_save();
-			break;
-		}
-	}
-	__local_irq_restore(irq_save);
-	//SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk; //触发上下文切换中断
-	asm_ctx_switch();
-}
-
-
-//from==TASK_SWITCH_ACTIVE: 主动切换 (包括应用层直接放弃cpu和阻塞等时间，理解切换出来)
-//from==TASK_SWITCH_PASSIVE: 被动切换(包括时钟定时器切换或其他中断返回切换，除SVC),相同任务需要查看时间片。
-void VOSTaskSwitch(u32 from)
-{
-	s32 ret = 0;
-	u32 irq_save = 0;
-	if (VOSRunning==0) return; //还没开始就切换直接返回
-	irq_save = __local_irq_save();
-	if (pRunningTask && !list_empty(&gListTaskReady)) {
-		ret = VOSTaskReadyCmpPrioTo(pRunningTask); //比较运行任务优先级跟就绪队列里的任务优先级
-		switch(from)
-		{
-			case TASK_SWITCH_ACTIVE://主动切换任务，不需要判断时间片等内容，直接切换
-			{
-				if (ret <= 0 || //正在运行的任务优先级相同或更低，需要任务切换
-					pRunningTask->status == VOS_STA_FREE || //任务状态如果是FREE状态，也需要切换
-					pRunningTask->status == VOS_STA_BLOCK //任务添加到阻塞队列
-					) {
-					__local_irq_restore(irq_save);
-					VOSCortexSwitch();
-					irq_save = __local_irq_save();
-				}
-				break;
-			}
-			case TASK_SWITCH_PASSIVE://系统定时切换，被动切换
-			{
-				if (ret < 0 || //ret < 0: 就绪队列有更高优先级，强制切换
-					pRunningTask->status == VOS_STA_FREE || //被释放掉的任务强制切换
-					pRunningTask->status == VOS_STA_BLOCK || //任务需要添加到阻塞队列
-					(ret == 0 && pRunningTask->ticks_timeslice == 0 )//ret == 0 && ticks_timeslice==0:时间片用完，同时就绪队列有相同优先级，也得切换
-				)
-				{
-					__local_irq_restore(irq_save);
-					VOSCortexSwitch();
-					irq_save = __local_irq_save();
-				}
-				if (pRunningTask->ticks_timeslice > 0) { //时间片不能为负数，万一有相同优先级后来进入就绪队列，就可以立即切换
-					pRunningTask->ticks_timeslice--;
-				}
-				break;
-			}
-			default: //不支持，输出错误信息
-				kprintf("ERROR: VOSTaskSwitch\r\n");
-				while(1) ;
-				break;
-		}
-	}
-	__local_irq_restore(irq_save);
-}
-#endif
 void  VOSIntEnter()
 {
 	u32 irq_save = 0;
@@ -1195,58 +885,60 @@ void VOSTaskScheduleISR()
 		asm_ctx_switch();//触发PendSV_Handler中断
 	}
 }
-
+int vvsprintf(char *buf, int len, char* format, ...);
+#define sprintf vvsprintf
 void VOSTaskSchTabDebug()
 {
-#if 0
+	static u8 buf[1024];
+	u8 temp[100];
 	s32 prio_mark = -1;
 	u32 mark = 0;
 	StVosTask *ptask_prio = 0;
 	struct list_head *list_prio;
 	struct list_head *phead = 0;
+
 	u32 irq_save;
 	irq_save = __vos_irq_save();
-	phead = &gListTaskReady;
-	kprintf("[(%d) ", pRunningTask?pRunningTask->id:-1);
-	kprintf("(%d) ", pReadyTask?pReadyTask->id:-1);
-	//插入队列，必须优先级从高到低有序排列
-	kprintf("(");
-	list_for_each(list_prio, phead) {
-		ptask_prio = list_entry(list_prio, struct StVosTask, list);
-		kprintf("%d", ptask_prio->id);
-		if (list_prio->next != phead) {
-			kprintf("->");
-		}
-	}
-	kprintf(")");
-	phead = &gListTaskBlock;
-	//插入队列，必须优先级从高到低有序排列
-	kprintf("(");
-	list_for_each(list_prio, phead) {
-		ptask_prio = list_entry(list_prio, struct StVosTask, list);
-		kprintf("%d", ptask_prio->id);
-		if (list_prio->next != phead) {
-			kprintf("->");
-		}
-	}
-	kprintf(")]\r\n");
-	__vos_irq_restore(irq_save);
-#endif
-}
 
-//检查目前运行在中断上下文还是任务上下文。
-s32 VOSCortexCheck()
-{
-#if 0
-	s32 status;
-	if (VOSRunning) {
-		status = VOSIntNesting ? VOS_RUNNING_BY_INTERRUPTE:VOS_RUNNING_BY_TASK;
+	buf[0] = 0;
+
+	vvsprintf(temp, sizeof(temp), "[(%d) ", pRunningTask?pRunningTask->id:-1);
+	strcat(buf, temp);
+	vvsprintf(temp, sizeof(temp), "(%d) ", pReadyTask?pReadyTask->id:-1);
+	strcat(buf, temp);
+
+	//插入队列，必须优先级从高到低有序排列
+	strcat(buf, "(");
+
+	void *iter = 0; //从头遍历
+	while (ptask_prio = tasks_bitmap_iterate(&iter)) {
+		vvsprintf(temp, sizeof(temp), "%d", ptask_prio->id);
+		strcat(buf, temp);
+		strcat(buf, "->");
+
 	}
-	else {
-		status = VOS_RUNNING_BY_STARTUP;
+	if (ptask_prio==0) {
+		if (buf[strlen(buf)-1] == '>') {
+			buf[strlen(buf)-2] = 0;
+		}
 	}
-	return status;
-#endif
+
+	//kprintf(")");
+	strcat(buf, ")");
+	phead = &gListTaskDelay;
+	//插入队列，必须优先级从高到低有序排列
+	strcat(buf, "(");
+	list_for_each(list_prio, phead) {
+		ptask_prio = list_entry(list_prio, struct StVosTask, list);
+		vvsprintf(temp, sizeof(temp), "%d", ptask_prio->id);
+		strcat(buf, temp);
+		if (list_prio->next != phead) {
+			strcat(buf, "->");
+		}
+	}
+	strcat(buf, ")]\r\n");
+	kprintf("%s", buf);
+	__vos_irq_restore(irq_save);
 }
 
 void VOSSysTick()

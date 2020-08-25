@@ -56,7 +56,6 @@ s32 TaskHighestPrioGet(u32 *bitmap, s32 num)
 }
 
 
-
 //位图测试
 
 u32 bitmap[10];//4*10 bits
@@ -72,6 +71,31 @@ int bitmap_prinf(u8 *bitmap, s32 num)
 		if (line_num % 32 == 0) kprintf("\r\n");
 	}
 	kprintf("\r\n");
+}
+
+//遍历位图
+s32 bitmap_iterate(void **iter)
+{
+	u32 pos = (u32)*iter;
+	u8 *p8 = (u8*)bitmap;
+	while (pos < sizeof(bitmap) * 8) {
+		if ((pos & 0x7) == 0 && p8[pos>>3] == 0) {//处理一个字节
+			pos += 8;
+		}
+		else {//处理8bit
+			do {
+				if (p8[pos>>3] & 1 << (pos & 0x7)) {
+					*iter = (void*)(pos + 1);
+					goto END_ITERATE;
+				}
+				pos++;
+			} while (pos & 0x7);
+		}
+	}
+	return -1;
+
+END_ITERATE:
+	return pos;
 }
 
 int bitmap_test() {
@@ -102,7 +126,11 @@ int bitmap_test() {
 	bitmap_set(16, bitmap);
 	bitmap_prinf(bitmap, sizeof(bitmap));
 	kprintf("TaskHighestPrioGet=%d\r\n", TaskHighestPrioGet(bitmap, MAX_COUNTS(bitmap)));
-
+	void *iter = 0; //从头遍历
+	s32 prio;
+	while (-1 != (prio = bitmap_iterate(&iter))) {
+		kprintf("======>prio=%d<======\r\n", prio);
+	}
 #if 0
 	bitmap_for_each(n, bitmap) {
 		if (bitmap_get(n, bitmap)) {

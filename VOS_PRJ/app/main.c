@@ -19,6 +19,8 @@ void stack_test();
 
 void main(void *param)
 {
+
+
 	u32 save = 0;
 	dma_printf("hello world!\r\n");
 	kprintf("main function!\r\n");
@@ -27,7 +29,7 @@ void main(void *param)
 	//mq_test();
 	//mutex_test();
 	//delay_test();
-	schedule_test();
+	//schedule_test();
 	//uart_test();
 	//timer_test();
 	//shell_test();

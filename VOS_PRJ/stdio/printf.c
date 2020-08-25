@@ -226,6 +226,17 @@ int kprintf(char* format, ...)
 	va_end(lst);
 	return i;
 }
+
+int vvsprintf(char *buf, int len, char* format, ...)
+{
+	int i=0;
+	va_list lst;
+	va_start (lst, format);
+	i=c_vsnprintf(buf, len, format, lst);
+	va_end(lst);
+	return i;
+}
+
 void dma_vputs(s8 *str, s32 len);
 int dma_printf(char* format, ...)
 {
