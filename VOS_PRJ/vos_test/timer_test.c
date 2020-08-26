@@ -61,4 +61,12 @@ void timer_test()
 	VOSTimerStart(timer3);
 	VOSTimerStart(timer4);
 
+	while (TestExitFlagGet() == 0) {
+		VOSTaskDelay(1*1000);
+	}
+	VOSTimerStop(timer1);
+	VOSTimerStop(timer2);
+	VOSTimerStop(timer3);
+	VOSTimerStop(timer4);
+
 }

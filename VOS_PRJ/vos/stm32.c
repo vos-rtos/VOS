@@ -14,7 +14,7 @@ void misc_init ()
 {
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
 	uart_init(115200);
- 	//TIM3_Int_Init(5000-1,8400-1);
+ 	TIM3_Int_Init(5000-1,8400-1);
 }
 
 

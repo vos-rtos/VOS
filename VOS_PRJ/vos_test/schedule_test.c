@@ -26,6 +26,7 @@ static void task_low(void *param)
 				kprintf("%s working %d(s)!\r\n", __FUNCTION__, cnt);
 				VOSDelayUs(1000*1000);
 				cnt++;
+				if (TestExitFlagGet()) break;
 			}
 			kprintf("%s Release Mutex Success!\r\n", __FUNCTION__);
 			kprintf("%s working DONE!\r\n", __FUNCTION__);
@@ -49,6 +50,7 @@ static void task_high(void *param)
 				kprintf("%s working %d(s)!\r\n", __FUNCTION__, cnt);
 				VOSDelayUs(1000*1000);
 				cnt++;
+				if (TestExitFlagGet()) break;
 			}
 			kprintf("%s Release Mutex Success!\r\n", __FUNCTION__);
 			kprintf("%s working DONE!\r\n", __FUNCTION__);
@@ -68,6 +70,7 @@ static void task_normal(void *param)
 		while (cnts < 5) {
 			kprintf("%s cnts=%d\r\n", __FUNCTION__, cnts++);
 			VOSDelayUs(1000*1000);
+			if (TestExitFlagGet()) break;
 		}
 		kprintf("%s ended working ... \r\n", __FUNCTION__);
 		while (TestExitFlagGet() == 0) VOSTaskDelay(1*1000);

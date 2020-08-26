@@ -17,7 +17,6 @@ void delay_test();
 void schedule_test();
 void uart_test();
 void timer_test();
-void shell_test();
 void stack_test();
 
 s32 test_exit_flag = 0;
@@ -75,11 +74,18 @@ void VSHELL_FUN(schedule_t)(s8 **parr, s32 cnts)
 	TestExitFlagSet(0);
 	schedule_test();
 }
-
+s32 GetTaskIdByName(u8 *name);
 void VSHELL_FUN(uart_t)(s8 **parr, s32 cnts)
 {
+	u32 event = 0;
+	s32 task_id = GetTaskIdByName("vshell");
+	if (task_id != -1) {
+		event = VOSEventGet(task_id);
+		VOSEventDisable(task_id, event);//屏蔽接收某些位事件
+	}
 	TestExitFlagSet(0);
 	uart_test();
+	VOSEventEnable(task_id, event);//恢复接收某些位事件
 }
 
 void VSHELL_FUN(timer_t)(s8 **parr, s32 cnts)
@@ -88,11 +94,6 @@ void VSHELL_FUN(timer_t)(s8 **parr, s32 cnts)
 	timer_test();
 }
 
-void VSHELL_FUN(shell_t)(s8 **parr, s32 cnts)
-{
-	TestExitFlagSet(0);
-	shell_test();
-}
 void VSHELL_FUN(stack_t)(s8 **parr, s32 cnts)
 {
 	TestExitFlagSet(0);
@@ -191,9 +192,6 @@ void vshell_do(s8 **parr, s32 cnts, s32 is_bg)
 			break;
 		}
 	}
-//	if (pfname == &vshell_name_end) {
-//		kprintf("\r\ninfo: use \"help\" to list all command!\r\n");
-//	}
 }
 void RegistUartEvent(s32 event, s32 task_id);
 //is_bg, 获取是否后台运行
@@ -242,7 +240,6 @@ void VOSTaskShell(void *param)
 	u8  cmd[100];
 	u8 echo[100];
 	s32 mark = 0;
-
 
 	while(VOSEventWait(EVENT_USART1_RECV, TIMEOUT_INFINITY_U32)) {
 		ret = peek_vgets(echo, sizeof(echo)-1);

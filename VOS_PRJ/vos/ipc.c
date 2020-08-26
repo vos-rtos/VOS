@@ -387,8 +387,7 @@ s32 VOSMutexDelete(StVOSMutex *pMutex)
 	return ret;
 }
 
-
-s32 VOSEventWait(u32 event_mask, u64 timeout_ms)
+s32 VOSEventWait(u32 event, u64 timeout_ms)
 {
 	s32 ret = 0;
 	u32 irq_save = 0;
@@ -397,23 +396,29 @@ s32 VOSEventWait(u32 event_mask, u64 timeout_ms)
 
 	irq_save = __vos_irq_save();
 
-	//把当前任务切换到阻塞队列
-	pRunningTask->status = VOS_STA_BLOCK; //添加到阻塞队列
-
-	//信号量阻塞类型
-	pRunningTask->block_type |= VOS_BLOCK_EVENT;//事件类型
-	pRunningTask->psyn = 0;
-	pRunningTask->event_mask = event_mask;
-	//同时是超时时间类型
-	pRunningTask->ticks_start = gVOSTicks;
-	pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(timeout_ms);
-	if (pRunningTask->ticks_alert < gMarkTicksNearest) { //如果闹钟结点小于记录的最少值，则更新
-		gMarkTicksNearest = pRunningTask->ticks_alert;//更新为最近的闹钟
+	if (event & pRunningTask->event_mask) {
+		pRunningTask->event_mask &= (~event); //事件match，就直接退出
 	}
-	pRunningTask->block_type |= VOS_BLOCK_DELAY;//指明阻塞类型为自延时
+	else {
+		//把当前任务切换到阻塞队列
+		pRunningTask->status = VOS_STA_BLOCK; //添加到阻塞队列
 
-	//直接挂在延时全局链表，唤醒就直接在全局延时里查询
-	VOSTaskDelayListInsert(pRunningTask);
+		//信号量阻塞类型
+		pRunningTask->block_type |= VOS_BLOCK_EVENT;//事件类型
+		pRunningTask->psyn = 0;
+		//pRunningTask->event_req = event; //记录请求的事件
+		pRunningTask->event_mask |= event;
+		//同时是超时时间类型
+		pRunningTask->ticks_start = gVOSTicks;
+		pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(timeout_ms);
+		if (pRunningTask->ticks_alert < gMarkTicksNearest) { //如果闹钟结点小于记录的最少值，则更新
+			gMarkTicksNearest = pRunningTask->ticks_alert;//更新为最近的闹钟
+		}
+		pRunningTask->block_type |= VOS_BLOCK_DELAY;//指明阻塞类型为自延时
+
+		//直接挂在延时全局链表，唤醒就直接在全局延时里查询
+		VOSTaskDelayListInsert(pRunningTask);
+	}
 
 	__vos_irq_restore(irq_save);
 
@@ -435,6 +440,53 @@ s32 VOSEventWait(u32 event_mask, u64 timeout_ms)
 	return ret;
 }
 
+//s32 VOSEventWait(u32 event_mask, u64 timeout_ms)
+//{
+//	s32 ret = 0;
+//	u32 irq_save = 0;
+//
+//	if (VOSIntNesting != 0) return -1; //中断上下文，直接返回-1
+//
+//	irq_save = __vos_irq_save();
+//
+//	//把当前任务切换到阻塞队列
+//	pRunningTask->status = VOS_STA_BLOCK; //添加到阻塞队列
+//
+//	//信号量阻塞类型
+//	pRunningTask->block_type |= VOS_BLOCK_EVENT;//事件类型
+//	pRunningTask->psyn = 0;
+//	pRunningTask->event_mask = event_mask;
+//	//同时是超时时间类型
+//	pRunningTask->ticks_start = gVOSTicks;
+//	pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(timeout_ms);
+//	if (pRunningTask->ticks_alert < gMarkTicksNearest) { //如果闹钟结点小于记录的最少值，则更新
+//		gMarkTicksNearest = pRunningTask->ticks_alert;//更新为最近的闹钟
+//	}
+//	pRunningTask->block_type |= VOS_BLOCK_DELAY;//指明阻塞类型为自延时
+//
+//	//直接挂在延时全局链表，唤醒就直接在全局延时里查询
+//	VOSTaskDelayListInsert(pRunningTask);
+//
+//	__vos_irq_restore(irq_save);
+//
+//	if (ret==0) { //没获取互斥锁，进入阻塞队列
+//
+//		VOSTaskSchedule(); //任务调度并进入阻塞队列
+//		switch(pRunningTask->wakeup_from) { //阻塞后是被定时器唤醒或者互斥锁唤醒
+//		case VOS_WAKEUP_FROM_DELAY:
+//			ret = 0;
+//			break;
+//		case VOS_WAKEUP_FROM_EVENT:
+//			ret = 1;
+//			break;
+//		default:
+//			ret = -1;
+//			break;
+//		}
+//	}
+//	return ret;
+//}
+
 s32 VOSEventSet(s32 task_id, u32 event)
 {
 	s32 ret = -1;
@@ -444,7 +496,7 @@ s32 VOSEventSet(s32 task_id, u32 event)
 	StVosTask *pTask = VOSGetTaskFromId(task_id);
 	if (pTask && pTask->block_type == (VOS_BLOCK_DELAY|VOS_BLOCK_EVENT)) {
 
-		if (pTask->event_mask == 0 || //如果event_mask为0，则接受任何事件
+		if ((pTask->event_stop & event) == 0 && //屏蔽接收指定信号
 				pTask->event_mask & event) { //或者设置的事件被mask到就触发操作
 
 			VOSTaskBlockListRelease(pTask);//唤醒在阻塞队列里阻塞的等待该信号量的任务,每次都唤醒优先级最高的那个
@@ -453,11 +505,17 @@ s32 VOSEventSet(s32 task_id, u32 event)
 			pTask->block_type = 0;
 			pTask->ticks_start = 0;
 			pTask->ticks_alert = 0;
-			pTask->event = 0;
-			pTask->event_mask = 0;
+			//pTask->event_req = 0;
+			pTask->event_mask &= (~event);//清除事件位，该阻塞任务已经获取到事件通知
 			pTask->wakeup_from = VOS_WAKEUP_FROM_EVENT;
+			ret = 1;
 		}
-		ret = 1;
+		else {
+			pTask->event_mask |= event;
+		}
+	}
+	else {//设置该事件位有效
+		pTask->event_mask |= event;
 	}
 	__vos_irq_restore(irq_save);
 
@@ -486,7 +544,7 @@ u32 VOSEventGet(s32 task_id)
 	return event_mask;
 }
 
-s32 VOSEventClear(s32 task_id, u32 event)
+s32 VOSEventDisable(s32 task_id, u32 event)
 {
 	u32 mask = 0;
 	u32 irq_save = 0;
@@ -496,14 +554,30 @@ s32 VOSEventClear(s32 task_id, u32 event)
 	irq_save = __vos_irq_save();
 	StVosTask *pTask = VOSGetTaskFromId(task_id);
 	if (pTask) {
-		pTask->event_mask &= (~event);
-		mask = pTask->event_mask;
+		pTask->event_stop |= event;
+		mask = pTask->event_stop;
 	}
 	__vos_irq_restore(irq_save);
 
 	return mask;
 }
+s32 VOSEventEnable(s32 task_id, u32 event)
+{
+	u32 mask = 0;
+	u32 irq_save = 0;
 
+	if (VOSIntNesting != 0) return -1;
+
+	irq_save = __vos_irq_save();
+	StVosTask *pTask = VOSGetTaskFromId(task_id);
+	if (pTask) {
+		pTask->event_stop &= (~event);
+		mask = pTask->event_stop;
+	}
+	__vos_irq_restore(irq_save);
+
+	return mask;
+}
 /**************************************
  * 消息队列和邮箱直接使用信号量实现
  **************************************/

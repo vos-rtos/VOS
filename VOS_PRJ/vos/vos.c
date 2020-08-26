@@ -149,6 +149,8 @@ StVosTask *VOSGetTaskFromId(s32 task_id)
 	return &gArrVosTask[task_id];
 }
 
+
+
 //就绪队列表，取出某个任务
 StVosTask *VOSTaskReadyListCutTask(StVosTask *pCutTask)
 {
@@ -528,6 +530,8 @@ s32 VOSTaskCreate(void (*task_fun)(void *param), void *param,
 	ptask->block_type = 0;//没任何阻塞
 
 	ptask->ticks_used_start = -1; //禁止统计cpu使用率
+
+	ptask->event_mask = 0;
 
 	ptask->list.pTask = ptask;
 
@@ -985,6 +989,53 @@ s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode)
 		}
 	}
 	return ret;
+}
+
+s32 GetTaskIdByName(u8 *name)
+{
+	s32 id_ret = -1;
+
+	static u8 buf[1024];
+	u8 temp[100];
+	s32 prio_mark = -1;
+	u32 mark = 0;
+	StVosTask *ptask_prio = 0;
+	struct list_head *list_prio;
+	struct list_head *phead = 0;
+
+	u32 irq_save;
+	irq_save = __vos_irq_save();
+
+	buf[0] = 0;
+
+	if (strcmp(name, pRunningTask->name) == 0) {
+		id_ret = pRunningTask->id;
+		goto END_GETID;
+	}
+
+	void *iter = 0; //从头遍历
+	while (ptask_prio = tasks_bitmap_iterate(&iter)) {
+		if (strcmp(name, ptask_prio->name) == 0) {
+			id_ret = ptask_prio->id;
+			goto END_GETID;
+		}
+	}
+
+	phead = &gListTaskDelay;
+	//插入队列，必须优先级从高到低有序排列
+	strcat(buf, "(");
+	list_for_each(list_prio, phead) {
+		ptask_prio = list_entry(list_prio, struct StVosTask, list_delay);
+		if (strcmp(name, ptask_prio->name) == 0) {
+			id_ret = ptask_prio->id;
+			goto END_GETID;
+		}
+	}
+
+END_GETID:
+	__vos_irq_restore(irq_save);
+
+	return id_ret;
 }
 
 

@@ -17,7 +17,7 @@ static long long task_stack[12]; //至少的18个u32
 void stack_test()
 {
 	memset(temp, 0x44, sizeof(temp));
-	kprintf("test sem!\r\n");
+	kprintf("test stack overflow check!\r\n");
 	s32 task_id;
 	task_id = VOSTaskCreate(task_stack_test, 0, task_stack, sizeof(task_stack), TASK_PRIO_NORMAL, "task_stack_test");
 	while (TestExitFlagGet() == 0) {

@@ -19,21 +19,48 @@ s32 data_check(s8 *buf, s32 len)
 	}
 }
 
-static void task_uartin(void *param)
+s32 is_quit(u8 ch)
+{
+	s32 ret = 0;
+	static s32 index = 0;
+
+	switch (index) {
+	case 0:
+		ch == 'q' ? index++ : (index = 0);
+		break;
+	case 1:
+		ch == 'u' ? index++ : (index = 0);
+		break;
+	case 2:
+		ch == 'i' ? index++ : (index = 0);
+		break;
+	case 3:
+		ch == 't' ? (ret = 1, index = 0) : (index = 0);
+		break;
+	}
+	return ret;
+}
+
+void task_uartin(void *param)
 {
 	s32 ret = 0;
 	u8 buf[512];
 	u32 counts = 0;
 	u32 mark_cnts = 0;
 	s64 mark_ms = 0;
+	int i = 0;
 
 	s32 time_spend = 0;
 	mark_ms = VOSGetTimeMs();
 	kprintf("statistics:\r\n");
-	while(TestExitFlagGet() == 0) {
+	while(1) {
 		ret = vgets(buf, sizeof(buf)-1);
 		if (ret > 0){
-			//kprintf("ret=%d!\r\n", ret);
+			for (i=0; i<ret; i++) {
+				if (is_quit(buf[i])) {
+					goto END_UARTIN;
+				}
+			}
 			data_check(buf, ret);
 			buf[ret] = 0;
 			counts += ret;
@@ -45,6 +72,9 @@ static void task_uartin(void *param)
 		}
 		VOSTaskDelay(1);
 	}
+END_UARTIN:
+	TestExitFlagSet(1);
+	return;
 }
 
 
@@ -57,4 +87,7 @@ void uart_test()
 	kprintf("uart_test!\r\n");
 	s32 task_id;
 	task_id = VOSTaskCreate(task_uartin, 0, task_uartin_stack, sizeof(task_uartin_stack), TASK_PRIO_NORMAL, "task_uartin");
+	while (TestExitFlagGet() == 0) {
+		VOSTaskDelay(1*1000);
+	}
 }
