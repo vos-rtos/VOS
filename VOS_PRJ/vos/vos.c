@@ -116,7 +116,7 @@ void CaluTasksCpuUsedRateStart()
 	phead = &gListTaskDelay; //阻塞的任务全部都会在延时链表中
 	//插入队列，必须优先级从高到低有序排列
 	list_for_each(list_prio, phead) {
-		ptask_prio = list_entry(list_prio, struct StVosTask, list);
+		ptask_prio = list_entry(list_prio, struct StVosTask, list_delay);
 		ptask_prio->ticks_used_start = gVOSTicks;
 	}
 
@@ -194,7 +194,7 @@ s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode)
 	phead = &gListTaskDelay; //阻塞的任务全部都会在延时链表中
 	//插入队列，必须优先级从高到低有序排列
 	list_for_each(list_prio, phead) {
-		ptask_prio = list_entry(list_prio, struct StVosTask, list);
+		ptask_prio = list_entry(list_prio, struct StVosTask, list_delay);
 		i++;
 		if (i < cnts) {
 			arr[i].id = ptask_prio->id;
@@ -684,6 +684,9 @@ s32 VOSTaskCreate(void (*task_fun)(void *param), void *param,
 	if (list_empty(&gListTaskFree)) goto END_CREATE;
 	ptask = list_entry(gListTaskFree.next, StVosTask, list); //获取第一个空闲任务
 	list_del(gListTaskFree.next); //空闲任务队列里删除第一个空闲任务
+
+	memset(ptask, 0, sizeof(*ptask));
+
 	ptask->id = (ptask - gArrVosTask);
 
 	ptask->prio = ptask->prio_base = prio;
@@ -693,7 +696,10 @@ s32 VOSTaskCreate(void (*task_fun)(void *param), void *param,
 	ptask->pstack_top = (u32*)((u8*)pstack + stack_size);
 
 	if (pstack && stack_size) {
-		memset(pstack, 0x64, stack_size); //初始化栈内容为064, 栈检测使用
+		memset(pstack, 0x64, stack_size); //初始化栈内容为0x64, 栈检测使用
+		if (*((u8*)pstack) != 0x64) {
+			kprintf("fuck!!!!!!!!!\r\n");
+		}
 	}
 	ptask->name = task_nm;
 
@@ -710,6 +716,8 @@ s32 VOSTaskCreate(void (*task_fun)(void *param), void *param,
 	ptask->ticks_used_start = -1; //禁止统计cpu使用率
 
 	ptask->list.pTask = ptask;
+
+	ptask->list_delay.pTask = ptask;
 
 	//初始化栈内容,至少18个u32大小
 	ptask->pstack = ptask->pstack_top;
@@ -761,10 +769,10 @@ void task_idle(void *param)
 	static s64 mark_time=0;
 	mark_time = VOSGetTimeMs();
 	while (1) {//禁止空闲任务阻塞
-		if ((s32)(VOSGetTimeMs()-mark_time) > 1000) {
-			mark_time = VOSGetTimeMs();
-			VOSTaskSchTabDebug();
-		}
+//		if ((s32)(VOSGetTimeMs()-mark_time) > 1000) {
+//			mark_time = VOSGetTimeMs();
+//			VOSTaskSchTabDebug();
+//		}
 	}
 }
 
@@ -929,7 +937,7 @@ void VOSTaskSchTabDebug()
 	//插入队列，必须优先级从高到低有序排列
 	strcat(buf, "(");
 	list_for_each(list_prio, phead) {
-		ptask_prio = list_entry(list_prio, struct StVosTask, list);
+		ptask_prio = list_entry(list_prio, struct StVosTask, list_delay);
 		vvsprintf(temp, sizeof(temp), "%d", ptask_prio->id);
 		strcat(buf, temp);
 		if (list_prio->next != phead) {

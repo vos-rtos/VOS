@@ -342,7 +342,6 @@ s32 VOSMutexRelease(StVOSMutex *pMutex)
 		else {//释放互斥锁, 没等待该锁任务，直接释放
 			pMutex->counter++;
 		}
-		//VOSTaskBlockWaveUp(); //唤醒在阻塞队列里阻塞的等待该互斥锁的任务
 		VOSTaskRestorePrioBeforeRelease();//恢复自身的优先级
 		pRunningTask->psyn = 0; //清除指向资源的指针。
 		pMutex->ptask_owner = 0; //清除拥有者

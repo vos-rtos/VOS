@@ -78,7 +78,7 @@ vos_start (void)
 
 	misc_init ();
 
-	//VOSTimerInit(); //定时器初始化，依赖信号量，互斥量，不能关中断里执行，因为里面有使用svn中断
+	VOSTimerInit(); //定时器初始化，依赖信号量，互斥量，不能关中断里执行，因为里面有使用svn中断
 
 	VOSShellInit();
 
