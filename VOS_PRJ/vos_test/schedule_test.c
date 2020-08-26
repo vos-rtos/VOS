@@ -12,7 +12,7 @@ static void task_low(void *param)
 	s32 ret = 0;
 	s32 cnt = 0;
 	kprintf("%s start ...\r\n", __FUNCTION__);
-	s64 mark_time = VOSGetTimeMs()/1000;
+	u32 mark_time = VOSGetTimeMs()/1000;
 	kprintf("mark_time: %d\r\n", (u32)mark_time);
 
 	gMutexPtr = VOSMutexCreate("mutex_schedule");

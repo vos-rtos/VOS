@@ -22,8 +22,8 @@
 #endif
 
 extern struct StVosTask *pRunningTask;
-extern volatile s64  gVOSTicks;
-extern volatile s64 gMarkTicksNearest;
+extern volatile u32  gVOSTicks;
+extern volatile u32 gMarkTicksNearest;
 
 static struct list_head gListSemaphore;//空闲信号量链表
 
@@ -90,7 +90,7 @@ s32 VOSSemTryWait(StVOSSemaphore *pSem)
 	__vos_irq_restore(irq_save);
 	return ret;
 }
-s32 VOSSemWait(StVOSSemaphore *pSem, u64 timeout_ms)
+s32 VOSSemWait(StVOSSemaphore *pSem, u32 timeout_ms)
 {
 	s32 ret = 0;
 	u32 irq_save = 0;
@@ -110,7 +110,15 @@ s32 VOSSemWait(StVOSSemaphore *pSem, u64 timeout_ms)
 		pRunningTask->psyn = pSem;
 		//同时是超时时间类型
 		pRunningTask->ticks_start = gVOSTicks;
-		pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(timeout_ms);
+
+		//临时这样设定，想办法如何处理溢出问题
+		if (MAX_INFINITY_U32 - gVOSTicks < MAKE_TICKS(timeout_ms)) {
+			pRunningTask->ticks_alert = MAX_INFINITY_U32;
+		}
+		else {
+			pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(timeout_ms);
+		}
+
 		if (pRunningTask->ticks_alert < gMarkTicksNearest) { //如果闹钟结点小于记录的最少值，则更新
 			gMarkTicksNearest = pRunningTask->ticks_alert;//更新为最近的闹钟
 		}
@@ -251,7 +259,7 @@ StVOSMutex *VOSMutexCreate(s8 *name)
 }
 
 
-s32 VOSMutexWait(StVOSMutex *pMutex, s64 timeout_ms)
+s32 VOSMutexWait(StVOSMutex *pMutex, u32 timeout_ms)
 {
 	s32 ret = 0;
 	u32 irq_save = 0;
@@ -277,7 +285,15 @@ s32 VOSMutexWait(StVOSMutex *pMutex, s64 timeout_ms)
 		pRunningTask->psyn = pMutex;
 		//同时是超时时间类型
 		pRunningTask->ticks_start = gVOSTicks;
-		pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(timeout_ms);
+
+		//临时这样设定，想办法如何处理溢出问题
+		if (MAX_INFINITY_U32 - gVOSTicks < MAKE_TICKS(timeout_ms)) {
+			pRunningTask->ticks_alert = MAX_INFINITY_U32;
+		}
+		else {
+			pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(timeout_ms);
+		}
+
 		if (pRunningTask->ticks_alert < gMarkTicksNearest) { //如果闹钟结点小于记录的最少值，则更新
 			gMarkTicksNearest = pRunningTask->ticks_alert;//更新为最近的闹钟
 		}
@@ -387,7 +403,7 @@ s32 VOSMutexDelete(StVOSMutex *pMutex)
 	return ret;
 }
 
-s32 VOSEventWait(u32 event, u64 timeout_ms)
+s32 VOSEventWait(u32 event, u32 timeout_ms)
 {
 	s32 ret = 0;
 	u32 irq_save = 0;
@@ -410,7 +426,13 @@ s32 VOSEventWait(u32 event, u64 timeout_ms)
 		pRunningTask->event_mask |= event;
 		//同时是超时时间类型
 		pRunningTask->ticks_start = gVOSTicks;
-		pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(timeout_ms);
+		//临时这样设定，想办法如何处理溢出问题
+		if (MAX_INFINITY_U32 - gVOSTicks < MAKE_TICKS(timeout_ms)) {
+			pRunningTask->ticks_alert = MAX_INFINITY_U32;
+		}
+		else {
+			pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(timeout_ms);
+		}
 		if (pRunningTask->ticks_alert < gMarkTicksNearest) { //如果闹钟结点小于记录的最少值，则更新
 			gMarkTicksNearest = pRunningTask->ticks_alert;//更新为最近的闹钟
 		}
@@ -439,53 +461,6 @@ s32 VOSEventWait(u32 event, u64 timeout_ms)
 	}
 	return ret;
 }
-
-//s32 VOSEventWait(u32 event_mask, u64 timeout_ms)
-//{
-//	s32 ret = 0;
-//	u32 irq_save = 0;
-//
-//	if (VOSIntNesting != 0) return -1; //中断上下文，直接返回-1
-//
-//	irq_save = __vos_irq_save();
-//
-//	//把当前任务切换到阻塞队列
-//	pRunningTask->status = VOS_STA_BLOCK; //添加到阻塞队列
-//
-//	//信号量阻塞类型
-//	pRunningTask->block_type |= VOS_BLOCK_EVENT;//事件类型
-//	pRunningTask->psyn = 0;
-//	pRunningTask->event_mask = event_mask;
-//	//同时是超时时间类型
-//	pRunningTask->ticks_start = gVOSTicks;
-//	pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(timeout_ms);
-//	if (pRunningTask->ticks_alert < gMarkTicksNearest) { //如果闹钟结点小于记录的最少值，则更新
-//		gMarkTicksNearest = pRunningTask->ticks_alert;//更新为最近的闹钟
-//	}
-//	pRunningTask->block_type |= VOS_BLOCK_DELAY;//指明阻塞类型为自延时
-//
-//	//直接挂在延时全局链表，唤醒就直接在全局延时里查询
-//	VOSTaskDelayListInsert(pRunningTask);
-//
-//	__vos_irq_restore(irq_save);
-//
-//	if (ret==0) { //没获取互斥锁，进入阻塞队列
-//
-//		VOSTaskSchedule(); //任务调度并进入阻塞队列
-//		switch(pRunningTask->wakeup_from) { //阻塞后是被定时器唤醒或者互斥锁唤醒
-//		case VOS_WAKEUP_FROM_DELAY:
-//			ret = 0;
-//			break;
-//		case VOS_WAKEUP_FROM_EVENT:
-//			ret = 1;
-//			break;
-//		default:
-//			ret = -1;
-//			break;
-//		}
-//	}
-//	return ret;
-//}
 
 s32 VOSEventSet(s32 task_id, u32 event)
 {
@@ -641,7 +616,7 @@ s32 VOSMsgQuePut(StVOSMsgQueue *pMQ, void *pmsg, s32 len)
 	return ret;
 }
 //返回添加的个数
-s32 VOSMsgQueGet(StVOSMsgQueue *pMQ, void *pmsg, s32 len, s64 timeout_ms)
+s32 VOSMsgQueGet(StVOSMsgQueue *pMQ, void *pmsg, s32 len, u32 timeout_ms)
 {
 	s32 ret = 0;
 	u8 *phead = 0;

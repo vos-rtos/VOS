@@ -9,7 +9,7 @@
 #include "vos.h"
 #include "vlist.h"
 
-extern volatile s64  gVOSTicks;
+extern volatile u32  gVOSTicks;
 
 static struct list_head gListTimerFree;//定时器链表闲链表
 static struct list_head gListTimerRunning;//定时器正在运行的链表
@@ -20,12 +20,11 @@ static StVOSSemaphore *gSemVosTimer = 0;
 
 static StVOSMutex *gMutexVosTimer = 0; //互斥锁来保护资源
 
-#define TIME_OUT_NERVER 0xFFFFFFFF
 
-#define VOS_TIMER_LOCK() VOSMutexWait(gMutexVosTimer, TIME_OUT_NERVER)
+#define VOS_TIMER_LOCK() VOSMutexWait(gMutexVosTimer, TIMEOUT_INFINITY_U32)
 #define VOS_TIMER_UNLOCK() VOSMutexRelease(gMutexVosTimer)
 
-volatile u32 gVosTimerMarkNearest = 0xFFFFFFFF; //记录延时时刻
+volatile u32 gVosTimerMarkNearest = TIMEOUT_INFINITY_U32; //记录延时时刻
 
 
 void VOSTimerSemPost()
@@ -85,7 +84,15 @@ s32 VOSTimerStart(StVOSTimer *pTimer)
 	pTimer->status = VOS_TIMER_STA_RUNNING;
 
 	pTimer->ticks_start = gVOSTicks;
-	pTimer->ticks_alert = gVOSTicks + pTimer->ticks_delay;
+	//pTimer->ticks_alert = gVOSTicks + pTimer->ticks_delay;
+
+	//临时这样设定，想办法如何处理溢出问题
+	if (MAX_INFINITY_U32 - gVOSTicks < pTimer->ticks_delay) {
+		pTimer->ticks_alert = MAX_INFINITY_U32;
+	}
+	else {
+		pTimer->ticks_alert = gVOSTicks + pTimer->ticks_delay;
+	}
 
 	if (pTimer->ticks_alert < gVosTimerMarkNearest) {
 		gVosTimerMarkNearest = pTimer->ticks_alert;
@@ -160,7 +167,7 @@ void VOSTaskTimer(void *param)
 		}
 		VOS_TIMER_LOCK();
 
-		gVosTimerMarkNearest = 0xFFFFFFFF; //设置最大，下面更新最少的延时，然后延时处理
+		gVosTimerMarkNearest = TIMEOUT_INFINITY_U32; //设置最大，下面更新最少的延时，然后延时处理
 		list_for_each_safe(list_timer, list_temp, &gListTimerRunning) {
 			pTimer = list_entry(list_timer, struct StVOSTimer, list);
 			if (gVOSTicks >= pTimer->ticks_alert) { //闹钟到，执行相关任务
@@ -174,7 +181,14 @@ void VOSTaskTimer(void *param)
 				}
 				else if (pTimer->type == VOS_TIMER_TYPE_PERIODIC){//更新闹钟时间，重新计时
 					pTimer->ticks_start = gVOSTicks;
-					pTimer->ticks_alert = gVOSTicks + pTimer->ticks_delay;
+					//pTimer->ticks_alert = gVOSTicks + pTimer->ticks_delay;
+					//临时这样设定，想办法如何处理溢出问题
+					if (MAX_INFINITY_U32 - gVOSTicks < pTimer->ticks_delay) {
+						pTimer->ticks_alert = MAX_INFINITY_U32;
+					}
+					else {
+						pTimer->ticks_alert = gVOSTicks + pTimer->ticks_delay;
+					}
 				}
 				else {
 

@@ -161,15 +161,15 @@ typedef struct StVosTask {
 	volatile u32 block_type; //如果阻塞，则这里指名阻塞类型
 	void (*task_fun)(void *param);
 	void *param;
-	s64 ticks_start;//闹钟设置点
-	s64 ticks_alert;//闹钟响节点
+	u32 ticks_start;//闹钟设置点
+	u32 ticks_alert;//闹钟响节点
 	u32 ticks_timeslice; //时间片
 	void *psyn; //指向同步信息控制块
 	u32 wakeup_from; //唤醒同步信号的来源，
 	u32 event_mask;  //事件类型，32位事件
 	u32 event_stop;  //停止接收指定的事件
-	s64 ticks_used_start; //每次进入cpu,记录开始时间，等待切换出去时，把当前时间减去这个时间然后累加到ticks_used_cnts
-	s64 ticks_used_cnts; //统计cpu使用率
+	u32 ticks_used_start; //每次进入cpu,记录开始时间，等待切换出去时，把当前时间减去这个时间然后累加到ticks_used_cnts
+	u32 ticks_used_cnts; //统计cpu使用率
 	struct list_head list;//空闲链表和优先级任务链表,优先级高的排第头，优先级低的排尾
 	struct list_head list_delay;//定时任务列表，注意这里包括单独延时也包括信号量超时任务。
 }StVosTask;
@@ -178,7 +178,7 @@ typedef struct StVosTask {
 typedef struct StTaskInfo {
 	s32 id;
 	s32 prio;
-	s64 ticks;
+	u32 ticks;
 	s32 stack_top;
 	s32 stack_size;
 	s32 stack_ptr;//当前指向的位置
@@ -235,18 +235,18 @@ extern void local_irq_enable(void);
 
 void VOSSemInit();
 StVOSSemaphore *VOSSemCreate(s32 max_sems, s32 init_sems, s8 *name);
-s32 VOSSemWait(StVOSSemaphore *pSem, u64 timeout_ms);
+s32 VOSSemWait(StVOSSemaphore *pSem, u32 timeout_ms);
 s32 VOSSemTryWait(StVOSSemaphore *pSem);
 s32 VOSSemRelease(StVOSSemaphore *pSem);
 s32 VOSSemDelete(StVOSSemaphore *pSem);
 
 void VOSMutexInit();
 StVOSMutex *VOSMutexCreate(s8 *name);
-s32 VOSMutexWait(StVOSMutex *pMutex, s64 timeout_ms);
+s32 VOSMutexWait(StVOSMutex *pMutex, u32 timeout_ms);
 s32 VOSMutexRelease(StVOSMutex *pMutex);
 s32 VOSMutexDelete(StVOSMutex *pMutex);
 
-s32 VOSEventWait(u32 event_mask, u64 timeout_ms);
+s32 VOSEventWait(u32 event_mask, u32 timeout_ms);
 s32 VOSEventSet(s32 task_id, u32 event);
 u32 VOSEventGet(s32 task_id);
 s32 VOSEventClear(s32 task_id, u32 event);
@@ -254,13 +254,13 @@ s32 VOSEventClear(s32 task_id, u32 event);
 void VOSMsgQueInit();
 StVOSMsgQueue *VOSMsgQueCreate(s8 *pRingBuf, s32 length, s32 msg_size, s8 *name);
 s32 VOSMsgQuePut(StVOSMsgQueue *pMQ, void *pmsg, s32 len);
-s32 VOSMsgQueGet(StVOSMsgQueue *pMQ, void *pmsg, s32 len, s64 timeout_ms);
+s32 VOSMsgQueGet(StVOSMsgQueue *pMQ, void *pmsg, s32 len, u32 timeout_ms);
 s32 VOSMsgQueFree(StVOSMsgQueue *pMQ);
 
 u32 VOSTaskDelay(u32 ms);
 
-s64 VOSGetTicks();
-s64 VOSGetTimeMs();
+u32 VOSGetTicks();
+u32 VOSGetTimeMs();
 
 //任务上下文使用VOSTaskCreate
 s32 VOSTaskCreate(void (*task_fun)(void *param), void *param,

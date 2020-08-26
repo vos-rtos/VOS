@@ -7,7 +7,7 @@ static void task0(void *param)
 {
 	int cnts = 0;
 	kprintf("%s start ...\r\n", __FUNCTION__);
-	s64 mark_time = VOSGetTimeMs()/1000;
+	u32 mark_time = VOSGetTimeMs()/1000;
 	kprintf("mark_time: %d\r\n", (u32)mark_time);
 
 	sem_hdl = VOSSemCreate(1, 1, "sem_hdl");
@@ -54,7 +54,7 @@ static void task0_int(void *param)
 {
 	int cnts = 0;
 	kprintf("%s start ...\r\n", __FUNCTION__);
-	s64 mark_time = VOSGetTimeMs()/1000;
+	u32 mark_time = VOSGetTimeMs()/1000;
 	kprintf("mark_time: %d\r\n", (u32)mark_time);
 
 	sem_int = VOSSemCreate(1, 1, "sem_int");

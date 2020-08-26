@@ -47,7 +47,7 @@ void task_uartin(void *param)
 	u8 buf[512];
 	u32 counts = 0;
 	u32 mark_cnts = 0;
-	s64 mark_ms = 0;
+	u32 mark_ms = 0;
 	int i = 0;
 
 	s32 time_spend = 0;
@@ -67,7 +67,7 @@ void task_uartin(void *param)
 			if (counts > mark_cnts+5000){
 				mark_cnts = counts;
 				time_spend = (s32)(VOSGetTimeMs()-mark_ms);
-				kprintf("speed[%08dms:%08dB:%05dBps]\r\n", time_spend, counts, (s32)((u64)(counts)*1000/time_spend));
+				kprintf("speed[%08dms:%08dB:%05dBps]\r\n", time_spend, counts, (s32)((u32)(counts)*1000/time_spend));
 			}
 		}
 		VOSTaskDelay(1);

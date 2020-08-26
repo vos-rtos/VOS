@@ -1,6 +1,6 @@
 #include "vos.h"
 
-s32 VOSEventWait(u32 event_mask, u64 timeout_ms);
+s32 VOSEventWait(u32 event_mask, u32 timeout_ms);
 
 u32 task0_id = -1;
 
@@ -8,7 +8,7 @@ static void task0(void *param)
 {
 	int cnts = 0;
 	kprintf("%s start ...\r\n", __FUNCTION__);
-	s64 mark_time = VOSGetTimeMs()/1000;
+	u32 mark_time = VOSGetTimeMs()/1000;
 	kprintf("mark_time: %d\r\n", (u32)mark_time);
 
 

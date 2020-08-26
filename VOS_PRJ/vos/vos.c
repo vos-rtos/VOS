@@ -22,9 +22,9 @@ struct StVosTask *pRunningTask; //正在运行的任务
 
 struct StVosTask *pReadyTask; //准备要切换的任务
 
-volatile s64  gVOSTicks = 0;
+volatile u32  gVOSTicks = 0;
 
-volatile s64 gMarkTicksNearest = MAX_SIGNED_VAL_64; //记录最近闹钟响
+volatile u32 gMarkTicksNearest = TIMEOUT_INFINITY_U32; //记录最近闹钟响
 
 volatile u32 VOSIntNesting = 0;
 
@@ -102,9 +102,9 @@ void __vos_irq_restore(u32 save)
 
 
 
-s64 VOSGetTicks()
+u32 VOSGetTicks()
 {
-	s64 ticks;
+	u32 ticks;
 	u32 irq_save = 0;
 	irq_save = __vos_irq_save();
 	ticks = gVOSTicks;
@@ -112,9 +112,9 @@ s64 VOSGetTicks()
 	return ticks;
 }
 
-s64 VOSGetTimeMs()
+u32 VOSGetTimeMs()
 {
-	s64 ticks = 0;
+	u32 ticks = 0;
 	ticks = VOSGetTicks();
 	return ticks * TICKS_INTERVAL_MS;
 }
@@ -332,7 +332,7 @@ u32 VOSTaskDelayListWakeUp()
 
 	irq_save = __local_irq_save();
 
-	gMarkTicksNearest = MAX_SIGNED_VAL_64;
+	gMarkTicksNearest = TIMEOUT_INFINITY_U32;
 
 	phead = &gListTaskDelay;
 
@@ -583,7 +583,7 @@ void task_idle(void *param)
 	 * 原因： 如果空闲任务被置换到阻塞队列，导致就绪任务剩下一个时，就无法被切出去。
 	 *       如果剩下一个就绪任务被切换出去，那么当前cpu跑啥东西，需要空闲任务不能阻塞。
 	 */
-	static s64 mark_time=0;
+	static u32 mark_time=0;
 	mark_time = VOSGetTimeMs();
 	while (1) {//禁止空闲任务阻塞
 //		if ((s32)(VOSGetTimeMs()-mark_time) > 1000) {
@@ -735,7 +735,15 @@ u32 VOSTaskDelay(u32 ms)
 	if (ms) {//进入延时设置
 		irq_save = __vos_irq_save();
 		pRunningTask->ticks_start = gVOSTicks;
-		pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(ms);
+//		pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(ms);
+		//临时这样设定，想办法如何处理溢出问题
+		if (MAX_INFINITY_U32 - gVOSTicks < MAKE_TICKS(ms)) {
+			pRunningTask->ticks_alert = MAX_INFINITY_U32;
+		}
+		else {
+			pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(ms);
+		}
+
 		if (pRunningTask->ticks_alert < gMarkTicksNearest) { //如果闹钟结点小于记录的最少值，则更新
 			gMarkTicksNearest = pRunningTask->ticks_alert;//更新为最近的闹钟
 		}
