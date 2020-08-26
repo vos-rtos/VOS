@@ -105,7 +105,7 @@ int bitmap_test() {
 	bitmap_set(32*10-1, bitmap);
 	bitmap_prinf(bitmap, sizeof(bitmap));
 	kprintf("TaskHighestPrioGet=%d\r\n", TaskHighestPrioGet(bitmap, MAX_COUNTS(bitmap)));
-	bitmap_clear(2, bitmap);
+	bitmap_clr(2, bitmap);
 	bitmap_prinf(bitmap, sizeof(bitmap));
 	kprintf("TaskHighestPrioGet=%d\r\n", TaskHighestPrioGet(bitmap, MAX_COUNTS(bitmap)));
 	bitmap_set(7, bitmap);
@@ -120,7 +120,7 @@ int bitmap_test() {
 	bitmap_set(0, bitmap);
 	bitmap_prinf(bitmap, sizeof(bitmap));
 	kprintf("TaskHighestPrioGet=%d\r\n", TaskHighestPrioGet(bitmap, MAX_COUNTS(bitmap)));
-	bitmap_clear(0, bitmap);
+	bitmap_clr(0, bitmap);
 	bitmap_prinf(bitmap, sizeof(bitmap));
 	kprintf("TaskHighestPrioGet=%d\r\n", TaskHighestPrioGet(bitmap, MAX_COUNTS(bitmap)));
 	bitmap_set(16, bitmap);

@@ -30,7 +30,7 @@ static void task_uartin(void *param)
 	s32 time_spend = 0;
 	mark_ms = VOSGetTimeMs();
 	kprintf("statistics:\r\n");
-	while(1) {
+	while(TestExitFlagGet() == 0) {
 		ret = vgets(buf, sizeof(buf)-1);
 		if (ret > 0){
 			//kprintf("ret=%d!\r\n", ret);
@@ -51,7 +51,7 @@ static void task_uartin(void *param)
 
 
 
-static long long task_uartin_stack[1024];
+static long long task_uartin_stack[256];
 void uart_test()
 {
 	kprintf("uart_test!\r\n");

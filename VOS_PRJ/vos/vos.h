@@ -84,9 +84,9 @@ enum {
 #define VOS_BLOCK_SEMP			(u32)(1<<1) //信号量阻塞
 #define VOS_BLOCK_EVENT			(u32)(1<<2) //事件阻塞
 #define VOS_BLOCK_MUTEX			(u32)(1<<3) //互斥阻塞
-#define VOS_BLOCK_MSGQUE		(u32)(1<<4) //消息队列阻塞
 
-#define BLOCK_SUB_MASK (VOS_BLOCK_SEMP|VOS_BLOCK_MUTEX|VOS_BLOCK_EVENT|VOS_BLOCK_MSGQUE)
+
+#define BLOCK_SUB_MASK (VOS_BLOCK_SEMP|VOS_BLOCK_MUTEX|VOS_BLOCK_EVENT/*|VOS_BLOCK_MSGQUE*/)
 
 #define TASK_PRIO_INVALID		(s32)(-1) //次优先级分配给IDLE
 #define TASK_PRIO_REAL			(s32)(100)
@@ -145,7 +145,7 @@ typedef struct StVOSMsgQueue {
 	s32 msg_size; //每个消息的大小（字节）
 	s32 distory; //删除互斥锁标志，需要把就绪队列里的所有等待该锁的阻塞任务添加到就绪队列
 	struct list_head list;
-	struct list_head list_task;//阻塞任务链表
+	StVOSSemaphore  *psem;
 }StVOSMsgQueue;
 
 typedef struct StVosTask {
@@ -279,7 +279,8 @@ void VOSTaskBlockWaveUp();
 void VOSStarup();
 void VOSTaskSchedule();
 void VOSSysTick();
-//s32 VOSTaskRaisePrioBeforeBlock(StVosTask *pMutexOwnerTask);
+
+
 s32 VOSTaskRaisePrioBeforeBlock(StVOSMutex *pMutex);
 s32 VOSTaskRestorePrioBeforeRelease();
 

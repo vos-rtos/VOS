@@ -100,8 +100,6 @@ s32 VOSSemWait(StVOSSemaphore *pSem, u64 timeout_ms)
 
 	if (pSem->left > 0) {
 		pSem->left--;
-		//pRunningTask->psyn = pSem; //也要设置指向资源的指针，优先级反转需要用到
-		//bitmap_set(pRunningTask->id, pSem->bitmap);
 		ret = 1;	}
 	else if (VOSIntNesting==0) {
 		//把当前任务切换到阻塞队列
@@ -117,7 +115,7 @@ s32 VOSSemWait(StVOSSemaphore *pSem, u64 timeout_ms)
 			gMarkTicksNearest = pRunningTask->ticks_alert;//更新为最近的闹钟
 		}
 		pRunningTask->block_type |= VOS_BLOCK_DELAY;//指明阻塞类型为自延时
-		//VOSTaskRaisePrioBeforeBlock(pRunningTask); //阻塞前处理优先级反转问题，提升就绪队列里的任务优先级
+
 		//插入到延时队列，也同时插入到阻塞队列
 		VOSTaskDelayListInsert(pRunningTask);
 		VOSTaskBlockListInsert(pRunningTask, &pSem->list_task);
@@ -179,10 +177,7 @@ s32 VOSSemRelease(StVOSSemaphore *pSem)
 		else {
 			pBlockTask->wakeup_from = VOS_WAKEUP_FROM_SEM_DEL;
 		}
-
-		//VOSTaskBlockWaveUp(); //唤醒在阻塞队列里阻塞的等待该信号量的任务
 		pRunningTask->psyn = 0; //清除指向资源的指针。
-		//bitmap_clear(pRunningTask->id, pSem->bitmap); //清除任务编号，如果同个任务多次获取相同信号量该如何处理？
 		ret = 1;
 	}
 	__vos_irq_restore(irq_save);
@@ -272,7 +267,6 @@ s32 VOSMutexWait(StVOSMutex *pMutex, s64 timeout_ms)
 	if (pMutex->counter > 0) {
 		pMutex->counter--;
 		pMutex->ptask_owner = pRunningTask;
-		//pRunningTask->psyn = pMutex; //也要设置指向资源的指针，优先级反转需要用到
 		ret = 1;
 	}
 	else {//把当前任务切换到阻塞队列
@@ -302,7 +296,7 @@ s32 VOSMutexWait(StVOSMutex *pMutex, s64 timeout_ms)
 		VOSTaskSchedule(); //任务调度并进入阻塞队列
 		switch(pRunningTask->wakeup_from) { //阻塞后是被定时器唤醒或者互斥锁唤醒
 		case VOS_WAKEUP_FROM_DELAY:
-			ret = -1;
+			ret = 0;
 			break;
 		case VOS_WAKEUP_FROM_MUTEX:
 			ret = 1;
@@ -312,7 +306,6 @@ s32 VOSMutexWait(StVOSMutex *pMutex, s64 timeout_ms)
 			break;
 		default:
 			ret = 0;
-			//printf info here
 			break;
 		}
 	}
@@ -429,14 +422,13 @@ s32 VOSEventWait(u32 event_mask, u64 timeout_ms)
 		VOSTaskSchedule(); //任务调度并进入阻塞队列
 		switch(pRunningTask->wakeup_from) { //阻塞后是被定时器唤醒或者互斥锁唤醒
 		case VOS_WAKEUP_FROM_DELAY:
-			ret = -1;
+			ret = 0;
 			break;
 		case VOS_WAKEUP_FROM_EVENT:
 			ret = 1;
 			break;
 		default:
 			ret = -1;
-			//printf info here
 			break;
 		}
 	}
@@ -465,7 +457,6 @@ s32 VOSEventSet(s32 task_id, u32 event)
 			pTask->event_mask = 0;
 			pTask->wakeup_from = VOS_WAKEUP_FROM_EVENT;
 		}
-		//VOSTaskBlockWaveUp(); //唤醒在阻塞队列里阻塞的等待该事件的任务
 		ret = 1;
 	}
 	__vos_irq_restore(irq_save);
@@ -513,7 +504,9 @@ s32 VOSEventClear(s32 task_id, u32 event)
 	return mask;
 }
 
-
+/**************************************
+ * 消息队列和邮箱直接使用信号量实现
+ **************************************/
 void VOSMsgQueInit()
 {
 	s32 i = 0;
@@ -534,9 +527,8 @@ StVOSMsgQueue *VOSMsgQueCreate(s8 *pRingBuf, s32 length, s32 msg_size, s8 *name)
 	StVOSMsgQueue *pMsgQue = 0;
 	u32 irq_save = 0;
 
-	if (VOSIntNesting != 0) return -1;
-
 	irq_save = __vos_irq_save();
+
 	if (!list_empty(&gListMsgQue)) {
 		pMsgQue = list_entry(gListMsgQue.next, StVOSMsgQueue, list);
 		list_del(gListMsgQue.next);
@@ -548,7 +540,7 @@ StVOSMsgQueue *VOSMsgQueCreate(s8 *pRingBuf, s32 length, s32 msg_size, s8 *name)
 		pMsgQue->msg_cnts = 0;
 		pMsgQue->msg_maxs = length/msg_size;
 		pMsgQue->msg_size = msg_size;
-		INIT_LIST_HEAD(&pMsgQue->list_task);
+		pMsgQue->psem = VOSSemCreate(pMsgQue->msg_maxs, 0, "mq_vos");
 	}
 	__vos_irq_restore(irq_save);
 	return  pMsgQue;
@@ -558,12 +550,9 @@ s32 VOSMsgQuePut(StVOSMsgQueue *pMQ, void *pmsg, s32 len)
 {
 	s32 ret = 0;
 	u8 *ptail = 0;
-	struct StVosTask *pBlockTask = 0;
-	u32 irq_save = 0;
 
-	if (VOSIntNesting != 0) return -1;
+	if (pMQ->psem == 0) return -1;
 
-	irq_save = __vos_irq_save();
 	if (pMQ->pos_tail != pMQ->pos_head || //头不等于尾，可以添加新消息
 		pMQ->msg_cnts == 0) { //队列为空，可以添加新消息
 		ptail = pMQ->pdata + pMQ->pos_tail * pMQ->msg_size;
@@ -572,33 +561,8 @@ s32 VOSMsgQuePut(StVOSMsgQueue *pMQ, void *pmsg, s32 len)
 		pMQ->pos_tail++;
 		pMQ->pos_tail = pMQ->pos_tail % pMQ->msg_maxs;
 		pMQ->msg_cnts++;
-		pBlockTask = list_entry(pMQ->list_task.next, struct StVosTask, list);
-		if (!list_empty(&pMQ->list_task)) {
-			VOSTaskBlockListRelease(pBlockTask);//唤醒在阻塞队列里阻塞的等待该信号量的任务,每次都唤醒优先级最高的那个
-			//修改状态
-			pBlockTask->status = VOS_STA_READY;
-			pBlockTask->block_type = 0;
-			pBlockTask->ticks_start = 0;
-			pBlockTask->ticks_alert = 0;
-			//pBlockTask->psyn = 0;
-			if (pMQ->distory == 0) {
-				pBlockTask->wakeup_from = VOS_WAKEUP_FROM_MSGQUE;
-			}
-			else {
-				pBlockTask->wakeup_from = VOS_WAKEUP_FROM_MSGQUE_DEL;
-			}
-		}
-		//VOSTaskBlockWaveUp(); //唤醒在阻塞队列里阻塞的等待该信号量的任务
-		//VOSTaskRestorePrioBeforeRelease(pRunningTask);//恢复自身的优先级
-		pRunningTask->psyn = 0; //清除指向资源的指针。
-		ret = 1;
-	}
-	__vos_irq_restore(irq_save);
 
-	if (ret == 1) {
-		//唤醒后，立即调用任务调度，万一唤醒的任务优先级高于当前任务，则切换,
-		//但不能用VOSTaskSwitch(TASK_SWITCH_USER);这是必须在特权模式下使用。
-		VOSTaskSchedule();
+		VOSSemRelease(pMQ->psem);
 	}
 	return ret;
 }
@@ -607,71 +571,17 @@ s32 VOSMsgQueGet(StVOSMsgQueue *pMQ, void *pmsg, s32 len, s64 timeout_ms)
 {
 	s32 ret = 0;
 	u8 *phead = 0;
-	u32 irq_save = 0;
 
-	if (VOSIntNesting != 0) return -1;
+	if (pMQ->psem == 0) return -1;
 
-	irq_save = __vos_irq_save();
-	if (pMQ->msg_cnts > 0) {//有消息
+	if ((ret = VOSSemWait(pMQ->psem, timeout_ms)) > 0) {
 		phead = pMQ->pdata + pMQ->pos_head * pMQ->msg_size;
 		len = (len <= pMQ->msg_size) ? len : pMQ->msg_size;
 		memcpy(pmsg, phead, len);
 		pMQ->pos_head++;
 		pMQ->pos_head = pMQ->pos_head % pMQ->msg_maxs;
 		pMQ->msg_cnts--;
-
-		//pRunningTask->psyn = pMQ; //也要设置指向资源的指针，优先级反转需要用到
-		ret = 1;
 	}
-	else {//没消息，进入就绪队列
-		pRunningTask->status = VOS_STA_BLOCK; //添加到阻塞队列
-
-		//信号量阻塞类型
-		pRunningTask->block_type |= VOS_BLOCK_MSGQUE;//消息队列类型
-		pRunningTask->psyn = pMQ;
-		//同时是超时时间类型
-		pRunningTask->ticks_start = gVOSTicks;
-		pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(timeout_ms);
-		if (pRunningTask->ticks_alert < gMarkTicksNearest) { //如果闹钟结点小于记录的最少值，则更新
-			gMarkTicksNearest = pRunningTask->ticks_alert;//更新为最近的闹钟
-		}
-		pRunningTask->block_type |= VOS_BLOCK_DELAY;//指明阻塞类型为自延时
-
-		//VOSTaskRaisePrioBeforeBlock(pRunningTask); //阻塞前处理优先级反转问题，提升就绪队列里的任务优先级
-		//插入到延时队列，也同时插入到阻塞队列
-		VOSTaskDelayListInsert(pRunningTask);
-		VOSTaskBlockListInsert(pRunningTask, &pMQ->list_task);
-	}
-	__vos_irq_restore(irq_save);
-
-	if (ret==0) { //没获取互斥锁，进入阻塞队列
-
-		VOSTaskSchedule(); //任务调度并进入阻塞队列
-		switch(pRunningTask->wakeup_from) { //阻塞后是被定时器唤醒或者互斥锁唤醒
-		case VOS_WAKEUP_FROM_DELAY:
-			ret = -1;
-			break;
-		case VOS_WAKEUP_FROM_MSGQUE: //正常的有消息，获取消息
-			irq_save = __vos_irq_save();
-			phead = pMQ->pdata + pMQ->pos_head * pMQ->msg_size;
-			len = (len <= pMQ->msg_size) ? len : pMQ->msg_size;
-			memcpy(pmsg, phead, len);
-			pMQ->pos_head++;
-			pMQ->pos_head = pMQ->pos_head % pMQ->msg_maxs;
-			pMQ->msg_cnts--;
-			__vos_irq_restore(irq_save);
-			ret = 1;
-			break;
-		case VOS_WAKEUP_FROM_MSGQUE_DEL:
-			ret = -1;
-			break;
-		default:
-			ret = 0;
-			//printf info here
-			break;
-		}
-	}
-
 	return ret;
 }
 
@@ -680,18 +590,12 @@ s32 VOSMsgQueFree(StVOSMsgQueue *pMQ)
 	s32 ret = -1;
 	u32 irq_save = 0;
 
-	if (VOSIntNesting != 0) return -1;
-
 	irq_save = __vos_irq_save();
 	if (!list_empty(&gListMsgQue)) {
 
 		if (pMQ->msg_cnts == 0) {//消息为空，释放
-//			//清除消息队列，是否需要把就绪队列里的所有等待该信号量的阻塞任务添加到就绪队列
-//			pMQ->distory = 1;
-//			VOSTaskBlockWaveUp(); //唤醒在阻塞队列里阻塞的等待该信号量的任务
 
 			list_del(pMQ);
-			list_add_tail(&pMQ->list, &gListMsgQue);
 			pMQ->distory = 0;
 			pMQ->name = 0;
 			pMQ->pdata = 0;

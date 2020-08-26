@@ -44,10 +44,10 @@ void func_timer4(void *ptimer, void *parg)
 }
 
 
-static long long task_timer1_stack[1024];
-static long long task_timer2_stack[1024];
-static long long task_timer3_stack[1024];
-static long long task_timer4_stack[1024];
+static long long task_timer1_stack[256];
+static long long task_timer2_stack[256];
+static long long task_timer3_stack[256];
+static long long task_timer4_stack[256];
 void timer_test()
 {
 	kprintf("timer_test!\r\n");

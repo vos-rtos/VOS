@@ -72,187 +72,6 @@ END_ITERATE:
 }
 
 
-
-//目前这个函数用于统计任务使用cpu占用率计算
-//当前任务准备切换出去前，
-void HookTaskSwitchOut()
-{
-	if (VOSRunning && pRunningTask->ticks_used_start != -1) {
-		if (gVOSTicks - pRunningTask->ticks_used_start > 0) {
-			pRunningTask->ticks_used_cnts += gVOSTicks - pRunningTask->ticks_used_start;
-		}
-	}
-}
-//目前这个函数用于统计任务使用cpu占用率计算
-void HookTaskSwitchIn()
-{
-	if (VOSRunning && pRunningTask->ticks_used_start != -1) {
-		pRunningTask->ticks_used_start = gVOSTicks;
-	}
-}
-
-void CaluTasksCpuUsedRateStart()
-{
-
-	u32 irq_save = 0;
-
-	StVosTask *ptask_prio = 0;
-	struct list_head *list_prio;
-	struct list_head *phead = 0;
-
-	if (VOSRunning==0 || flag_cpu_collect) return;
-
-	irq_save = __local_irq_save();
-
-	//正在与运行的任务也要计算算
-	pRunningTask->ticks_used_start = gVOSTicks;
-
-	//优先级表使用位图
-	void *iter = 0; //从头遍历
-	while (ptask_prio = tasks_bitmap_iterate(&iter)) {
-		ptask_prio->ticks_used_start = gVOSTicks;
-	}
-
-	phead = &gListTaskDelay; //阻塞的任务全部都会在延时链表中
-	//插入队列，必须优先级从高到低有序排列
-	list_for_each(list_prio, phead) {
-		ptask_prio = list_entry(list_prio, struct StVosTask, list_delay);
-		ptask_prio->ticks_used_start = gVOSTicks;
-	}
-
-	flag_cpu_collect = 1; //设置采集标志
-
-	__local_irq_restore(irq_save);
-
-}
-
-//mode: 0; 立即结束。
-//mode: 1; 不结束，时间累加采集。
-s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode)
-{
-	u32 irq_save = 0;
-	s32 i = 0;
-	s32 j = 0;
-	s32 ret = 0;
-	s32 ticks_totals = 0;
-	StVosTask *ptask_prio = 0;
-	s8 stack_status[16];
-	struct list_head *list_prio;
-	struct list_head *phead = 0;
-	s32 stack_left = 0;
-	//把数组全部元素的id设置为-1
-	for (i=0; i<cnts; i++) {
-		arr[i].id = -1;
-	}
-
-	if (flag_cpu_collect==0) {
-		CaluTasksCpuUsedRateStart();
-		flag_cpu_collect = 1;
-	}
-
-	irq_save = __local_irq_save();
-
-	i = 0;
-	//正在与运行的任务也要计算
-	if (i < cnts) {
-		arr[i].id = pRunningTask->id;
-		arr[i].ticks = pRunningTask->ticks_used_cnts;
-		arr[i].prio = pRunningTask->prio_base;
-		arr[i].stack_top = pRunningTask->pstack_top;
-		arr[i].stack_size = pRunningTask->stack_size;
-		arr[i].stack_ptr = pRunningTask->pstack;
-		arr[i].name = pRunningTask->name;
-		ticks_totals += arr[i].ticks;
-		if (mode==0) {//结束
-			pRunningTask->ticks_used_start = -1;
-			pRunningTask->ticks_used_cnts = 0;
-		}
-	}
-
-	void *iter = 0; //从头遍历
-	while (ptask_prio = tasks_bitmap_iterate(&iter)) {
-		i++;
-		if (i < cnts) {
-			arr[i].id = ptask_prio->id;
-			arr[i].ticks = ptask_prio->ticks_used_cnts;
-			arr[i].prio = ptask_prio->prio_base;
-			arr[i].stack_top = ptask_prio->pstack_top;
-			arr[i].stack_size = ptask_prio->stack_size;
-			arr[i].stack_ptr = ptask_prio->pstack;
-			arr[i].name = ptask_prio->name;
-			ticks_totals += arr[i].ticks;
-			if (mode==0) {//结束
-				ptask_prio->ticks_used_start = -1;
-				ptask_prio->ticks_used_cnts = 0;
-			}
-		}
-		else {//跳出
-			break;
-		}
-	}
-
-	phead = &gListTaskDelay; //阻塞的任务全部都会在延时链表中
-	//插入队列，必须优先级从高到低有序排列
-	list_for_each(list_prio, phead) {
-		ptask_prio = list_entry(list_prio, struct StVosTask, list_delay);
-		i++;
-		if (i < cnts) {
-			arr[i].id = ptask_prio->id;
-			arr[i].ticks = ptask_prio->ticks_used_cnts;
-			arr[i].prio = ptask_prio->prio_base;
-			arr[i].stack_top = ptask_prio->pstack_top;
-			arr[i].stack_size = ptask_prio->stack_size;
-			arr[i].stack_ptr = ptask_prio->pstack;
-			arr[i].name = ptask_prio->name;
-			ticks_totals += arr[i].ticks;
-			if (mode==0) {//结束
-				ptask_prio->ticks_used_start = -1;
-				ptask_prio->ticks_used_cnts = 0;
-			}
-		}
-		else {//跳出
-			break;
-		}
-	}
-	if (mode==0) {//立即结束采集
-		flag_cpu_collect = 0;
-	}
-	__local_irq_restore(irq_save);
-
-	ret = i;
-
-	//打印所有任务信息
-	//按任务号排序，待优化，任务id唯一，直接从0开始找
-	kprintf("任务号\t优先级\tCPU(百分比)\t栈顶地址\t栈当前地址\t栈总尺寸\t栈剩余尺寸\t栈状态\t任务名\r\n");
-	for (i=0; i<MAX_VOSTASK_NUM; i++) {
-		for (j=0; j<cnts; j++) {
-			if (arr[j].id == i) {
-				//打印任务信息
-				memset(stack_status, 0, sizeof(stack_status));
-				strcpy(stack_status, "正常");
-				if (arr[j].stack_ptr <= arr[j].stack_top - arr[j].stack_size) {
-					stack_left = 0;
-				}
-				else {//正常
-					stack_left = arr[j].stack_size - (arr[j].stack_top - arr[j].stack_ptr);
-				}
-				//检查栈是否被修改或溢出, 检查栈底是否0x64被修改
-				if (*(u32*)(arr[j].stack_top - arr[j].stack_size) != 0x64646464) {
-					strcpy(stack_status, "破坏"); //可能是被自己破坏或者被自己下面的变量破坏
-				}
-				if (ticks_totals==0) ticks_totals = 1; //除法分母不能为0
-				kprintf("%04d\t%03d\t\t%03d\t%08x\t%08x\t%08x\t%08x\t%s\t%s\r\n",
-						arr[j].id, arr[j].prio, (u32)(arr[j].ticks*100/ticks_totals), arr[j].stack_top,
-						arr[j].stack_ptr, arr[j].stack_size, stack_left, stack_status, arr[j].name);
-				break;
-			}
-		}
-	}
-
-	return ret;
-
-}
-
 u32 __vos_irq_save()
 {
 	u32 vos_save;
@@ -306,12 +125,11 @@ u32 VOSTaskInit()
 	u32 irq_save = 0;
 	irq_save = __local_irq_save();
 
-	memset(gArrPrio2Taskid, 0xFF, sizeof(gArrPrio2Taskid));//映射数组初始化为无效的任务ID
+	//memset(gArrPrio2Taskid, 0xFF, sizeof(gArrPrio2Taskid));//映射数组初始化为无效的任务ID
+	memset(gArrPrio2Taskid, 0, sizeof(gArrPrio2Taskid));
 
 	//初始化就绪任务队列和空闲任务队列
-	//INIT_LIST_HEAD(&gListTaskReady);
 	INIT_LIST_HEAD(&gListTaskFree);
-	//INIT_LIST_HEAD(&gListTaskBlock);
 	INIT_LIST_HEAD(&gListTaskDelay);
 	//把所有任务链接到空闲任务队列中
 	for (i=0; i<MAX_VOSTASK_NUM; i++) {
@@ -342,9 +160,9 @@ StVosTask *VOSTaskReadyListCutTask(StVosTask *pCutTask)
 	irq_save = __local_irq_save();
 
 	if (list_empty(&pCutTask->list)) {//为空，证明只有一个节点，则清空位图某个位
-		bitmap_clear(pCutTask->prio, gArrPrioBitMap); //优先级表位图置位
+		bitmap_clr(pCutTask->prio, gArrPrioBitMap); //优先级表位图置位
 		list_del(&pCutTask->list);//从相同优先级任务链表中删除自己
-		gArrPrio2Taskid[pCutTask->prio] = 0xFF; //无效任务ID值
+		//gArrPrio2Taskid[pCutTask->prio] = 0xFF; //无效任务ID值, 注意：这里不使用也可以，因为位图已经控制是否有数据
 	}
 	else {//证明相同优先级有多个任务，这时要把后面的任务的id设置到gArrPrio2Taskid表中，同时链表中删除最高优先级的任务
 		ptasknext = list_entry(pCutTask->list.next, struct StVosTask, list);
@@ -418,9 +236,6 @@ s32 VOSTaskRaisePrioBeforeBlock(StVOSMutex *pMutex)
 			list_head = 0;
 		case VOS_BLOCK_MUTEX:
 			list_head = &((StVOSMutex*)pObj)->list_task;
-		case VOS_BLOCK_MSGQUE:
-			list_head = &((StVOSMsgQueue*)pObj)->list_task;
-			break;
 		default: //只是延时，只是修改任务的优先级就行
 			pMutexOwnerTask->prio = pRunningTask->prio; //直接赋值
 			break;
@@ -618,7 +433,7 @@ s32 VOSTaskReadyCmpPrioTo(StVosTask *pRunTask)
 	__local_irq_restore(irq_save);
 	return ret;
 }
-#if 1
+
 //获取当前就绪队列中优先级最高的任务
 StVosTask *VOSTaskReadyCutPriorest()
 {
@@ -631,13 +446,10 @@ StVosTask *VOSTaskReadyCutPriorest()
 	highest = TaskHighestPrioGet(gArrPrioBitMap, MAX_COUNTS(gArrPrioBitMap));
 	if (highest != -1) {
 		pHightask = &gArrVosTask[gArrPrio2Taskid[highest]];
-		if (pHightask == 0) {
-			kprintf("aaaaaaaaaaaaaaaaaaaaaaa\r\n");
-		}
 		if (list_empty(&pHightask->list)) {//为空，证明只有一个节点，则清空位图某个位
-			bitmap_clear(highest, gArrPrioBitMap); //优先级表位图置位
+			bitmap_clr(highest, gArrPrioBitMap); //优先级表位图置位
 			list_del(&pHightask->list);//从相同优先级任务链表中删除自己
-			gArrPrio2Taskid[highest] = 0xFF; //无效任务ID值
+			//gArrPrio2Taskid[highest] = 0xFF; //无效任务ID值
 		}
 		else {//证明相同优先级有多个任务，这时要把后面的任务的id设置到gArrPrio2Taskid表中，同时链表中删除最高优先级的任务
 			ptasknext = list_entry(pHightask->list.next, struct StVosTask, list);
@@ -651,7 +463,7 @@ StVosTask *VOSTaskReadyCutPriorest()
 	__local_irq_restore(irq_save);
 	return pHightask;
 }
-#endif
+
 
 s32 PrepareForCortexSwitch()
 {
@@ -682,8 +494,13 @@ s32 VOSTaskCreate(void (*task_fun)(void *param), void *param,
 	u32 irq_save = 0;
 	irq_save = __vos_irq_save();
 	if (list_empty(&gListTaskFree)) goto END_CREATE;
+
 	ptask = list_entry(gListTaskFree.next, StVosTask, list); //获取第一个空闲任务
 	list_del(gListTaskFree.next); //空闲任务队列里删除第一个空闲任务
+
+	if (prio > MAX_VOS_TASK_PRIO_IDLE) {//优先级不能超过255，可以等于255
+		prio = MAX_VOS_TASK_PRIO_IDLE;
+	}
 
 	memset(ptask, 0, sizeof(*ptask));
 
@@ -697,9 +514,6 @@ s32 VOSTaskCreate(void (*task_fun)(void *param), void *param,
 
 	if (pstack && stack_size) {
 		memset(pstack, 0x64, stack_size); //初始化栈内容为0x64, 栈检测使用
-		if (*((u8*)pstack) != 0x64) {
-			kprintf("fuck!!!!!!!!!\r\n");
-		}
 	}
 	ptask->name = task_nm;
 
@@ -745,7 +559,6 @@ s32 VOSTaskCreate(void (*task_fun)(void *param), void *param,
 	*(--ptask->pstack) = 0xFFFFFFFDUL; //EXC_RETURN
 
 	//插入到就绪队列
-	//VOSTaskListPrioInsert(ptask, VOS_LIST_READY);
 	VOSReadyTaskPrioSet(ptask);
 
 END_CREATE:
@@ -804,9 +617,7 @@ void  VOSIntExit ()
     if (VOSRunning) {
     	irq_save = __local_irq_save();
         if (VOSIntNesting) VOSIntNesting--;
-        //__local_irq_restore(irq_save);
         if (VOSIntNesting == 0) {
-        	//VOSTaskSwitch(TASK_SWITCH_PASSIVE);
         	VOSTaskScheduleISR();
         }
         __local_irq_restore(irq_save);
@@ -874,7 +685,6 @@ void VOSTaskScheduleISR()
 	else {
 		//比较正在运行的任务优先级和就绪队列里的最高优先级
 		ret = VOSTaskReadyCmpPrioTo(pRunningTask);
-		//ret < 0: 就绪队列有更高优先级，强制切换
 		if (ret < 0 || (ret == 0 && pRunningTask->ticks_timeslice == 0))//ret == 0 && ticks_timeslice==0:时间片用完，同时就绪队列有相同优先级，也得切换
 		{
 			VOSCtxSwtFlag = 1;
@@ -893,6 +703,56 @@ void VOSTaskScheduleISR()
 		asm_ctx_switch();//触发PendSV_Handler中断
 	}
 }
+
+
+void VOSSysTick()
+{
+	u32 irq_save;
+	irq_save = __local_irq_save();
+	gVOSTicks++;
+	__local_irq_restore(irq_save);
+	if (VOSRunning && gVOSTicks >= gMarkTicksNearest) {//闹钟响，查找阻塞队列，把对应的阻塞任务添加到就绪队列中
+		VOSTaskDelayListWakeUp();
+	}
+}
+
+
+
+u32 VOSTaskDelay(u32 ms)
+{
+	//如果中断被关闭，系统不进入调度，则直接硬延时
+	if (VOSIntNesting > 0) {
+		VOSDelayUs(ms*1000);
+		return 0;
+	}
+	//否则进入操作系统的闹钟延时
+	u32 irq_save = 0;
+
+	if (ms) {//进入延时设置
+		irq_save = __vos_irq_save();
+		pRunningTask->ticks_start = gVOSTicks;
+		pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(ms);
+		if (pRunningTask->ticks_alert < gMarkTicksNearest) { //如果闹钟结点小于记录的最少值，则更新
+			gMarkTicksNearest = pRunningTask->ticks_alert;//更新为最近的闹钟
+		}
+		pRunningTask->status = VOS_STA_BLOCK; //添加到阻塞队列
+		pRunningTask->block_type |= VOS_BLOCK_DELAY;//指明阻塞类型为自延时
+
+		VOSTaskDelayListInsert(pRunningTask); //把当前任务直接插到延时任务链表
+
+		__vos_irq_restore(irq_save);
+	}
+	//ms为0，切换任务, 或者VOS_STA_BLOCK_DELAY标志，呼唤调度
+	VOSTaskSchedule();
+	return 0;
+}
+
+/**********************************************************************
+ * ********************************************************************
+ * 下面主要是定义查看内核信息的函数
+ * ********************************************************************
+ **********************************************************************/
+
 int vvsprintf(char *buf, int len, char* format, ...);
 #define sprintf vvsprintf
 void VOSTaskSchTabDebug()
@@ -930,8 +790,6 @@ void VOSTaskSchTabDebug()
 			buf[strlen(buf)-2] = 0;
 		}
 	}
-
-	//kprintf(")");
 	strcat(buf, ")");
 	phead = &gListTaskDelay;
 	//插入队列，必须优先级从高到低有序排列
@@ -949,47 +807,184 @@ void VOSTaskSchTabDebug()
 	__vos_irq_restore(irq_save);
 }
 
-void VOSSysTick()
+
+
+//目前这个函数用于统计任务使用cpu占用率计算
+//当前任务准备切换出去前，
+void HookTaskSwitchOut()
 {
-	u32 irq_save;
-	irq_save = __local_irq_save();
-	gVOSTicks++;
-	__local_irq_restore(irq_save);
-	if (VOSRunning && gVOSTicks >= gMarkTicksNearest) {//闹钟响，查找阻塞队列，把对应的阻塞任务添加到就绪队列中
-		//VOSTaskBlockWaveUp();
-		VOSTaskDelayListWakeUp();
+	if (VOSRunning && pRunningTask->ticks_used_start != -1) {
+		if (gVOSTicks - pRunningTask->ticks_used_start > 0) {
+			pRunningTask->ticks_used_cnts += gVOSTicks - pRunningTask->ticks_used_start;
+		}
+	}
+}
+//目前这个函数用于统计任务使用cpu占用率计算
+void HookTaskSwitchIn()
+{
+	if (VOSRunning && pRunningTask->ticks_used_start != -1) {
+		pRunningTask->ticks_used_start = gVOSTicks;
 	}
 }
 
-
-
-u32 VOSTaskDelay(u32 ms)
+void CaluTasksCpuUsedRateStart()
 {
-	//如果中断被关闭，系统不进入调度，则直接硬延时
-	if (VOSIntNesting > 0) {
-		VOSDelayUs(ms*1000);
-		return 0;
-	}
-	//否则进入操作系统的闹钟延时
+
 	u32 irq_save = 0;
 
-	if (ms) {//进入延时设置
-		irq_save = __vos_irq_save();
-		pRunningTask->ticks_start = gVOSTicks;
-		pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(ms);
-		if (pRunningTask->ticks_alert < gMarkTicksNearest) { //如果闹钟结点小于记录的最少值，则更新
-			gMarkTicksNearest = pRunningTask->ticks_alert;//更新为最近的闹钟
-		}
-		pRunningTask->status = VOS_STA_BLOCK; //添加到阻塞队列
-		pRunningTask->block_type |= VOS_BLOCK_DELAY;//指明阻塞类型为自延时
+	StVosTask *ptask_prio = 0;
+	struct list_head *list_prio;
+	struct list_head *phead = 0;
 
-		VOSTaskDelayListInsert(pRunningTask); //把当前任务直接插到延时任务链表
+	if (VOSRunning==0 || flag_cpu_collect) return;
 
-		__vos_irq_restore(irq_save);
+	irq_save = __local_irq_save();
+
+	//正在与运行的任务也要计算算
+	pRunningTask->ticks_used_start = gVOSTicks;
+
+	//优先级表使用位图
+	void *iter = 0; //从头遍历
+	while (ptask_prio = tasks_bitmap_iterate(&iter)) {
+		ptask_prio->ticks_used_start = gVOSTicks;
 	}
-	//ms为0，切换任务, 或者VOS_STA_BLOCK_DELAY标志，呼唤调度
-	VOSTaskSchedule();
-	return 0;
+
+	phead = &gListTaskDelay; //阻塞的任务全部都会在延时链表中
+	//插入队列，必须优先级从高到低有序排列
+	list_for_each(list_prio, phead) {
+		ptask_prio = list_entry(list_prio, struct StVosTask, list_delay);
+		ptask_prio->ticks_used_start = gVOSTicks;
+	}
+
+	flag_cpu_collect = 1; //设置采集标志
+
+	__local_irq_restore(irq_save);
+
+}
+
+//mode: 0; 立即结束。
+//mode: 1; 不结束，时间累加采集。
+s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode)
+{
+	u32 irq_save = 0;
+	s32 i = 0;
+	s32 j = 0;
+	s32 ret = 0;
+	s32 ticks_totals = 0;
+	StVosTask *ptask_prio = 0;
+	s8 stack_status[16];
+	struct list_head *list_prio;
+	struct list_head *phead = 0;
+	s32 stack_left = 0;
+	//把数组全部元素的id设置为-1
+	for (i=0; i<cnts; i++) {
+		arr[i].id = -1;
+	}
+
+	if (flag_cpu_collect==0) {
+		CaluTasksCpuUsedRateStart();
+		flag_cpu_collect = 1;
+	}
+
+	irq_save = __local_irq_save();
+
+	i = 0;
+	//正在与运行的任务也要计算
+	if (i < cnts) {
+		arr[i].id = pRunningTask->id;
+		arr[i].ticks = pRunningTask->ticks_used_cnts;
+		arr[i].prio = pRunningTask->prio_base;
+		arr[i].stack_top = pRunningTask->pstack_top;
+		arr[i].stack_size = pRunningTask->stack_size;
+		arr[i].stack_ptr = pRunningTask->pstack;
+		arr[i].name = pRunningTask->name;
+		ticks_totals += arr[i].ticks;
+		if (mode==0) {//结束
+			pRunningTask->ticks_used_start = -1;
+			pRunningTask->ticks_used_cnts = 0;
+		}
+	}
+
+	void *iter = 0; //从头遍历
+	while (ptask_prio = tasks_bitmap_iterate(&iter)) {
+		i++;
+		if (i < cnts) {
+			arr[i].id = ptask_prio->id;
+			arr[i].ticks = ptask_prio->ticks_used_cnts;
+			arr[i].prio = ptask_prio->prio_base;
+			arr[i].stack_top = ptask_prio->pstack_top;
+			arr[i].stack_size = ptask_prio->stack_size;
+			arr[i].stack_ptr = ptask_prio->pstack;
+			arr[i].name = ptask_prio->name;
+			ticks_totals += arr[i].ticks;
+			if (mode==0) {//结束
+				ptask_prio->ticks_used_start = -1;
+				ptask_prio->ticks_used_cnts = 0;
+			}
+		}
+		else {//跳出
+			break;
+		}
+	}
+
+	phead = &gListTaskDelay; //阻塞的任务全部都会在延时链表中
+	//插入队列，必须优先级从高到低有序排列
+	list_for_each(list_prio, phead) {
+		ptask_prio = list_entry(list_prio, struct StVosTask, list_delay);
+		i++;
+		if (i < cnts) {
+			arr[i].id = ptask_prio->id;
+			arr[i].ticks = ptask_prio->ticks_used_cnts;
+			arr[i].prio = ptask_prio->prio_base;
+			arr[i].stack_top = ptask_prio->pstack_top;
+			arr[i].stack_size = ptask_prio->stack_size;
+			arr[i].stack_ptr = ptask_prio->pstack;
+			arr[i].name = ptask_prio->name;
+			ticks_totals += arr[i].ticks;
+			if (mode==0) {//结束
+				ptask_prio->ticks_used_start = -1;
+				ptask_prio->ticks_used_cnts = 0;
+			}
+		}
+		else {//跳出
+			break;
+		}
+	}
+	if (mode==0) {//立即结束采集
+		flag_cpu_collect = 0;
+	}
+	__local_irq_restore(irq_save);
+
+	ret = i;
+
+	//打印所有任务信息
+	//按任务号排序，待优化，任务id唯一，直接从0开始找
+	kprintf("任务号\t优先级\tCPU(百分比)\t栈顶地址\t栈当前地址\t栈总尺寸\t栈剩余尺寸\t栈状态\t任务名\r\n");
+	for (i=0; i<MAX_VOSTASK_NUM; i++) {
+		for (j=0; j<cnts; j++) {
+			if (arr[j].id == i) {
+				//打印任务信息
+				memset(stack_status, 0, sizeof(stack_status));
+				strcpy(stack_status, "正常");
+				if (arr[j].stack_ptr <= arr[j].stack_top - arr[j].stack_size) {
+					stack_left = 0;
+				}
+				else {//正常
+					stack_left = arr[j].stack_size - (arr[j].stack_top - arr[j].stack_ptr);
+				}
+				//检查栈是否被修改或溢出, 检查栈底是否0x64被修改
+				if (*(u32*)(arr[j].stack_top - arr[j].stack_size) != 0x64646464) {
+					strcpy(stack_status, "破坏"); //可能是被自己破坏或者被自己下面的变量破坏
+				}
+				if (ticks_totals==0) ticks_totals = 1; //除法分母不能为0
+				kprintf("%04d\t%03d\t\t%03d\t%08x\t%08x\t%08x\t%08x\t%s\t%s\r\n",
+						arr[j].id, arr[j].prio, (u32)(arr[j].ticks*100/ticks_totals), arr[j].stack_top,
+						arr[j].stack_ptr, arr[j].stack_size, stack_left, stack_status, arr[j].name);
+				break;
+			}
+		}
+	}
+	return ret;
 }
 
 

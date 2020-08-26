@@ -9,36 +9,96 @@
 #include "vos.h"
 #include "vlist.h"
 
-void VSHELL_FUN(vincent)(s8 **parr, s32 cnts)
+void sem_test();
+void event_test();
+void mq_test();
+void mutex_test();
+void delay_test();
+void schedule_test();
+void uart_test();
+void timer_test();
+void shell_test();
+void stack_test();
+
+s32 test_exit_flag = 0;
+
+s32 TestExitFlagGet()
 {
-	s32 i = 0;
-	for (i=0; i<cnts; i++) {
-		kprintf("param[%d]:%s\r\n", i, parr[i]);
-	}
-}
-void VSHELL_FUN(abc)(s8 **parr, s32 cnts)
-{
-	s32 i = 0;
-	for (i=0; i<cnts; i++) {
-		kprintf("param[%d]:%s\r\n", i, parr[i]);
-	}
+	return test_exit_flag;
 }
 
-void VSHELL_FUN(aaa)(s8 **parr, s32 cnts)
+void TestExitFlagSet(s32 flag)
 {
-	s32 i = 0;
-	for (i=0; i<cnts; i++) {
-		kprintf("param[%d]:%s\r\n", i, parr[i]);
-	}
+	test_exit_flag = flag;
+}
+
+
+void VSHELL_FUN(quit)(s8 **parr, s32 cnts)
+{
+	TestExitFlagSet(1);
+}
+
+
+void VSHELL_FUN(sem_t)(s8 **parr, s32 cnts)
+{
+//	s32 i = 0;
+//	for (i=0; i<cnts; i++) {
+//		kprintf("param[%d]:%s\r\n", i, parr[i]);
+//	}
+	TestExitFlagSet(0);
+	sem_test();
+}
+
+void VSHELL_FUN(event_t)(s8 **parr, s32 cnts)
+{
+	TestExitFlagSet(0);
+	event_test();
 }
 //
-void VSHELL_FUN_NOTE(bbb, "this is function for test!")(s8 **parr, s32 cnts)
+void VSHELL_FUN(mq_t)(s8 **parr, s32 cnts)
 {
-	s32 i = 0;
-	for (i=0; i<cnts; i++) {
-		kprintf("param[%d]:%s\r\n", i, parr[i]);
-	}
+	TestExitFlagSet(0);
+	mq_test();
 }
+void VSHELL_FUN(mutex_t)(s8 **parr, s32 cnts)
+{
+	TestExitFlagSet(0);
+	mutex_test();
+}
+void VSHELL_FUN(delay_t)(s8 **parr, s32 cnts)
+{
+	TestExitFlagSet(0);
+	delay_test();
+}
+void VSHELL_FUN(schedule_t)(s8 **parr, s32 cnts)
+{
+	TestExitFlagSet(0);
+	schedule_test();
+}
+
+void VSHELL_FUN(uart_t)(s8 **parr, s32 cnts)
+{
+	TestExitFlagSet(0);
+	uart_test();
+}
+
+void VSHELL_FUN(timer_t)(s8 **parr, s32 cnts)
+{
+	TestExitFlagSet(0);
+	timer_test();
+}
+
+void VSHELL_FUN(shell_t)(s8 **parr, s32 cnts)
+{
+	TestExitFlagSet(0);
+	shell_test();
+}
+void VSHELL_FUN(stack_t)(s8 **parr, s32 cnts)
+{
+	TestExitFlagSet(0);
+	stack_test();
+}
+
 void CaluTasksCpuUsedRateStart();
 s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode);
 void VSHELL_FUN_NOTE(task, "list tasks infomation: task [time_ms]")(s8 **parr, s32 cnts)
@@ -118,6 +178,7 @@ void vshell_do(s8 **parr, s32 cnts, s32 is_bg)
 		name = (unsigned int *)(*pfname);
 		if (strcmp(name, parr[0])==0){
 			fun = (VSHELL_FUN)(*pfun);
+			if (strcmp(&name[strlen(name)-2], "_t")==0) is_bg = 1; //测试任务全部独立开任务来测试。
 			if (is_bg == 1) {
 				temp.parr = parr;
 				temp.cnts = cnts;

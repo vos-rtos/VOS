@@ -17,7 +17,7 @@ static void task_low(void *param)
 
 	gMutexPtr = VOSMutexCreate("mutex_schedule");
 
-	while (1) {
+	while (TestExitFlagGet() == 0) {
 		kprintf("%sks=%d!\r\n", __FUNCTION__, (u32)VOSGetTimeMs());
 		if (gMutexPtr) {
 			ret = VOSMutexWait(gMutexPtr, 60*1000);
@@ -31,7 +31,7 @@ static void task_low(void *param)
 			kprintf("%s working DONE!\r\n", __FUNCTION__);
 			VOSMutexRelease(gMutexPtr);
 		}
-		while (1) VOSTaskDelay(1*1000);
+		while (TestExitFlagGet() == 0) VOSTaskDelay(1*1000);
 	}
 }
 static void task_high(void *param)
@@ -39,7 +39,7 @@ static void task_high(void *param)
 	s32 cnt = 0;
 	s32 ret = 0;
 	kprintf("%s start ...\r\n", __FUNCTION__);
-	while(1) {
+	while(TestExitFlagGet() == 0) {
 		VOSTaskDelay(1*1000);
 		if (gMutexPtr) {
 			kprintf("%s try to get Mutex ...!\r\n", __FUNCTION__);
@@ -54,7 +54,7 @@ static void task_high(void *param)
 			kprintf("%s working DONE!\r\n", __FUNCTION__);
 			VOSMutexRelease(gMutexPtr);
 		}
-		while (1) VOSTaskDelay(1*1000);
+		while (TestExitFlagGet() == 0) VOSTaskDelay(1*1000);
 	}
 }
 
@@ -62,7 +62,7 @@ static void task_normal(void *param)
 {
 	int cnts = 0;
 	kprintf("%s start ...\r\n", __FUNCTION__);
-	while(1) {
+	while(TestExitFlagGet() == 0) {
 		VOSTaskDelay(2*1000);
 		kprintf("%s start working ... \r\n", __FUNCTION__);
 		while (cnts < 5) {
@@ -70,13 +70,13 @@ static void task_normal(void *param)
 			VOSDelayUs(1000*1000);
 		}
 		kprintf("%s ended working ... \r\n", __FUNCTION__);
-		while (1) VOSTaskDelay(1*1000);
+		while (TestExitFlagGet() == 0) VOSTaskDelay(1*1000);
 	}
 }
 
 
 
-static long long task_low_stack[1024], task_high_stack[1024], task_normal_stack[1024];
+static long long task_low_stack[1024], task_high_stack[256], task_normal_stack[256];
 void schedule_test()
 {
 	kprintf("test sem!\r\n");
@@ -84,7 +84,7 @@ void schedule_test()
 	task_id = VOSTaskCreate(task_low, 0, task_low_stack, sizeof(task_low_stack), TASK_PRIO_LOW, "task_low");
 	task_id = VOSTaskCreate(task_high, 0, task_high_stack, sizeof(task_high_stack), TASK_PRIO_HIGH, "task_high");
 	task_id = VOSTaskCreate(task_normal, 0, task_normal_stack, sizeof(task_normal_stack), TASK_PRIO_NORMAL, "task_normal");
-	while (1) {
+	while (TestExitFlagGet() == 0) {
 		VOSTaskDelay(1*1000);
 	}
 }

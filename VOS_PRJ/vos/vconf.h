@@ -34,10 +34,10 @@
 #define VOS_TASK_NOT_INHERITANCE   (0)  //默认是优先级继承来处理优先级反转问题，如果定义为1，则不处理反转问题
 
 
-#define MAX_VOS_TASK_ID	(u8)(0xFF-1) //0xFF表示无效ID
+//#define MAX_VOS_TASK_ID	(u8)(0xFF-1) //0xFF表示无效ID
 
 #define MAX_CPU_NUM 1
-#define MAX_VOSTASK_NUM  10
+#define MAX_VOSTASK_NUM  10 //不能超过255, 可以等于255
 
 #define TICKS_INTERVAL_MS 1 //systick的间隔，1ms
 

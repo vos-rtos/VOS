@@ -6,7 +6,7 @@ static void task_stack_test(void *param)
 {
 	u8 buf[18*4];
 	memset(buf, 0x55 , sizeof(buf));
-	while(1) {
+	while(TestExitFlagGet() == 0) {
 		VOSDelayUs(1000*1000);
 	}
 }
@@ -20,7 +20,7 @@ void stack_test()
 	kprintf("test sem!\r\n");
 	s32 task_id;
 	task_id = VOSTaskCreate(task_stack_test, 0, task_stack, sizeof(task_stack), TASK_PRIO_NORMAL, "task_stack_test");
-	while (1) {
+	while (TestExitFlagGet() == 0) {
 		VOSTaskDelay(1*1000);
 	}
 }
