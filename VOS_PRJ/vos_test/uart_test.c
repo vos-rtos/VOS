@@ -1,6 +1,6 @@
 /********************************************************************************************************
 * 版    权: Copyright (c) 2020, VOS Open source. All rights reserved.
-* 文    件: vos.c
+* 文    件: uart_test.c
 * 作    者: 156439848@qq.com; vincent_cws2008@gmail.com
 * 版    本: VOS V1.0
 * 历    史：
