@@ -200,8 +200,8 @@ typedef struct StVOSTimer{
 } StVOSTimer;
 
 
-u32 VOSTaskBlockListInsert(StVosTask *pInsertTask, struct list_head *phead);
-u32 VOSTaskBlockListRelease(StVosTask *pReleaseTask);
+void VOSTaskBlockListInsert(StVosTask *pInsertTask, struct list_head *phead);
+void VOSTaskBlockListRelease(StVosTask *pReleaseTask);
 
 void VOSTimerInit();
 StVOSTimer *VOSTimerCreate(s32 type, u32 delay_ms, VOS_TIMER_CB callback, void *arg, s8 *name);
@@ -246,7 +246,7 @@ s32 VOSMsgQuePut(StVOSMsgQueue *pMQ, void *pmsg, s32 len);
 s32 VOSMsgQueGet(StVOSMsgQueue *pMQ, void *pmsg, s32 len, u32 timeout_ms);
 s32 VOSMsgQueFree(StVOSMsgQueue *pMQ);
 
-u32 VOSTaskDelay(u32 ms);
+void VOSTaskDelay(u32 ms);
 
 u32 VOSGetTicks();
 u32 VOSGetTimeMs();
@@ -266,9 +266,12 @@ void VOSTaskSchedule();
 void VOSSysTick();
 
 
-s32 VOSTaskRaisePrioBeforeBlock(StVOSMutex *pMutex);
-s32 VOSTaskRestorePrioBeforeRelease();
+void VOSTaskRaisePrioBeforeBlock(StVOSMutex *pMutex);
+void VOSTaskRestorePrioBeforeRelease();
 
+void VOSTaskDelayListInsert(StVosTask *pInsertTask);
+
+void VOSTaskDelayListWakeUp();
 
 //检查目前运行在中断上下文还是任务上下文。
 s32 VOSCortexCheck();

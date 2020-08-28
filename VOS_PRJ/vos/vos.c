@@ -1,14 +1,16 @@
-//----------------------------------------------------
-// Copyright (c) 2020, VOS Open source. All rights reserved.
-// Author: 156439848@qq.com; vincent_cws2008@gmail.com
-// History:
-//	     2020-08-01: initial by vincent.
-//------------------------------------------------------
+/********************************************************************************************************
+* 版    权: Copyright (c) 2020, VOS Open source. All rights reserved.
+* 文    件: vos.c
+* 作    者: 156439848@qq.com; vincent_cws2008@gmail.com
+* 版    本: OS V1.0
+* 历    史：
+* --20200801：创建文件
+* --20200828：添加注释
+*********************************************************************************************************/
 
 #include "vtype.h"
 #include "vos.h"
 #include "vlist.h"
-
 #include "vbitmap.h"
 
 
@@ -37,16 +39,20 @@ volatile u32 vos_dis_irq_counter = 0;//记录调用irq disable层数
 
 long long stack_idle[1024];
 
-u32 VOSUserIRQSave();
-void VOSUserIRQRestore(u32 save);
-
 u32 gArrPrioBitMap[MAX_VOS_TASK_PRIO_NUM/8/4]; //每bit置位代表优先级数值
 u8  gArrPrio2Taskid[MAX_VOS_TASK_PRIO_NUM]; //通过优先级查找第一个相同优先级的链表头任务
 
-
 volatile u32 flag_cpu_collect = 0; //是否在采集cpu占用率
 
-//遍历位图任务
+
+/********************************************************************************************************
+* 函数：StVosTask *tasks_bitmap_iterate(void **iter);
+* 描述: 遍历就绪任务位图
+* 参数:
+* [1] iter: 迭代变量，记录下一个要查找的位置，如果为0，则从第一个开始查找
+* 返回：返回优先级表中的每一个任务指针，如果返回NULL，则表示没有就绪任务
+* 注意：无
+*********************************************************************************************************/
 StVosTask *tasks_bitmap_iterate(void **iter)
 {
 	u32 pos = (u32)*iter;
@@ -71,7 +77,13 @@ END_ITERATE:
 	return &gArrVosTask[gArrPrio2Taskid[pos]];
 }
 
-
+/********************************************************************************************************
+* 函数： u32 __vos_irq_save();
+* 描述: 关中断，然后返回关中断前的状态，这个返回值被__vos_irq_restore(u32 save)来恢复原来状态，支持多层嵌套
+* 参数: 无
+* 返回：返回优先级表中的每一个任务指针，如果返回NULL，则表示没有就绪任务
+* 注意：开关TASK_LEVEL，是支持线程级用户模式（非特权模式），需要svc切换到特权然后关闭中断
+*********************************************************************************************************/
 u32 __vos_irq_save()
 {
 	u32 vos_save;
@@ -88,6 +100,15 @@ u32 __vos_irq_save()
 #endif
 	return vos_save;
 }
+
+/********************************************************************************************************
+* 函数： void __vos_irq_restore(u32 save);
+* 描述: 开中断，支持多层嵌套
+* 参数:
+* [1] save: __vos_irq_save()返回值作为参数
+* 返回：无
+* 注意：开关TASK_LEVEL，是支持线程级用户模式（非特权模式），需要svc切换到特权然后关闭中断
+*********************************************************************************************************/
 void __vos_irq_restore(u32 save)
 {
 #if (TASK_LEVEL)
@@ -100,8 +121,13 @@ void __vos_irq_restore(u32 save)
 #endif
 }
 
-
-
+/********************************************************************************************************
+* 函数： u32 VOSGetTicks();
+* 描述: 获取系统的ticks计数，ticks在定时中断里每次累加1，无符号32位数值，溢出重头计数不受影响
+* 参数: 无
+* 返回：当前系统的计数值
+* 注意：无
+*********************************************************************************************************/
 u32 VOSGetTicks()
 {
 	u32 ticks;
@@ -112,6 +138,13 @@ u32 VOSGetTicks()
 	return ticks;
 }
 
+/********************************************************************************************************
+* 函数： u32 VOSGetTimeMs();
+* 描述: 获取系统当前运行的毫秒数，将ticks转化成毫秒后返回
+* 参数: 无
+* 返回：当前系统运行毫秒数
+* 注意：无
+*********************************************************************************************************/
 u32 VOSGetTimeMs()
 {
 	u32 ticks = 0;
@@ -119,18 +152,28 @@ u32 VOSGetTimeMs()
 	return ticks * TICKS_INTERVAL_MS;
 }
 
+/********************************************************************************************************
+* 函数： u32 VOSTaskInit();
+* 描述: 系统任务初始化，包括空闲任务初始化
+* 参数:	无
+* 返回：查看返回值
+* 注意：无
+*********************************************************************************************************/
 u32 VOSTaskInit()
 {
+	s32 ret = VERROR_NO_ERROR;
 	s32 i = 0;
 	u32 irq_save = 0;
 	irq_save = __local_irq_save();
 
-	//memset(gArrPrio2Taskid, 0xFF, sizeof(gArrPrio2Taskid));//映射数组初始化为无效的任务ID
+	//初始化就绪任务位图表和优先级任务ID映射表
+	memset(gArrPrioBitMap, 0, sizeof(gArrPrioBitMap));
 	memset(gArrPrio2Taskid, 0, sizeof(gArrPrio2Taskid));
 
 	//初始化就绪任务队列和空闲任务队列
 	INIT_LIST_HEAD(&gListTaskFree);
 	INIT_LIST_HEAD(&gListTaskDelay);
+
 	//把所有任务链接到空闲任务队列中
 	for (i=0; i<MAX_VOSTASK_NUM; i++) {
 		list_add_tail(&gArrVosTask[i].list, &gListTaskFree);
@@ -138,11 +181,20 @@ u32 VOSTaskInit()
 	}
 	__local_irq_restore(irq_save);
 
-	TaskIdleBuild();//创建idle任务
+	//创建idle任务
+	TaskIdleBuild();
 
-	return 0;
+	return ret;
 }
 
+/********************************************************************************************************
+* 函数： StVosTask *VOSGetTaskFromId(s32 task_id);
+* 描述: 通过任务ID返回任务结构指针
+* 参数:
+* [1] task_id: 任务ID
+* 返回：该任务指针, 否则返回NULL
+* 注意：无
+*********************************************************************************************************/
 StVosTask *VOSGetTaskFromId(s32 task_id)
 {
 	if (task_id < 0 || task_id >= MAX_VOSTASK_NUM) return 0;
@@ -150,13 +202,17 @@ StVosTask *VOSGetTaskFromId(s32 task_id)
 }
 
 
-
-//就绪队列表，取出某个任务
+/********************************************************************************************************
+* 函数：StVosTask *VOSTaskReadyListCutTask(StVosTask *pCutTask);
+* 描述: 就绪任务位图中，取出某个任务
+* 参数:
+* [1] pCutTask: 指定要取出的某个任务指针
+* 返回：该任务指针
+* 注意：无
+*********************************************************************************************************/
 StVosTask *VOSTaskReadyListCutTask(StVosTask *pCutTask)
 {
 	StVosTask *ptasknext = 0;
-	StVosTask *pHightask = 0;
-	s32 highest;
 	u32 irq_save = 0;
 
 	irq_save = __local_irq_save();
@@ -176,7 +232,16 @@ StVosTask *VOSTaskReadyListCutTask(StVosTask *pCutTask)
 	return pCutTask;
 }
 
-void VOSTaskPrioMoveUp(StVosTask *pMutexOwnerTask, struct list_head *list_head)
+/********************************************************************************************************
+* 函数：void VOSTaskPrioMoveUp(StVosTask *pMutexOwnerTask, struct list_head *list_head);
+* 描述: 提升目前互斥锁拥有者的任务优先级，解决任务优先级翻转问题
+* 参数:
+* [1] pMutexOwnerTask: 互斥锁拥有者（任务）
+* [2] list_head: 某个阻塞量的阻塞任务链表头
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
+static void VOSTaskPrioMoveUp(StVosTask *pMutexOwnerTask, struct list_head *list_head)
 {
 	struct list_head *list_owner = 0;
 	struct list_head *list_dest = 0;
@@ -201,30 +266,29 @@ void VOSTaskPrioMoveUp(StVosTask *pMutexOwnerTask, struct list_head *list_head)
 	}
 }
 
-//把就绪队列里的所有指向相同互斥控制块（只处理互斥锁）的任务提升到跟准备阻塞前的当前任务一样
-//如果当前任务优先级不如拥有者任务，则不处理
-//该函数不可以在中断里调用
-s32 VOSTaskRaisePrioBeforeBlock(StVOSMutex *pMutex)
+/********************************************************************************************************
+* 函数：void VOSTaskRaisePrioBeforeBlock(StVOSMutex *pMutex);
+* 描述: 把就绪队列里的所有指向相同互斥控制块（只处理互斥锁）的任务提升到跟准备阻塞前的当前任务一样
+*       如果当前任务优先级不如拥有者任务，则不处理
+* 参数:
+* [1] pMutex: 互斥锁对象指针
+* 返回：无
+* 注意：该函数不可以在中断里调用
+*********************************************************************************************************/
+void VOSTaskRaisePrioBeforeBlock(StVOSMutex *pMutex)
 {
-	StVosTask *pMutexOwnerTask = pMutex->ptask_owner;
-	StVosTask *ptask_dest = 0;
-	StVosTask *ptask_temp = 0;
-	StVosTask *ptask_ready = 0;
-	struct list_head *list_owner = 0;
-	struct list_head *list_dest = 0;
 	void *pObj = 0;
-
 	struct list_head *list_head = 0;
-
-	if (pMutexOwnerTask->prio <= pRunningTask->prio) return 0;//准备阻塞的任务优先级不如拥有者，直接返回
-
+	StVosTask *pMutexOwnerTask = pMutex->ptask_owner;
 	u32 irq_save = 0;
+
+	if (pMutexOwnerTask->prio <= pRunningTask->prio) return;//准备阻塞的任务优先级不如拥有者，直接返回
+
 	irq_save = __local_irq_save();
 	//可能被多次提升
 	//互斥锁拥有者可能在就绪队列里面，也有可能在阻塞队列里面，如果在阻塞队列里，
 	//证明锁拥有者先获取到这个锁后在申请别的锁（信号量等）或延时进入阻塞队列
 	if (pMutexOwnerTask->status == VOS_STA_READY) {//在就绪队列里（优先级排序队列）
-		//list_head = &gListTaskReady;
 		VOSTaskReadyListCutTask(pMutexOwnerTask);//从就绪表中清除
 		pMutexOwnerTask->prio = pRunningTask->prio; //删除后赋值
 		VOSReadyTaskPrioSet(pMutexOwnerTask); //插入
@@ -243,15 +307,21 @@ s32 VOSTaskRaisePrioBeforeBlock(StVOSMutex *pMutex)
 			break;
 		}
 		pMutexOwnerTask->prio = pRunningTask->prio; //先赋值
-		//冒泡上移
-		VOSTaskPrioMoveUp(pMutexOwnerTask, list_head);
+
+		VOSTaskPrioMoveUp(pMutexOwnerTask, list_head);//冒泡上移
 	}
 END_RAISE_PRIO:
 	__local_irq_restore(irq_save);
-	return 0;
 }
 
-s32 VOSTaskRestorePrioBeforeRelease()
+/********************************************************************************************************
+* 函数：void VOSTaskRestorePrioBeforeRelease();
+* 描述: 当释放互斥锁时，也同时还原优先级
+* 参数: 无
+* 返回：无
+* 注意：该函数不可以在中断里调用
+*********************************************************************************************************/
+void VOSTaskRestorePrioBeforeRelease()
 {
 	u32 irq_save = 0;
 	irq_save = __local_irq_save();
@@ -259,15 +329,16 @@ s32 VOSTaskRestorePrioBeforeRelease()
 		pRunningTask->prio = pRunningTask->prio_base;
 	}
 	__local_irq_restore(irq_save);
-	return 0;
 }
 
-//把当前任务插入到任务队列里，按优先高低排列
-//高优先级插入到队列头，如果相同优先级，则插入到相同优先级的最后，
-//这样的优先级队列主要是为了查找时，从头开始查找，如果找到就释放同步信号。
-//保证队列里优先级最高的有限获取资源的能力
-void VOSTaskPrtList(s32 which_list);
-u32 VOSTaskCheck();
+/********************************************************************************************************
+* 函数：void VOSReadyTaskPrioSet(StVosTask *pInsertTask);
+* 描述: 把任务设置到就绪任务位图中，如果位图中已经设置该位，就插入到该相同优先级任务链表的末尾
+* 参数:
+* [1] pInsertTask: 要添加到就绪位图的任务指针
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
 void VOSReadyTaskPrioSet(StVosTask *pInsertTask)
 {
 	StVosTask *ptask = 0;
@@ -286,9 +357,16 @@ void VOSReadyTaskPrioSet(StVosTask *pInsertTask)
 	__local_irq_restore(irq_save);
 }
 
-u32 VOSTaskDelayListInsert(StVosTask *pInsertTask)
+/********************************************************************************************************
+* 函数：void VOSTaskDelayListInsert(StVosTask *pInsertTask);
+* 描述: 把任务插入到延时定时器任务链表中，这个链表里的任务是按闹钟响的时间距离从近到远排列
+* 参数:
+* [1] pInsertTask: 要添加到阻塞链表的任务指针
+* 返回：无
+* 注意：该链表记录所有阻塞任务，链接到该链表的任务可能也链接到阻塞对象（信号量，互斥锁）
+*********************************************************************************************************/
+void VOSTaskDelayListInsert(StVosTask *pInsertTask)
 {
-	s32 ret = -1;
 	StVosTask *ptask_delay = 0;
 	struct list_head *list;
 	struct list_head *phead = 0;
@@ -304,7 +382,6 @@ u32 VOSTaskDelayListInsert(StVosTask *pInsertTask)
 		//pInsertTask->ticks_alert < ptask_delay->ticks_alert
 		if (TICK_CMP(pInsertTask->ticks_alert, ptask_delay->ticks_alert, gVOSTicks) < 0) {//闹钟越近，排在越前
 			list_add_tail(&pInsertTask->list_delay, list);
-			ret = 0;
 			break;
 		}
 	}
@@ -318,13 +395,17 @@ u32 VOSTaskDelayListInsert(StVosTask *pInsertTask)
 		gMarkTicksNearest = pInsertTask->ticks_alert;
 	}
 	__local_irq_restore(irq_save);
-
-	return ret;
 }
 
-u32 VOSTaskDelayListWakeUp()
+/********************************************************************************************************
+* 函数：void VOSTaskDelayListWakeUp();
+* 描述: 定时器中断里唤醒延时定时器任务链表中已经到达的任务
+* 参数: 无
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
+void VOSTaskDelayListWakeUp()
 {
-	s32 ret = -1;
 	StVosTask *ptask_delay = 0;
 	struct list_head *list;
 	struct list_head *list_temp;
@@ -362,24 +443,29 @@ u32 VOSTaskDelayListWakeUp()
 		}
 	}
 	__local_irq_restore(irq_save);
-
-	return ret;
 }
 
-u32 VOSTaskBlockListInsert(StVosTask *pInsertTask, struct list_head *phead)
+/********************************************************************************************************
+* 函数：void VOSTaskBlockListInsert(StVosTask *pInsertTask, struct list_head *phead);
+* 描述: 把任务插入到某个阻塞对象（例如信号量，互斥锁等）的链表中，按任务优先级从高到低排序
+* 参数:
+* [1] pInsertTask: 要添加到阻塞链表的任务指针
+* [2] phead: 阻塞量（例如信号量，互斥量）的链表头
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
+void VOSTaskBlockListInsert(StVosTask *pInsertTask, struct list_head *phead)
 {
-	s32 ret = -1;
 	StVosTask *ptask = 0;
 	struct list_head *list;
-
 	u32 irq_save = 0;
+
 	irq_save = __local_irq_save();
 	//插入队列，必须优先级从高到低有序排列
 	list_for_each(list, phead) {
 		ptask = list_entry(list, struct StVosTask, list);
 		if (pInsertTask->prio < ptask->prio) {//数值越小，优先级越高，如果相同优先级，则插入到所有相同优先级后面
 			list_add_tail(&pInsertTask->list, list);
-			ret = 0;
 			break;
 		}
 	}
@@ -388,12 +474,18 @@ u32 VOSTaskBlockListInsert(StVosTask *pInsertTask, struct list_head *phead)
 	}
 	__local_irq_restore(irq_save);
 
-	return ret;
 }
-//阻塞在信号量等任务，开始添加到就绪队列
-u32 VOSTaskBlockListRelease(StVosTask *pReleaseTask)
+
+/********************************************************************************************************
+* 函数：void VOSTaskBlockListRelease(StVosTask *pReleaseTask);
+* 描述: 释放阻塞任务
+* 参数:
+* [1] pReleaseTask: 要释放的任务指针
+* 返回：无
+* 注意：别忘记也要在延时定时链表中释放
+*********************************************************************************************************/
+void VOSTaskBlockListRelease(StVosTask *pReleaseTask)
 {
-	s32 ret = -1;
 	u32 irq_save = 0;
 	irq_save = __local_irq_save();
 	//释放阻塞对象的任务
@@ -412,19 +504,24 @@ u32 VOSTaskBlockListRelease(StVosTask *pReleaseTask)
 	VOSReadyTaskPrioSet(pReleaseTask);
 
 	__local_irq_restore(irq_save);
-
-	return ret;
 }
 
-//检查就绪链表是否有比当前运行的优先级更高
-//返回正数：证明正运行任务的优先级更高（数值更小），不需要调度
-//返回负数：证明正运行任务的优先级更低（数值更大），需要调度
-//返回 0  : 证明正运行任务的优先级相同， 需要调度，基于时间片
+/********************************************************************************************************
+* 函数：s32 VOSTaskReadyCmpPrioTo(StVosTask *pRunTask);
+* 描述: 正在运行的任务和就绪位图里最高优先级的任务进行优先级比较
+* 参数:
+* [1] pRunTask: 正在运行的任务指针
+* 返回：
+* 返回值 > 0：证明正运行任务的优先级更高（数值更小），不需要调度
+* 返回值 < 0：证明正运行任务的优先级更低（数值更大），需要调度
+* 返回值 = 0: 证明正运行任务的优先级相同， 需要调度，基于时间片
+* 注意：无
+*********************************************************************************************************/
 s32 VOSTaskReadyCmpPrioTo(StVosTask *pRunTask)
 {
 	s32 ret = 1;//默认返回整数，代表不用调度
 	s32 highest;
-	StVosTask *ptask_prio = 0;
+
 	u32 irq_save = 0;
 	irq_save = __local_irq_save();
 
@@ -439,7 +536,13 @@ s32 VOSTaskReadyCmpPrioTo(StVosTask *pRunTask)
 	return ret;
 }
 
-//获取当前就绪队列中优先级最高的任务
+/********************************************************************************************************
+* 函数：StVosTask *VOSTaskReadyCutPriorest();
+* 描述: 取出就绪位图表里优先级最高的任务
+* 参数: 无
+* 返回：就绪任务中最高优先级任务指针
+* 注意：无
+*********************************************************************************************************/
 StVosTask *VOSTaskReadyCutPriorest()
 {
 	StVosTask *ptasknext = 0;
@@ -454,7 +557,6 @@ StVosTask *VOSTaskReadyCutPriorest()
 		if (list_empty(&pHightask->list)) {//为空，证明只有一个节点，则清空位图某个位
 			bitmap_clr(highest, gArrPrioBitMap); //优先级表位图置位
 			list_del(&pHightask->list);//从相同优先级任务链表中删除自己
-			//gArrPrio2Taskid[highest] = 0xFF; //无效任务ID值
 		}
 		else {//证明相同优先级有多个任务，这时要把后面的任务的id设置到gArrPrio2Taskid表中，同时链表中删除最高优先级的任务
 			ptasknext = list_entry(pHightask->list.next, struct StVosTask, list);
@@ -469,13 +571,27 @@ StVosTask *VOSTaskReadyCutPriorest()
 	return pHightask;
 }
 
-
+/********************************************************************************************************
+* 函数：s32 PrepareForCortexSwitch();
+* 描述: 上下文切换前准备工作，主要是取出就绪任务位图中优先级最高的任务赋值到pReadyTask变量中
+* 参数: 无
+* 返回：返回true，代表已经准备好，可以正常切换上下文，否则不切换
+* 注意：无
+*********************************************************************************************************/
 s32 PrepareForCortexSwitch()
 {
 	pReadyTask = VOSTaskReadyCutPriorest();
 	return pReadyTask && pRunningTask;//两个都不能为0
 }
-//所有任务总入口
+
+/********************************************************************************************************
+* 函数：void VOSTaskEntry(void *param);
+* 描述: 所有任务都从这里出发，这里包括任务结束的清理工作
+* 参数:
+* [1] param: 暂时没用到
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
 void VOSTaskEntry(void *param)
 {
 	u32 irq_save = 0;
@@ -491,7 +607,20 @@ void VOSTaskEntry(void *param)
 	VOSTaskSchedule();
 }
 
-//创建任务，不能在任务上下文创建(任务上下文使用VOSTaskCreate)
+/********************************************************************************************************
+* 函数：s32 VOSTaskCreate(void (*task_fun)(void *param), void *param,
+*					void *pstack, u32 stack_size, s32 prio, s8 *task_nm);
+* 描述: 创建任务
+* 参数:
+* [1] task_fun: 任务要执行的例程函数
+* [2] param: 例程函数参数
+* [3] pstack: 任务栈指针地址（栈底地址）
+* [4] stack_size: 任务栈大小
+* [5] prio: 任务优先级
+* [5] task_nm: 任务名字
+* 返回：任务ID, 如果创建失败，返回-1
+* 注意：无
+*********************************************************************************************************/
 s32 VOSTaskCreate(void (*task_fun)(void *param), void *param,
 		void *pstack, u32 stack_size, s32 prio, s8 *task_nm)
 {
@@ -579,6 +708,14 @@ END_CREATE:
 	return ptask ? ptask->id : -1;
 }
 
+/********************************************************************************************************
+* 函数：void task_idle(void *param);
+* 描述: 创建空闲任务
+* 参数:
+* [1] param: 暂时没用到
+* 返回：无
+* 注意：空闲任务不可以阻塞，必须要就绪状态或者运行状态
+*********************************************************************************************************/
 void task_idle(void *param)
 {
 	/*
@@ -588,7 +725,8 @@ void task_idle(void *param)
 	 */
 	static u32 mark_time=0;
 	mark_time = VOSGetTimeMs();
-	while (1) {//禁止空闲任务阻塞
+	while (1) {
+		//禁止空闲任务阻塞
 //		if ((s32)(VOSGetTimeMs()-mark_time) > 1000) {
 //			mark_time = VOSGetTimeMs();
 //			VOSTaskSchTabDebug();
@@ -596,7 +734,13 @@ void task_idle(void *param)
 	}
 }
 
-
+/********************************************************************************************************
+* 函数：void VOSStarup();
+* 描述: VOS系统启动第一个任务，这里是IDLE任务
+* 参数: 无
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
 void VOSStarup()
 {
 	if (VOSRunning == 0) { //启动第一个任务时会设置个VOSRunning为1
@@ -605,23 +749,38 @@ void VOSStarup()
 	}
 }
 
-void  VOSIntEnter()
+/********************************************************************************************************
+* 函数：void VOSIntEnter();
+* 描述: 任何中断进入时设置，主要是记录中断层数，在最终中断退出时启动系统调度
+* 参数: 无
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
+void VOSIntEnter()
 {
 	u32 irq_save = 0;
-    if (VOSRunning) {
+    if (VOSRunning)
+    {
     	irq_save = __local_irq_save();
-        if (VOSIntNesting < 0xFFFFFFFFU) {
+        if (VOSIntNesting < MAX_INFINITY_U32) {
         	VOSIntNesting++;
         }
         __local_irq_restore(irq_save);
     }
 }
 
-void  VOSIntExit ()
+/********************************************************************************************************
+* 函数：void VOSIntExit();
+* 描述: 任何中断退出时设置，主要是记录中断层数，在最终中断退出时启动系统调度
+* 参数: 无
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
+void VOSIntExit()
 {
 	u32 irq_save = 0;
-
-    if (VOSRunning) {
+    if (VOSRunning)
+    {
     	irq_save = __local_irq_save();
         if (VOSIntNesting) VOSIntNesting--;
         if (VOSIntNesting == 0) {
@@ -631,7 +790,14 @@ void  VOSIntExit ()
     }
 }
 
-//创建IDLE任务，无论何时都至少有个IDLE任务在就绪队列
+
+/********************************************************************************************************
+* 函数：void TaskIdleBuild();
+* 描述: 创建空闲任务
+* 参数: 无
+* 返回：无
+* 注意：无论何时都至少有个IDLE任务在就绪队列
+*********************************************************************************************************/
 void TaskIdleBuild()
 {
 	u32 irq_save = 0;
@@ -641,7 +807,14 @@ void TaskIdleBuild()
 	__local_irq_restore(irq_save);
 }
 
-//任务上下文调度
+
+/********************************************************************************************************
+* 函数：void VOSTaskSchedule();
+* 描述: 任务上下文调度，这需要工作在任务上下文，如果是中断上下文则调用VOSTaskScheduleISR
+* 参数: 无
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
 void VOSTaskSchedule()
 {
 	s32 ret = 0;
@@ -674,7 +847,14 @@ void VOSTaskSchedule()
 		asm_ctx_switch();//触发PendSV_Handler中断
 	}
 }
-//中断上下文调度
+
+/********************************************************************************************************
+* 函数：void VOSTaskSchedule();
+* 描述: 中断上下文调度，这需要工作在中断上下文，如果是任务上下文则调用VOSTaskSchedule
+* 参数: 无
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
 void VOSTaskScheduleISR()
 {
 	s32 ret = 0;
@@ -711,7 +891,13 @@ void VOSTaskScheduleISR()
 	}
 }
 
-
+/********************************************************************************************************
+* 函数：void VOSSysTick();
+* 描述: Tick计数, 这函数需要在定时中断里添加
+* 参数: 无
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
 void VOSSysTick()
 {
 	u32 irq_save;
@@ -723,14 +909,19 @@ void VOSSysTick()
 	}
 }
 
-
-
-u32 VOSTaskDelay(u32 ms)
+/********************************************************************************************************
+* 函数：void VOSTaskDelay(u32 ms);
+* 描述: 延时函数，任务上下文调用，如果是中断上下文，则硬件延时
+* 参数:
+* [1] ms: 延时单位毫秒
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
+void VOSTaskDelay(u32 ms)
 {
 	//如果中断被关闭，系统不进入调度，则直接硬延时
 	if (VOSIntNesting > 0) {
 		VOSDelayUs(ms*1000);
-		return 0;
 	}
 	//否则进入操作系统的闹钟延时
 	u32 irq_save = 0;
@@ -753,7 +944,6 @@ u32 VOSTaskDelay(u32 ms)
 	}
 	//ms为0，切换任务, 或者VOS_STA_BLOCK_DELAY标志，呼唤调度
 	VOSTaskSchedule();
-	return 0;
 }
 
 /**********************************************************************
@@ -764,6 +954,14 @@ u32 VOSTaskDelay(u32 ms)
 
 int vvsprintf(char *buf, int len, char* format, ...);
 #define sprintf vvsprintf
+
+/********************************************************************************************************
+* 函数：void VOSTaskSchTabDebug();
+* 描述: 打印就绪任务位图表和阻塞任务表
+* 参数: 无
+* 返回：无
+* 注意：此函数主要是调试时使用
+*********************************************************************************************************/
 void VOSTaskSchTabDebug()
 {
 	static u8 buf[1024];
@@ -816,10 +1014,13 @@ void VOSTaskSchTabDebug()
 	__vos_irq_restore(irq_save);
 }
 
-
-
-//目前这个函数用于统计任务使用cpu占用率计算
-//当前任务准备切换出去前，
+/********************************************************************************************************
+* 函数：void HookTaskSwitchOut();
+* 描述: 当前任务准备切换出去前调用该函数，目前这个函数用于统计任务使用cpu占用率计算
+* 参数: 无
+* 返回：无
+* 注意：此函数主要被用于shell命令task列表，查看cpu占用率
+*********************************************************************************************************/
 void HookTaskSwitchOut()
 {
 	if (VOSRunning && pRunningTask->ticks_used_start != -1) {
@@ -828,7 +1029,14 @@ void HookTaskSwitchOut()
 		}
 	}
 }
-//目前这个函数用于统计任务使用cpu占用率计算
+
+/********************************************************************************************************
+* 函数：void HookTaskSwitchOut();
+* 描述: 最高优先级任务已经切换为当前运行任务调用该函数，目前这个函数用于统计任务使用cpu占用率计算
+* 参数: 无
+* 返回：无
+* 注意：此函数主要被用于shell命令task列表，查看cpu占用率
+*********************************************************************************************************/
 void HookTaskSwitchIn()
 {
 	if (VOSRunning && pRunningTask->ticks_used_start != -1) {
@@ -836,11 +1044,16 @@ void HookTaskSwitchIn()
 	}
 }
 
+/********************************************************************************************************
+* 函数：void CaluTasksCpuUsedRateStart();
+* 描述: shell命令task调用这个函数显示相关信息
+* 参数: 无
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
 void CaluTasksCpuUsedRateStart()
 {
-
 	u32 irq_save = 0;
-
 	StVosTask *ptask_prio = 0;
 	struct list_head *list_prio;
 	struct list_head *phead = 0;
@@ -871,8 +1084,16 @@ void CaluTasksCpuUsedRateStart()
 
 }
 
-//mode: 0; 立即结束。
-//mode: 1; 不结束，时间累加采集。
+/********************************************************************************************************
+* 函数：s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode);
+* 描述: shell命令task调用这个函数显示相关信息
+* 参数:
+* [1] arr: 用户提供的任务信息数组
+* [2] cnts: 任务信息的个数
+* [3] mode: mode==0, 立即结束; mode==1, 不结束，时间累加采集。
+* 返回：返回有效的任务的个数，如果参数cnts >= 返回值，则列出所有任务，否则列出部分任务，这时cpu统计不准
+* 注意：无
+*********************************************************************************************************/
 s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode)
 {
 	u32 irq_save = 0;
@@ -996,29 +1217,29 @@ s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode)
 	return ret;
 }
 
+/********************************************************************************************************
+* 函数：s32 GetTaskIdByName(u8 *name);
+* 描述: 通过任务名来获取任务ID
+* 参数:
+* [1] name: 任务名
+* 返回：任务ID,如果找不到任务，返回-1
+* 注意：无
+*********************************************************************************************************/
 s32 GetTaskIdByName(u8 *name)
 {
 	s32 id_ret = -1;
-
-	static u8 buf[1024];
-	u8 temp[100];
-	s32 prio_mark = -1;
-	u32 mark = 0;
 	StVosTask *ptask_prio = 0;
 	struct list_head *list_prio;
 	struct list_head *phead = 0;
-
+	void *iter = 0; //从头遍历
 	u32 irq_save;
 	irq_save = __vos_irq_save();
-
-	buf[0] = 0;
 
 	if (strcmp(name, pRunningTask->name) == 0) {
 		id_ret = pRunningTask->id;
 		goto END_GETID;
 	}
 
-	void *iter = 0; //从头遍历
 	while (ptask_prio = tasks_bitmap_iterate(&iter)) {
 		if (strcmp(name, ptask_prio->name) == 0) {
 			id_ret = ptask_prio->id;
@@ -1028,7 +1249,6 @@ s32 GetTaskIdByName(u8 *name)
 
 	phead = &gListTaskDelay;
 	//插入队列，必须优先级从高到低有序排列
-	strcat(buf, "(");
 	list_for_each(list_prio, phead) {
 		ptask_prio = list_entry(list_prio, struct StVosTask, list_delay);
 		if (strcmp(name, ptask_prio->name) == 0) {
