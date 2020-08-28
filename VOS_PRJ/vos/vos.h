@@ -202,13 +202,12 @@ typedef struct StVOSTimer{
 	struct list_head list;
 } StVOSTimer;
 
-
 void VOSTaskBlockListInsert(StVosTask *pInsertTask, struct list_head *phead);
 void VOSTaskBlockListRelease(StVosTask *pReleaseTask);
 
 void VOSTimerInit();
 StVOSTimer *VOSTimerCreate(s32 type, u32 delay_ms, VOS_TIMER_CB callback, void *arg, s8 *name);
-s32 VOSTimerDelete(StVOSTimer *pTimer);
+void VOSTimerDelete(StVOSTimer *pTimer);
 s32 VOSTimerStart(StVOSTimer *pTimer);
 s32 VOSTimerStop(StVOSTimer *pTimer);
 s32 VOSTimerGetStatus(StVOSTimer *pTimer);

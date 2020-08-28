@@ -26,6 +26,7 @@
 #define VERROR_NO_SCHEDULE		(-8) //系统还没开始调度
 #define VERROR_EMPTY_RESOURCES	(-9) //资源为空
 #define VERROR_FULL_RESOURCES	(-10) //资源为满
+#define VERROR_TIMER_RUNNING	(-11) //定时器运行中
 #define VERROR_UNKNOWN			(-100) //不明错误
 
 

@@ -12,12 +12,7 @@
 #include "vos.h"
 
 
-StVOSTimer *VOSTimerCreate(s32 type, u32 delay_ms, VOS_TIMER_CB callback, void *arg, s8 *name);
-s32 VOSTimerDelete(StVOSTimer *pTimer);
-s32 VOSTimerStart(StVOSTimer *pTimer);
-s32 VOSTimerStop(StVOSTimer *pTimer);
-s32 VOSTimerGetStatus(StVOSTimer *pTimer);
-s32 VOSTimerGetLeftTime(StVOSTimer *pTimer);
+
 
 StVOSTimer *timer1 =0;
 StVOSTimer *timer2 =0;

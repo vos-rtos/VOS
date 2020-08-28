@@ -631,8 +631,6 @@ u32 VOSEventGet(s32 task_id)
 	u32 event_mask = 0;
 	u32 irq_save = 0;
 
-	if (VOSIntNesting != 0) return -1;
-
 	irq_save = __vos_irq_save();
 	StVosTask *pTask = VOSGetTaskFromId(task_id);
 	if (pTask) {
@@ -656,8 +654,6 @@ s32 VOSEventDisable(s32 task_id, u32 event)
 {
 	u32 mask = 0;
 	u32 irq_save = 0;
-
-	if (VOSIntNesting != 0) return VERROR_INT_CORTEX;
 
 	irq_save = __vos_irq_save();
 	StVosTask *pTask = VOSGetTaskFromId(task_id);
@@ -683,8 +679,6 @@ s32 VOSEventEnable(s32 task_id, u32 event)
 {
 	u32 mask = 0;
 	u32 irq_save = 0;
-
-	if (VOSIntNesting != 0) return VERROR_INT_CORTEX;
 
 	irq_save = __vos_irq_save();
 	StVosTask *pTask = VOSGetTaskFromId(task_id);

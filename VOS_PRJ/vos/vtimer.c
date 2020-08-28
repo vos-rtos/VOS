@@ -29,12 +29,33 @@ static StVOSMutex *gMutexVosTimer = 0; //互斥锁来保护资源
 
 volatile u32 gVosTimerMarkNearest = TIMEOUT_INFINITY_U32; //记录延时时刻
 
+static long long task_timer_stack[1024];
 
+/********************************************************************************************************
+* 函数：void VOSTimerSemPost();
+* 描述: 唤醒定时任务
+* 参数: 无
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
 void VOSTimerSemPost()
 {
 	if (gSemVosTimer)
 		VOSSemRelease(gSemVosTimer);
 }
+
+/********************************************************************************************************
+* 函数：StVOSTimer *VOSTimerCreate(s32 type, u32 delay_ms, VOS_TIMER_CB callback, void *arg, s8 *name);
+* 描述: 定时器创建
+* 参数:
+* [1] type: 一次性定时（VOS_TIMER_TYPE_ONE_SHOT），周期性定时（VOS_TIMER_TYPE_PERIODIC）
+* [2] delay_ms: 定时时间
+* [3] callback: 定时器执行例程
+* [4] arg: 定时器例程参数
+* [5] name: 定时器名
+* 返回：定时器指针
+* 注意：无
+*********************************************************************************************************/
 StVOSTimer *VOSTimerCreate(s32 type, u32 delay_ms, VOS_TIMER_CB callback, void *arg, s8 *name)
 {
 	StVOSTimer *pTimer = 0;
@@ -56,7 +77,16 @@ StVOSTimer *VOSTimerCreate(s32 type, u32 delay_ms, VOS_TIMER_CB callback, void *
 	VOS_TIMER_UNLOCK();
 	return  pTimer;
 }
-s32 VOSTimerDelete(StVOSTimer *pTimer)
+
+/********************************************************************************************************
+* 函数：void VOSTimerDelete(StVOSTimer *pTimer);
+* 描述: 定时器删除
+* 参数:
+* [1] pTimer: 指定定时器指针
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
+void VOSTimerDelete(StVOSTimer *pTimer)
 {
 	VOS_TIMER_LOCK();
 	if (pTimer && pTimer->status != VOS_TIMER_STA_FREE) {
@@ -67,18 +97,25 @@ s32 VOSTimerDelete(StVOSTimer *pTimer)
 		list_add_tail(&pTimer->list, &gListTimerFree);
 	}
 	VOS_TIMER_UNLOCK();
-	return 0;
 }
 
+/********************************************************************************************************
+* 函数：s32 VOSTimerStart(StVOSTimer *pTimer);
+* 描述: 启动定时器
+* 参数:
+* [1] pTimer: 指定定时器指针
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
 s32 VOSTimerStart(StVOSTimer *pTimer)
 {
-	s32 ret = 0;
+	s32 ret = VERROR_NO_ERROR;
 	s32 notify = 0;//通知闹钟任务执行新的延时
 
 	VOS_TIMER_LOCK();
 
 	if (pTimer->status != VOS_TIMER_STA_STOPPED) {
-		ret = -1;
+		ret = VERROR_TIMER_RUNNING;
 		goto END_TIMER_START;
 	}
 	//从暂停列表中删除
@@ -108,12 +145,20 @@ END_TIMER_START:
 	return ret;
 }
 
+/********************************************************************************************************
+* 函数：s32 VOSTimerStop(StVOSTimer *pTimer);
+* 描述: 定时器暂停
+* 参数:
+* [1] pTimer: 指定定时器指针
+* 返回：查看返回值
+* 注意：无
+*********************************************************************************************************/
 s32 VOSTimerStop(StVOSTimer *pTimer)
 {
-	s32 ret = 0;
+	s32 ret = VERROR_NO_ERROR;
 	VOS_TIMER_LOCK();
 	if (pTimer->status != VOS_TIMER_STA_RUNNING) {
-		ret = -1;
+		ret = VERROR_TIMER_RUNNING;
 		goto END_TIMER_STOP;
 	}
 	//从运行列表中删除
@@ -128,6 +173,14 @@ END_TIMER_STOP:
 
 }
 
+/********************************************************************************************************
+* 函数：s32 VOSTimerGetStatus(StVOSTimer *pTimer);
+* 描述: 获取定时器状态
+* 参数:
+* [1] pTimer: 指定定时器指针
+* 返回：定时器状态
+* 注意：无
+*********************************************************************************************************/
 s32 VOSTimerGetStatus(StVOSTimer *pTimer)
 {
 	s32 status = 0;
@@ -136,7 +189,15 @@ s32 VOSTimerGetStatus(StVOSTimer *pTimer)
 	VOS_TIMER_UNLOCK();
 	return status;
 }
-//返回闹钟响的剩余时间
+
+/********************************************************************************************************
+* 函数：s32 VOSTimerGetLeftTime(StVOSTimer *pTimer);
+* 描述: 获取闹钟响的剩余时间
+* 参数:
+* [1] pTimer: 指定定时器指针
+* 返回：定时器剩余的时间，单位毫秒
+* 注意：无
+*********************************************************************************************************/
 s32 VOSTimerGetLeftTime(StVOSTimer *pTimer)
 {
 	s32 ticks = 0;
@@ -150,9 +211,14 @@ s32 VOSTimerGetLeftTime(StVOSTimer *pTimer)
 	return MAKE_TIME_MS(ticks);
 }
 
-
-
-
+/********************************************************************************************************
+* 函数：void VOSTaskTimer(void *param);
+* 描述: 定时器任务，实现多定时器执行操作
+* 参数:
+* [1] param: 暂时没用
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
 void VOSTaskTimer(void *param)
 {
 	s32 ret = 0;
@@ -196,8 +262,13 @@ void VOSTaskTimer(void *param)
 	}
 }
 
-
-static long long task_timer_stack[1024];
+/********************************************************************************************************
+* 函数：void VOSTimerInit();
+* 描述: 定时器初始化（任务执行多个定时函数，如果某个阻塞，就影响到后面的定时器）
+* 参数: 无
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
 void VOSTimerInit()
 {
 	s32 i = 0;

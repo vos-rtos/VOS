@@ -16,12 +16,18 @@ extern unsigned int __data_rw_array_end;
 extern unsigned int __bss_zero_array_start;
 extern unsigned int __bss_zero_array_end;
 
-
+extern void misc_init ();
 extern void main(void *param);
 long long main_stack[1024];
 
-
-void init_data_and_bss ()
+/********************************************************************************************************
+* 函数：void init_data_and_bss();
+* 描述: data 和 bss段初始化
+* 参数: 无
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
+void init_data_and_bss()
 {
     unsigned int *to_begin = 0;
     unsigned int *to_end = 0;
@@ -43,27 +49,39 @@ void init_data_and_bss ()
 	}
 }
 
-void
-__attribute__((weak))
-_exit(int code __attribute__((unused)))
+/********************************************************************************************************
+* 函数：void __attribute__((weak)) _exit(int code __attribute__((unused)));
+* 描述: ld链接时需要定义该函数
+* 参数: 无
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
+void __attribute__((weak)) _exit(int code __attribute__((unused)))
 {
-  // TODO: write on trace
-  while (1)
-    ;
+  while (1) ;
 }
 
-void
-__attribute__((weak,noreturn))
-abort(void)
+/********************************************************************************************************
+* 函数：void __attribute__((weak,noreturn)) abort(void);
+* 描述: ld链接时需要定义该函数
+* 参数: 无
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
+void __attribute__((weak,noreturn)) abort(void)
 {
-  //trace_puts("abort(), exiting...");
-
   _exit(1);
 }
 
-void misc_init ();
+/********************************************************************************************************
+* 函数：void __attribute__ ((section(".after_vectors"))) vos_start (void);
+* 描述: 启动函数，复位后第一个执行的函数
+* 参数: 无
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
 void __attribute__ ((section(".after_vectors")))
-vos_start (void)
+vos_start(void)
 {
 	int code = 0;
 	u32 irq_save = 0;
@@ -89,10 +107,8 @@ vos_start (void)
 
 	__vos_irq_restore(irq_save);
 
-
 	VOSStarup();
 
-	_exit (code);
 	while(1) ;
 }
 
