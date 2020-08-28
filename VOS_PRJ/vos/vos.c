@@ -301,7 +301,8 @@ u32 VOSTaskDelayListInsert(StVosTask *pInsertTask)
 	//插入队列，闹钟时间必须从小到大有序排列
 	list_for_each(list, phead) {
 		ptask_delay = list_entry(list, struct StVosTask, list_delay);
-		if (pInsertTask->ticks_alert < ptask_delay->ticks_alert) {//闹钟越近，排在越前
+		//pInsertTask->ticks_alert < ptask_delay->ticks_alert
+		if (TICK_CMP(pInsertTask->ticks_alert, ptask_delay->ticks_alert, gVOSTicks) < 0) {//闹钟越近，排在越前
 			list_add_tail(&pInsertTask->list_delay, list);
 			ret = 0;
 			break;
@@ -312,10 +313,10 @@ u32 VOSTaskDelayListInsert(StVosTask *pInsertTask)
 	}
 
 	//插入延时链表，也要更新最近闹钟
-	if (pInsertTask->ticks_alert <  gMarkTicksNearest) {
+	//gMarkTicksNearest > pInsertTask->ticks_alert
+	if (TICK_CMP(gMarkTicksNearest,pInsertTask->ticks_alert,pInsertTask->ticks_start) > 0) {
 		gMarkTicksNearest = pInsertTask->ticks_alert;
 	}
-
 	__local_irq_restore(irq_save);
 
 	return ret;
@@ -339,7 +340,9 @@ u32 VOSTaskDelayListWakeUp()
 	//闹钟时间必须从小到大有序排列
 	list_for_each_safe (list, list_temp, phead) {
 		ptask_delay = list_entry(list, struct StVosTask, list_delay);
-		if (ptask_delay->ticks_alert <= gVOSTicks) {//唤醒并添加到就绪表
+
+		//ptask_delay->ticks_alert <= gVOSTicks
+		if (TICK_CMP(gVOSTicks,ptask_delay->ticks_alert,ptask_delay->ticks_start) >= 0) {//唤醒并添加到就绪表
 			//断开当前延时队列
 			list_del(&ptask_delay->list_delay);
 			//如果在信号量等阻塞列表中，也要断开
@@ -735,18 +738,12 @@ u32 VOSTaskDelay(u32 ms)
 	if (ms) {//进入延时设置
 		irq_save = __vos_irq_save();
 		pRunningTask->ticks_start = gVOSTicks;
-//		pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(ms);
-		//临时这样设定，想办法如何处理溢出问题
-		if (MAX_INFINITY_U32 - gVOSTicks < MAKE_TICKS(ms)) {
-			pRunningTask->ticks_alert = MAX_INFINITY_U32;
-		}
-		else {
-			pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(ms);
-		}
-
-		if (pRunningTask->ticks_alert < gMarkTicksNearest) { //如果闹钟结点小于记录的最少值，则更新
+		pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(ms);
+		//gMarkTicksNearest > pRunningTask->ticks_alert
+		if (TICK_CMP(gMarkTicksNearest,pRunningTask->ticks_alert,pRunningTask->ticks_start) > 0) {
 			gMarkTicksNearest = pRunningTask->ticks_alert;//更新为最近的闹钟
 		}
+
 		pRunningTask->status = VOS_STA_BLOCK; //添加到阻塞队列
 		pRunningTask->block_type |= VOS_BLOCK_DELAY;//指明阻塞类型为自延时
 

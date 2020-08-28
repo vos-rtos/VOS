@@ -110,16 +110,9 @@ s32 VOSSemWait(StVOSSemaphore *pSem, u32 timeout_ms)
 		pRunningTask->psyn = pSem;
 		//同时是超时时间类型
 		pRunningTask->ticks_start = gVOSTicks;
-
-		//临时这样设定，想办法如何处理溢出问题
-		if (MAX_INFINITY_U32 - gVOSTicks < MAKE_TICKS(timeout_ms)) {
-			pRunningTask->ticks_alert = MAX_INFINITY_U32;
-		}
-		else {
-			pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(timeout_ms);
-		}
-
-		if (pRunningTask->ticks_alert < gMarkTicksNearest) { //如果闹钟结点小于记录的最少值，则更新
+		pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(timeout_ms);
+		//gMarkTicksNearest > pRunningTask->ticks_alert 就需要更新时间
+		if (TICK_CMP(gMarkTicksNearest,pRunningTask->ticks_alert,pRunningTask->ticks_start)>0) {
 			gMarkTicksNearest = pRunningTask->ticks_alert;//更新为最近的闹钟
 		}
 		pRunningTask->block_type |= VOS_BLOCK_DELAY;//指明阻塞类型为自延时
@@ -285,16 +278,10 @@ s32 VOSMutexWait(StVOSMutex *pMutex, u32 timeout_ms)
 		pRunningTask->psyn = pMutex;
 		//同时是超时时间类型
 		pRunningTask->ticks_start = gVOSTicks;
+		pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(timeout_ms);
 
-		//临时这样设定，想办法如何处理溢出问题
-		if (MAX_INFINITY_U32 - gVOSTicks < MAKE_TICKS(timeout_ms)) {
-			pRunningTask->ticks_alert = MAX_INFINITY_U32;
-		}
-		else {
-			pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(timeout_ms);
-		}
-
-		if (pRunningTask->ticks_alert < gMarkTicksNearest) { //如果闹钟结点小于记录的最少值，则更新
+		//gMarkTicksNearest > pRunningTask->ticks_alert 就需要更新时间
+		if (TICK_CMP(gMarkTicksNearest,pRunningTask->ticks_alert,pRunningTask->ticks_start) > 0) {
 			gMarkTicksNearest = pRunningTask->ticks_alert;//更新为最近的闹钟
 		}
 		pRunningTask->block_type |= VOS_BLOCK_DELAY;//指明阻塞类型为自延时
@@ -426,14 +413,9 @@ s32 VOSEventWait(u32 event, u32 timeout_ms)
 		pRunningTask->event_mask |= event;
 		//同时是超时时间类型
 		pRunningTask->ticks_start = gVOSTicks;
-		//临时这样设定，想办法如何处理溢出问题
-		if (MAX_INFINITY_U32 - gVOSTicks < MAKE_TICKS(timeout_ms)) {
-			pRunningTask->ticks_alert = MAX_INFINITY_U32;
-		}
-		else {
-			pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(timeout_ms);
-		}
-		if (pRunningTask->ticks_alert < gMarkTicksNearest) { //如果闹钟结点小于记录的最少值，则更新
+		pRunningTask->ticks_alert = gVOSTicks + MAKE_TICKS(timeout_ms);
+		//gMarkTicksNearest > pRunningTask->ticks_alert 就需要更新时间
+		if (TICK_CMP(gMarkTicksNearest,pRunningTask->ticks_alert,pRunningTask->ticks_start) > 0) {
 			gMarkTicksNearest = pRunningTask->ticks_alert;//更新为最近的闹钟
 		}
 		pRunningTask->block_type |= VOS_BLOCK_DELAY;//指明阻塞类型为自延时

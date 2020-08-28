@@ -13,6 +13,12 @@
 #include "vtype.h"
 #include "vlist.h"
 
+//A: 当前全局的tick
+//B: 比较对象的终止tick, 注意终止tick数值不一定少于开始tick，不能直接比较，使用距离比较法
+//C: 比较对象的开始tick
+//返回结果： A比B小，返回-1，A比B大返回1， A等于B返回0
+//注意：这里A,B,S必须是无符号比较，支持溢出
+#define TICK_CMP(A,B,S) ((A)-(S) < (B)-(S) ? -1 : ((A) == (B) ? 0 : 1))
 
 #define EVENT_USART1_RECV	(1<<0)
 
@@ -161,7 +167,7 @@ typedef struct StVosTask {
 	volatile u32 block_type; //如果阻塞，则这里指名阻塞类型
 	void (*task_fun)(void *param);
 	void *param;
-	u32 ticks_start;//闹钟设置点
+	u32 ticks_start;//闹钟设置点，必须使用TICK_CMP进行比较
 	u32 ticks_alert;//闹钟响节点
 	u32 ticks_timeslice; //时间片
 	void *psyn; //指向同步信息控制块

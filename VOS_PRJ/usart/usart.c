@@ -361,6 +361,7 @@ void dma_vputs(s8 *str, s32 len)
 {
 	u32 irq_save;
 	s32 i;
+	USART_GetFlagStatus(USART1, USART_FLAG_TC);
 	irq_save = __vos_irq_save();
 	USART1_DMA_Send(str, len);
 	__vos_irq_restore(irq_save);

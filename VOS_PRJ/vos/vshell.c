@@ -99,6 +99,11 @@ void VSHELL_FUN(stack_t)(s8 **parr, s32 cnts)
 	TestExitFlagSet(0);
 	stack_test();
 }
+void VSHELL_FUN(tickcmp_t)(s8 **parr, s32 cnts)
+{
+	TestExitFlagSet(0);
+	tickcmp_test();
+}
 
 void CaluTasksCpuUsedRateStart();
 s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode);

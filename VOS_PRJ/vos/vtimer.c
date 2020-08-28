@@ -84,17 +84,10 @@ s32 VOSTimerStart(StVOSTimer *pTimer)
 	pTimer->status = VOS_TIMER_STA_RUNNING;
 
 	pTimer->ticks_start = gVOSTicks;
-	//pTimer->ticks_alert = gVOSTicks + pTimer->ticks_delay;
+	pTimer->ticks_alert = gVOSTicks + pTimer->ticks_delay;
 
-	//临时这样设定，想办法如何处理溢出问题
-	if (MAX_INFINITY_U32 - gVOSTicks < pTimer->ticks_delay) {
-		pTimer->ticks_alert = MAX_INFINITY_U32;
-	}
-	else {
-		pTimer->ticks_alert = gVOSTicks + pTimer->ticks_delay;
-	}
-
-	if (pTimer->ticks_alert < gVosTimerMarkNearest) {
+	//pTimer->ticks_alert < gVosTimerMarkNearest
+	if (TICK_CMP(gVosTimerMarkNearest,pTimer->ticks_alert,pTimer->ticks_start)>0) {
 		gVosTimerMarkNearest = pTimer->ticks_alert;
 		notify = 1;
 	}
@@ -145,7 +138,9 @@ s32 VOSTimerGetLeftTime(StVOSTimer *pTimer)
 {
 	s32 ticks = 0;
 	VOS_TIMER_LOCK();
-	if (pTimer->ticks_alert > gVOSTicks) {
+
+	//pTimer->ticks_alert > gVOSTicks
+	if (TICK_CMP(gVOSTicks,pTimer->ticks_alert,pTimer->ticks_start) < 0) {
 		ticks = pTimer->ticks_alert - gVOSTicks;
 	}
 	VOS_TIMER_UNLOCK();
@@ -170,7 +165,8 @@ void VOSTaskTimer(void *param)
 		gVosTimerMarkNearest = TIMEOUT_INFINITY_U32; //设置最大，下面更新最少的延时，然后延时处理
 		list_for_each_safe(list_timer, list_temp, &gListTimerRunning) {
 			pTimer = list_entry(list_timer, struct StVOSTimer, list);
-			if (gVOSTicks >= pTimer->ticks_alert) { //闹钟到，执行相关任务
+			//gVOSTicks >= pTimer->ticks_alert
+			if (TICK_CMP(gVOSTicks,pTimer->ticks_alert,pTimer->ticks_start) >= 0) { //闹钟到，执行相关任务
 				if (pTimer->callback) pTimer->callback(pTimer, pTimer->arg);
 				if (pTimer->type == VOS_TIMER_TYPE_ONE_SHOT) {
 					//删除自己
@@ -181,14 +177,7 @@ void VOSTaskTimer(void *param)
 				}
 				else if (pTimer->type == VOS_TIMER_TYPE_PERIODIC){//更新闹钟时间，重新计时
 					pTimer->ticks_start = gVOSTicks;
-					//pTimer->ticks_alert = gVOSTicks + pTimer->ticks_delay;
-					//临时这样设定，想办法如何处理溢出问题
-					if (MAX_INFINITY_U32 - gVOSTicks < pTimer->ticks_delay) {
-						pTimer->ticks_alert = MAX_INFINITY_U32;
-					}
-					else {
-						pTimer->ticks_alert = gVOSTicks + pTimer->ticks_delay;
-					}
+					pTimer->ticks_alert = gVOSTicks + pTimer->ticks_delay;
 				}
 				else {
 
@@ -196,7 +185,7 @@ void VOSTaskTimer(void *param)
 			}
 			//都需要找到最近的闹钟
 			if (pTimer->status == VOS_TIMER_STA_RUNNING &&
-					pTimer->ticks_alert < gVosTimerMarkNearest) {
+					TICK_CMP(gVosTimerMarkNearest,pTimer->ticks_alert,pTimer->ticks_start) > 0) { //pTimer->ticks_alert < gVosTimerMarkNearest
 				gVosTimerMarkNearest = pTimer->ticks_alert;
 			}
 		}//ended ist_for_each(list_timer, &gListTimerRunning) {
