@@ -246,7 +246,7 @@ void VOSTaskShell(void *param)
 	u8 echo[100];
 	s32 mark = 0;
 
-	while(VOSEventWait(EVENT_USART1_RECV, TIMEOUT_INFINITY_U32)) {
+	while(VERROR_NO_ERROR == VOSEventWait(EVENT_USART1_RECV, TIMEOUT_INFINITY_U32)) {
 		ret = peek_vgets(echo, sizeof(echo)-1);
 		if (ret > 0) { //echo
 			echo[ret] = 0;

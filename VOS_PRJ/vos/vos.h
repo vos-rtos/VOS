@@ -12,6 +12,7 @@
 #include "vconf.h"
 #include "vtype.h"
 #include "vlist.h"
+#include "verror.h"
 
 //A: 当前全局的tick
 //B: 比较对象的终止tick, 注意终止tick数值不一定少于开始tick，不能直接比较，使用距离比较法
@@ -50,25 +51,6 @@ typedef void (*task_fun_t)(void *param);
 #endif
 
 extern struct StVosTask;
-
-enum {
-	VOS_RUNNING_BY_STARTUP, //系统刚启动，任务调度没执行时，就设置在启动状态
-	VOS_RUNNING_BY_INTERRUPTE, //中断上下文执行代码
-	VOS_RUNNING_BY_TASK, //任务上下文执行代码
-};
-
-enum {
-	VOS_LIST_READY = 0,
-	VOS_LIST_BLOCK,
-};
-
-enum {
-	TASK_SWITCH_TASK = 0,
-	TASK_SWITCH_ISR,
-};
-
-#define HW32_REG(ADDRESS) (*((volatile unsigned long *)(ADDRESS)))
-
 
 #define VOS_WAKEUP_FROM_SEM			(u32)(0)
 #define VOS_WAKEUP_FROM_SEM_DEL		(u32)(1) //删除信号量，必须通知的各等待信号量的任务添加到就绪队列
@@ -255,7 +237,8 @@ s32 VOSMutexDelete(StVOSMutex *pMutex);
 s32 VOSEventWait(u32 event_mask, u32 timeout_ms);
 s32 VOSEventSet(s32 task_id, u32 event);
 u32 VOSEventGet(s32 task_id);
-s32 VOSEventClear(s32 task_id, u32 event);
+s32 VOSEventDisable(s32 task_id, u32 event);
+s32 VOSEventEnable(s32 task_id, u32 event);
 
 void VOSMsgQueInit();
 StVOSMsgQueue *VOSMsgQueCreate(s8 *pRingBuf, s32 length, s32 msg_size, s8 *name);
@@ -272,16 +255,12 @@ u32 VOSGetTimeMs();
 s32 VOSTaskCreate(void (*task_fun)(void *param), void *param,
 		void *pstack, u32 stack_size, s32 prio, s8 *task_nm);
 
-//创建任务，不能在任务上下文创建(任务上下文使用VOSTaskCreate)
-s32 VOSTaskInBuild(void (*task_fun)(void *param), void *param,
-		void *pstack, u32 stack_size, s32 prio, s8 *task_nm);
 u32 VOSTaskInit();
 StVosTask *VOSGetTaskFromId(s32 task_id);
-u32 VOSTaskListPrioInsert(StVosTask *pTask, s32 which_list);
 s32 VOSTaskReadyCmpPrioTo(StVosTask *pRunTask);
 StVosTask *VOSTaskReadyCutPriorest();
 void VOSTaskEntry(void *param);
-void VOSTaskBlockWaveUp();
+
 void VOSStarup();
 void VOSTaskSchedule();
 void VOSSysTick();

@@ -32,11 +32,14 @@ static void task1(void *param)
 	while(TestExitFlagGet() == 0) {
 		if (gMutexPtr) {
 			ret = VOSMutexWait(gMutexPtr, 1000);
-			if (ret < 0) {
+			if (ret == VERROR_NO_ERROR) {
+				kprintf("info: VOSMutexWait OK!\r\n");
+			}
+			else if (ret == VERROR_TIMEOUT) {
 				kprintf("error: VOSMutexWait timeout!\r\n");
 			}
 			else {
-				kprintf("info: VOSMutexWait OK!\r\n");
+
 			}
 		}
 		else {

@@ -1,9 +1,12 @@
-//----------------------------------------------------
-// Copyright (c) 2020, VOS Open source. All rights reserved.
-// Author: 156439848@qq.com; vincent_cws2008@gmail.com
-// History:
-//	     2020-08-01: initial by vincent.
-//------------------------------------------------------
+/********************************************************************************************************
+* 版    权: Copyright (c) 2020, VOS Open source. All rights reserved.
+* 文    件: ipc.c
+* 作    者: 156439848@qq.com; vincent_cws2008@gmail.com
+* 版    本: OS V1.0
+* 历    史：
+* --20200801：创建文件
+* --20200828：添加注释
+*********************************************************************************************************/
 
 #include "vconf.h"
 #include "vos.h"
@@ -38,7 +41,15 @@ StVOSMutex gVOSMutex[MAX_VOS_MUTEX_NUM];
 StVOSMsgQueue gVOSMsgQue[MAX_VOS_MSG_QUE_NUM];
 
 extern volatile u32 VOSIntNesting;
+extern volatile u32 VOSRunning;
 
+/********************************************************************************************************
+* 函数：void VOSSemInit();
+* 描述: 信号量资料初始化
+* 参数: 无
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
 void VOSSemInit()
 {
 	s32 i = 0;
@@ -53,6 +64,17 @@ void VOSSemInit()
 	__vos_irq_restore(irq_save);
 }
 
+
+/********************************************************************************************************
+* 函数：StVOSSemaphore *VOSSemCreate(s32 max_sems, s32 init_sems, s8 *name);
+* 描述: 创建信号量
+* 参数:
+* [1] max_sems: 信号量资源最大值，最大的信号灯
+* [2] init_sems: 初始化信号量，目前有多少个亮灯
+* [3] name: 信号量名
+* 返回：NULL表示创建失败，非0表示创建成功
+* 注意：无
+*********************************************************************************************************/
 StVOSSemaphore *VOSSemCreate(s32 max_sems, s32 init_sems, s8 *name)
 {
 	StVOSSemaphore *pSemaphore = 0;
@@ -74,33 +96,54 @@ StVOSSemaphore *VOSSemCreate(s32 max_sems, s32 init_sems, s8 *name)
 	return  pSemaphore;
 }
 
-
+/********************************************************************************************************
+* 函数：s32 VOSSemTryWait(StVOSSemaphore *pSem);
+* 描述: 尝试获取某个信号量，如果返回VERROR_NO_ERROR,则已经获取到信号量，反正返回等待VERROR_WAIT_RESOURCES
+* 参数:
+* [1] pSem：信号量指针
+* 返回：获取成功返回VERROR_NO_ERROR， 获取失败返回VERROR_WAIT_RESOURCES，立即返回。
+* 注意：无
+*********************************************************************************************************/
 s32 VOSSemTryWait(StVOSSemaphore *pSem)
 {
-	s32 ret = -1;
+	s32 ret = VERROR_NO_RESOURCES;
 	u32 irq_save = 0;
-	if (pSem==0) return -1; //信号量可能不存在或者被释放
+
+	if (VOSRunning == 0) return VERROR_NO_SCHEDULE;
+	if (pSem==0) return VERROR_PARAMETER; //信号量可能不存在或者被释放
 
 	irq_save = __vos_irq_save();
 
 	if (pSem->left > 0) {
 		pSem->left--;
-		ret = 1;
+		ret = VERROR_NO_ERROR;
 	}
 	__vos_irq_restore(irq_save);
 	return ret;
 }
+
+/********************************************************************************************************
+* 函数：s32 VOSSemWait(StVOSSemaphore *pSem, u32 timeout_ms);
+* 描述: 获取某个信号量，如果指定信号量没灯亮，就进入就绪状态，否则立即返回
+* 参数:
+* [1] pSem：信号量指针
+* [2] timeout_ms：超时时间，单位毫秒
+* 返回：查看返回值。
+* 注意：无
+*********************************************************************************************************/
 s32 VOSSemWait(StVOSSemaphore *pSem, u32 timeout_ms)
 {
-	s32 ret = 0;
+	s32 ret = VERROR_NO_ERROR;
+	s32 need_sche = 0;
 	u32 irq_save = 0;
-	if (pSem==0) return -1; //信号量可能不存在或者被释放
+
+	if (VOSRunning == 0) return VERROR_NO_SCHEDULE;
+	if (pSem==0) return VERROR_PARAMETER; //信号量可能不存在或者被释放
 
 	irq_save = __vos_irq_save();
 
 	if (pSem->left > 0) {
-		pSem->left--;
-		ret = 1;	}
+		pSem->left--;	}
 	else if (VOSIntNesting==0) {
 		//把当前任务切换到阻塞队列
 		pRunningTask->status = VOS_STA_BLOCK; //添加到阻塞队列
@@ -121,40 +164,52 @@ s32 VOSSemWait(StVOSSemaphore *pSem, u32 timeout_ms)
 		VOSTaskDelayListInsert(pRunningTask);
 		VOSTaskBlockListInsert(pRunningTask, &pSem->list_task);
 
+		need_sche = 1;
+
 	}
 	if (VOSIntNesting) {//在中断上下文里,直接返回-1
-		ret = -1;
+		ret = VERROR_INT_CORTEX;
 	}
 	__vos_irq_restore(irq_save);
 
-	if (ret==0) { //没信号量，进入阻塞队列
+	if (need_sche) { //没信号量，进入阻塞队列
 
 		VOSTaskSchedule(); //任务调度并进入阻塞队列
 		switch(pRunningTask->wakeup_from) { //阻塞后是被定时器唤醒或者信号量唤醒
 		case VOS_WAKEUP_FROM_DELAY:
-			ret = 0;
+			ret = VERROR_TIMEOUT;
 			break;
 		case VOS_WAKEUP_FROM_SEM:
-			ret = 1;
+			ret = VERROR_NO_ERROR;
 			break;
 		case VOS_WAKEUP_FROM_SEM_DEL:
-			ret = -1;
+			ret = VERROR_DELETE_RESOURCES;
 			break;
 		default:
-			ret = 0;
-			//printf info here
+			ret = VERROR_UNKNOWN;
 			break;
 		}
 	}
 	return ret;
 }
 
+/********************************************************************************************************
+* 函数：s32 VOSSemRelease(StVOSSemaphore *pSem);
+* 描述: 释放某个信号量
+* 参数:
+* [1] pSem：信号量指针
+* 返回：查看返回值。
+* 注意：无
+*********************************************************************************************************/
 s32 VOSSemRelease(StVOSSemaphore *pSem)
 {
-	s32 ret = 0;
+	s32 ret = VERROR_NO_ERROR;
+	s32 need_sche = 0;
 	struct StVosTask *pBlockTask = 0;
 	u32 irq_save = 0;
-	if (pSem == 0) return -1; //信号量可能不存在或者被释放
+
+	if (VOSRunning == 0) return VERROR_NO_SCHEDULE;
+	if (pSem == 0) return VERROR_PARAMETER; //信号量可能不存在或者被释放
 
 	irq_save = __vos_irq_save();
 
@@ -162,27 +217,29 @@ s32 VOSSemRelease(StVOSSemaphore *pSem)
 		if (!list_empty(&pSem->list_task)) {
 			pBlockTask = list_entry(pSem->list_task.next, struct StVosTask, list);
 			VOSTaskBlockListRelease(pBlockTask);//唤醒在阻塞队列里阻塞的等待该信号量的任务,每次都唤醒优先级最高的那个
+			//修改状态
+			pBlockTask->status = VOS_STA_READY;
+			pBlockTask->block_type = 0;
+			pBlockTask->ticks_start = 0;
+			pBlockTask->ticks_alert = 0;
+			pBlockTask->psyn = 0;
+			if (pSem->distory == 0) {
+				pBlockTask->wakeup_from = VOS_WAKEUP_FROM_SEM;
+			}
+			else {
+				pBlockTask->wakeup_from = VOS_WAKEUP_FROM_SEM_DEL;
+			}
+			need_sche = 1; //需要
 		}
 		else {//没任务阻塞，就直接加加信号量
 			pSem->left++; //释放信号量
 		}
-		//修改状态
-		pBlockTask->status = VOS_STA_READY;
-		pBlockTask->block_type = 0;
-		pBlockTask->ticks_start = 0;
-		pBlockTask->ticks_alert = 0;
-		pBlockTask->psyn = 0;
-		if (pSem->distory == 0) {
-			pBlockTask->wakeup_from = VOS_WAKEUP_FROM_SEM;
-		}
-		else {
-			pBlockTask->wakeup_from = VOS_WAKEUP_FROM_SEM_DEL;
-		}
+
 		pRunningTask->psyn = 0; //清除指向资源的指针。
-		ret = 1;
+		ret = VERROR_NO_ERROR;
 	}
 	__vos_irq_restore(irq_save);
-	if (VOSIntNesting == 0 && ret == 1) { //如果在中断上下文调用(VOSIntNesting!=0),不用主动调度
+	if (VOSIntNesting == 0 && need_sche) { //如果在中断上下文调用(VOSIntNesting!=0),不用主动调度
 		//唤醒后，立即调用任务调度，万一唤醒的任务优先级高于当前任务，则切换,
 		//但不能用VOSTaskSwitch(TASK_SWITCH_USER);这是必须在特权模式下使用。
 		VOSTaskSchedule();
@@ -190,14 +247,20 @@ s32 VOSSemRelease(StVOSSemaphore *pSem)
 	return ret;
 }
 
-
-
+/********************************************************************************************************
+* 函数：s32 VOSSemDelete(StVOSSemaphore *pSem);
+* 描述: 删除某个信号量
+* 参数:
+* [1] pSem：信号量指针
+* 返回：查看返回值。
+* 注意：无
+*********************************************************************************************************/
 s32 VOSSemDelete(StVOSSemaphore *pSem)
 {
-	s32 ret = -1;
+	s32 ret = VERROR_NO_ERROR;
 	u32 irq_save = 0;
 
-	if (pSem==0) return -1; //信号量可能不存在或者被释放
+	if (pSem==0) return VERROR_PARAMETER; //信号量可能不存在或者被释放
 
 	irq_save = __vos_irq_save();
 	if (!list_empty(&gListSemaphore)) {
@@ -209,14 +272,23 @@ s32 VOSSemDelete(StVOSSemaphore *pSem)
 			pSem->name = 0;
 			pSem->left = 0;
 			//pSem->distory = 0;
-			ret = 0;
+			ret = VERROR_NO_ERROR;
 		}
+	}
+	else {
+		ret = VERROR_DELETE_RESOURCES;
 	}
 	__vos_irq_restore(irq_save);
 	return ret;
 }
 
-
+/********************************************************************************************************
+* 函数：void VOSMutexInit();
+* 描述: 初始化互斥锁
+* 参数: 无
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
 void VOSMutexInit()
 {
 	s32 i = 0;
@@ -232,7 +304,15 @@ void VOSMutexInit()
 	}
 	__vos_irq_restore(irq_save);
 }
-//创建是可以在任务之外创建
+
+/********************************************************************************************************
+* 函数：StVOSMutex *VOSMutexCreate(s8 *name);
+* 描述: 互斥锁创建
+* 参数:
+* [1] name：互斥锁名
+* 返回：互斥锁指针
+* 注意：无
+*********************************************************************************************************/
 StVOSMutex *VOSMutexCreate(s8 *name)
 {
 	StVOSMutex *pMutex = 0;
@@ -251,15 +331,25 @@ StVOSMutex *VOSMutexCreate(s8 *name)
 	return  pMutex;
 }
 
-
+/********************************************************************************************************
+* 函数：s32 VOSMutexWait(StVOSMutex *pMutex, u32 timeout_ms);
+* 描述: 互斥锁等待，如果没锁，立即返回，否则等待其他任务释放后才能返回成功
+* 参数:
+* [1] pMutex：互斥锁指针
+* [2] timeout_ms: 超时时间，单位毫秒
+* 返回：查看返回值
+* 注意：无
+*********************************************************************************************************/
 s32 VOSMutexWait(StVOSMutex *pMutex, u32 timeout_ms)
 {
-	s32 ret = 0;
+	s32 ret = VERROR_NO_ERROR;
+	s32 need_sche = 0;
 	u32 irq_save = 0;
-	if (pRunningTask == 0) return -1; //需要在用户任务里执行
-	if (pMutex->counter == -1) return -1; //信号量可能不存在或者被释放
 
-	if (VOSIntNesting != 0) return -1;
+
+	if (VOSIntNesting != 0) return VERROR_INT_CORTEX;
+
+	if (VOSRunning == 0) return VERROR_NO_SCHEDULE;
 
 	if (pMutex->counter > 1) pMutex->counter = 1;
 
@@ -268,7 +358,7 @@ s32 VOSMutexWait(StVOSMutex *pMutex, u32 timeout_ms)
 	if (pMutex->counter > 0) {
 		pMutex->counter--;
 		pMutex->ptask_owner = pRunningTask;
-		ret = 1;
+		ret = VERROR_NO_ERROR;
 	}
 	else {//把当前任务切换到阻塞队列
 		pRunningTask->status = VOS_STA_BLOCK; //添加到阻塞队列
@@ -290,50 +380,78 @@ s32 VOSMutexWait(StVOSMutex *pMutex, u32 timeout_ms)
 		//插入到延时队列，也同时插入到阻塞队列
 		VOSTaskDelayListInsert(pRunningTask);
 		VOSTaskBlockListInsert(pRunningTask, &pMutex->list_task);
+		need_sche = 1;
 	}
 
 	__vos_irq_restore(irq_save);
 
-	if (ret==0) { //没获取互斥锁，进入阻塞队列
+	if (need_sche) { //没获取互斥锁，进入阻塞队列
 
 		VOSTaskSchedule(); //任务调度并进入阻塞队列
 		switch(pRunningTask->wakeup_from) { //阻塞后是被定时器唤醒或者互斥锁唤醒
 		case VOS_WAKEUP_FROM_DELAY:
-			ret = 0;
+			ret = VERROR_TIMEOUT;
 			break;
 		case VOS_WAKEUP_FROM_MUTEX:
-			ret = 1;
+			ret = VERROR_NO_ERROR;
 			break;
 		case VOS_WAKEUP_FROM_MUTEX_DEL:
-			ret = -1;
+			ret = VERROR_DELETE_RESOURCES;
 			break;
 		default:
-			ret = 0;
+			ret = VERROR_UNKNOWN;
 			break;
 		}
 	}
 	return ret;
 }
 
+/********************************************************************************************************
+* 函数：s32 VOSMutexRelease(StVOSMutex *pMutex);
+* 描述: 互斥锁释放
+* 参数:
+* [1] pMutex：互斥锁指针
+* 返回：查看返回值
+* 注意：无
+*********************************************************************************************************/
 s32 VOSMutexRelease(StVOSMutex *pMutex)
 {
 	s32 ret = 0;
+	s32 need_sche = 0;
 	struct StVosTask *pBlockTask = 0;
+
 	u32 irq_save = 0;
 
-	if (pMutex->counter == -1) return -1; //互斥锁可能不存在或者被释放
-	if (pMutex->counter > 1) pMutex->counter = 1;
+	if (VOSIntNesting != 0) return VERROR_INT_CORTEX;
+	if (VOSRunning == 0) return VERROR_NO_SCHEDULE;
+	if (pMutex == 0) return VERROR_PARAMETER;
 
-	if (VOSIntNesting != 0) return -1;
+	if (pMutex->counter < 0) return VERROR_UNKNOWN; //互斥锁可能不存在或者被释放
+
+	if (pMutex->counter > 1) pMutex->counter = 1;
 
 	irq_save = __vos_irq_save();
 
-	if (pMutex->counter < 1 && pMutex->ptask_owner == pRunningTask) {//互斥量必须要由拥有者才能释放
+	if (pMutex->ptask_owner != pRunningTask)
+		ret = VERROR_MUTEX_RELEASE;
 
+	if (pMutex->counter < 1 && pMutex->ptask_owner == pRunningTask) {//互斥量必须要由拥有者才能释放
 		if (!list_empty(&pMutex->list_task)) {
 			pBlockTask = list_entry(pMutex->list_task.next, struct StVosTask, list);
 			pMutex->ptask_owner = pBlockTask;
-			VOSTaskBlockListRelease(pBlockTask);//唤醒在阻塞队列里阻塞的等待该信号量的任务,每次都唤醒优先级最高的那个
+			VOSTaskBlockListRelease(pBlockTask);//唤醒第一个任务
+			//修改状态
+			pBlockTask->status = VOS_STA_READY;
+			pBlockTask->block_type = 0;
+			pBlockTask->ticks_start = 0;
+			pBlockTask->ticks_alert = 0;
+			if (pMutex->distory == 0) {
+				pBlockTask->wakeup_from = VOS_WAKEUP_FROM_MUTEX;
+			}
+			else {
+				pBlockTask->wakeup_from = VOS_WAKEUP_FROM_MUTEX_DEL;
+			}
+			need_sche = 1;
 		}
 		else {//释放互斥锁, 没等待该锁任务，直接释放
 			pMutex->counter++;
@@ -341,24 +459,11 @@ s32 VOSMutexRelease(StVOSMutex *pMutex)
 		VOSTaskRestorePrioBeforeRelease();//恢复自身的优先级
 		pRunningTask->psyn = 0; //清除指向资源的指针。
 		pMutex->ptask_owner = 0; //清除拥有者
-
-		//修改状态
-		pBlockTask->status = VOS_STA_READY;
-		pBlockTask->block_type = 0;
-		pBlockTask->ticks_start = 0;
-		pBlockTask->ticks_alert = 0;
-		//ptask_block->psyn = 0;
-		if (pMutex->distory == 0) {
-			pBlockTask->wakeup_from = VOS_WAKEUP_FROM_MUTEX;
-		}
-		else {
-			pBlockTask->wakeup_from = VOS_WAKEUP_FROM_MUTEX_DEL;
-		}
-
-		ret = 1;
+		ret = VERROR_NO_ERROR;
 	}
+
 	__vos_irq_restore(irq_save);
-	if (ret == 1) {
+	if (need_sche) {
 		//唤醒后，立即调用任务调度，万一唤醒的任务优先级高于当前任务，则切换,
 		//但不能用VOSTaskSwitch(TASK_SWITCH_USER);这是必须在特权模式下使用。
 		VOSTaskSchedule();
@@ -366,12 +471,18 @@ s32 VOSMutexRelease(StVOSMutex *pMutex)
 	return ret;
 }
 
+/********************************************************************************************************
+* 函数：s32 VOSMutexDelete(StVOSMutex *pMutex);
+* 描述: 互斥锁删除
+* 参数:
+* [1] pMutex：互斥锁指针
+* 返回：查看返回值
+* 注意：无
+*********************************************************************************************************/
 s32 VOSMutexDelete(StVOSMutex *pMutex)
 {
-	s32 ret = -1;
+	s32 ret = VERROR_NO_ERROR;
 	u32 irq_save = 0;
-
-	if (VOSIntNesting != 0) return -1;
 
 	irq_save = __vos_irq_save();
 	if (!list_empty(&gListSemaphore)) {
@@ -386,16 +497,30 @@ s32 VOSMutexDelete(StVOSMutex *pMutex)
 			ret = 0;
 		}
 	}
+	else {
+		ret = VERROR_DELETE_RESOURCES;
+	}
 	__vos_irq_restore(irq_save);
 	return ret;
 }
 
+/********************************************************************************************************
+* 函数：s32 VOSEventWait(u32 event, u32 timeout_ms);
+* 描述: 事件等待
+* 参数:
+* [1] event：32位事件，最大支持32个事件类型，用户自定义
+* [2] timeout_ms: 超时时间，单位毫秒
+* 返回：查看返回值
+* 注意：无
+*********************************************************************************************************/
 s32 VOSEventWait(u32 event, u32 timeout_ms)
 {
 	s32 ret = 0;
+	s32 need_sche = 0;
 	u32 irq_save = 0;
 
-	if (VOSIntNesting != 0) return -1; //中断上下文，直接返回-1
+	if (VOSIntNesting != 0) return VERROR_INT_CORTEX;
+	if (VOSRunning == 0) return VERROR_NO_SCHEDULE;
 
 	irq_save = __vos_irq_save();
 
@@ -422,31 +547,41 @@ s32 VOSEventWait(u32 event, u32 timeout_ms)
 
 		//直接挂在延时全局链表，唤醒就直接在全局延时里查询
 		VOSTaskDelayListInsert(pRunningTask);
+		need_sche = 1;
 	}
 
 	__vos_irq_restore(irq_save);
 
-	if (ret==0) { //没获取互斥锁，进入阻塞队列
+	if (need_sche) { //没获取互斥锁，进入阻塞队列
 
 		VOSTaskSchedule(); //任务调度并进入阻塞队列
 		switch(pRunningTask->wakeup_from) { //阻塞后是被定时器唤醒或者互斥锁唤醒
 		case VOS_WAKEUP_FROM_DELAY:
-			ret = 0;
+			ret = VERROR_TIMEOUT;
 			break;
 		case VOS_WAKEUP_FROM_EVENT:
-			ret = 1;
+			ret = VERROR_NO_ERROR;
 			break;
 		default:
-			ret = -1;
+			ret = VERROR_UNKNOWN;
 			break;
 		}
 	}
 	return ret;
 }
-
+/********************************************************************************************************
+* 函数：s32 VOSEventSet(s32 task_id, u32 event);
+* 描述: 事件设置，会唤醒等待该事件的阻塞任务
+* 参数:
+* [1] task_id: 唤醒某个阻塞的任务的ID
+* [2] event：32位事件，最大支持32个事件类型，用户自定义
+* 返回：查看返回值
+* 注意：无
+*********************************************************************************************************/
 s32 VOSEventSet(s32 task_id, u32 event)
 {
 	s32 ret = -1;
+	s32 need_sche = 0;
 	u32 irq_save = 0;
 
 	irq_save = __vos_irq_save();
@@ -465,7 +600,7 @@ s32 VOSEventSet(s32 task_id, u32 event)
 			//pTask->event_req = 0;
 			pTask->event_mask &= (~event);//清除事件位，该阻塞任务已经获取到事件通知
 			pTask->wakeup_from = VOS_WAKEUP_FROM_EVENT;
-			ret = 1;
+			need_sche = 1;
 		}
 		else {
 			pTask->event_mask |= event;
@@ -476,14 +611,21 @@ s32 VOSEventSet(s32 task_id, u32 event)
 	}
 	__vos_irq_restore(irq_save);
 
-	if (VOSIntNesting == 0 && ret == 1) {
+	if (VOSIntNesting == 0 && need_sche) {
 		//唤醒后，立即调用任务调度，万一唤醒的任务优先级高于当前任务，则切换,
 		//但不能用VOSTaskSwitch(TASK_SWITCH_USER);这是必须在特权模式下使用。
 		VOSTaskSchedule();
 	}
 	return ret;
 }
-
+/********************************************************************************************************
+* 函数：u32 VOSEventGet(s32 task_id);
+* 描述: 获取某个任务的事件掩码。
+* 参数:
+* [1] task_id: 唤醒某个阻塞的任务的ID
+* 返回：事件掩码
+* 注意：无
+*********************************************************************************************************/
 u32 VOSEventGet(s32 task_id)
 {
 	u32 event_mask = 0;
@@ -501,12 +643,21 @@ u32 VOSEventGet(s32 task_id)
 	return event_mask;
 }
 
+/********************************************************************************************************
+* 函数：s32 VOSEventDisable(s32 task_id, u32 event);
+* 描述: 禁止某个任务的某些事件唤醒。
+* 参数:
+* [1] task_id: 唤醒某个阻塞的任务的ID
+* [2] event：32位事件，最大支持32个事件类型，用户自定义
+* 返回：事件禁止位
+* 注意：无
+*********************************************************************************************************/
 s32 VOSEventDisable(s32 task_id, u32 event)
 {
 	u32 mask = 0;
 	u32 irq_save = 0;
 
-	if (VOSIntNesting != 0) return -1;
+	if (VOSIntNesting != 0) return VERROR_INT_CORTEX;
 
 	irq_save = __vos_irq_save();
 	StVosTask *pTask = VOSGetTaskFromId(task_id);
@@ -518,12 +669,22 @@ s32 VOSEventDisable(s32 task_id, u32 event)
 
 	return mask;
 }
+
+/********************************************************************************************************
+* 函数：s32 VOSEventEnable(s32 task_id, u32 event);
+* 描述: 重新激活某个任务的某些事件唤醒。
+* 参数:
+* [1] task_id: 唤醒某个阻塞的任务的ID
+* [2] event：32位事件，最大支持32个事件类型，用户自定义
+* 返回：事件激活位
+* 注意：无
+*********************************************************************************************************/
 s32 VOSEventEnable(s32 task_id, u32 event)
 {
 	u32 mask = 0;
 	u32 irq_save = 0;
 
-	if (VOSIntNesting != 0) return -1;
+	if (VOSIntNesting != 0) return VERROR_INT_CORTEX;
 
 	irq_save = __vos_irq_save();
 	StVosTask *pTask = VOSGetTaskFromId(task_id);
@@ -535,9 +696,18 @@ s32 VOSEventEnable(s32 task_id, u32 event)
 
 	return mask;
 }
+
 /**************************************
  * 消息队列和邮箱直接使用信号量实现
  **************************************/
+
+/********************************************************************************************************
+* 函数：void VOSMsgQueInit();
+* 描述: 消息队列初始化。
+* 参数:
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
 void VOSMsgQueInit()
 {
 	s32 i = 0;
@@ -552,7 +722,17 @@ void VOSMsgQueInit()
 	}
 	__vos_irq_restore(irq_save);
 }
-
+/********************************************************************************************************
+* 函数：StVOSMsgQueue *VOSMsgQueCreate(s8 *pRingBuf, s32 length, s32 msg_size, s8 *name);
+* 描述: 消息队列创建
+* 参数:
+* [1] pRingBuf：用户提供内存地址
+* [2] length：用户提供的内存大小，单位字节
+* [3] msg_size：用户指定每个消息大小
+* [4] name：消息队列名
+* 返回：消息队列指针
+* 注意：无
+*********************************************************************************************************/
 StVOSMsgQueue *VOSMsgQueCreate(s8 *pRingBuf, s32 length, s32 msg_size, s8 *name)
 {
 	StVOSMsgQueue *pMsgQue = 0;
@@ -576,13 +756,23 @@ StVOSMsgQueue *VOSMsgQueCreate(s8 *pRingBuf, s32 length, s32 msg_size, s8 *name)
 	__vos_irq_restore(irq_save);
 	return  pMsgQue;
 }
-//返回添加的个数，成功返回1，表示添加一个消息成功；如果返回0，表示队列满。
+
+/********************************************************************************************************
+* 函数：s32 VOSMsgQuePut(StVOSMsgQueue *pMQ, void *pmsg, s32 len);
+* 描述: 把一则消息放到消息队列
+* 参数:
+* [1] pMQ：消息队列指针
+* [2] pmsg：每则消息指针[N]，用户提供
+* [3] len：用户提供的消息大小
+* 返回：查看返回值
+* 注意：无
+*********************************************************************************************************/
 s32 VOSMsgQuePut(StVOSMsgQueue *pMQ, void *pmsg, s32 len)
 {
-	s32 ret = 0;
+	s32 ret = VERROR_NO_ERROR;
 	u8 *ptail = 0;
 
-	if (pMQ->psem == 0) return -1;
+	if (pMQ->psem == 0) return VERROR_PARAMETER;
 
 	if (pMQ->pos_tail != pMQ->pos_head || //头不等于尾，可以添加新消息
 		pMQ->msg_cnts == 0) { //队列为空，可以添加新消息
@@ -595,17 +785,30 @@ s32 VOSMsgQuePut(StVOSMsgQueue *pMQ, void *pmsg, s32 len)
 
 		VOSSemRelease(pMQ->psem);
 	}
+	else {
+		ret = VERROR_FULL_RESOURCES;
+	}
 	return ret;
 }
-//返回添加的个数
+/********************************************************************************************************
+* 函数：s32 VOSMsgQueGet(StVOSMsgQueue *pMQ, void *pmsg, s32 len, u32 timeout_ms);
+* 描述: 从消息队列里获取一则消息，
+* 参数:
+* [1] pMQ：消息队列指针
+* [2] pmsg：每则消息指针[out]，用户提供
+* [3] len：用户提供的消息大小
+* [4] timeout_ms：超时时间，单位毫秒
+* 返回：查看返回值
+* 注意：无
+*********************************************************************************************************/
 s32 VOSMsgQueGet(StVOSMsgQueue *pMQ, void *pmsg, s32 len, u32 timeout_ms)
 {
-	s32 ret = 0;
+	s32 ret = VERROR_UNKNOWN;
 	u8 *phead = 0;
 
-	if (pMQ->psem == 0) return -1;
+	if (pMQ->psem == 0) return VERROR_PARAMETER;
 
-	if ((ret = VOSSemWait(pMQ->psem, timeout_ms)) > 0) {
+	if (VERROR_NO_ERROR == (ret = VOSSemWait(pMQ->psem, timeout_ms))) {
 		phead = pMQ->pdata + pMQ->pos_head * pMQ->msg_size;
 		len = (len <= pMQ->msg_size) ? len : pMQ->msg_size;
 		memcpy(pmsg, phead, len);
@@ -615,29 +818,35 @@ s32 VOSMsgQueGet(StVOSMsgQueue *pMQ, void *pmsg, s32 len, u32 timeout_ms)
 	}
 	return ret;
 }
-
+/********************************************************************************************************
+* 函数：s32 VOSMsgQueFree(StVOSMsgQueue *pMQ);
+* 描述: 删除一个消息队列
+* 参数:
+* [1] pMQ：消息队列指针
+* 返回：查看返回值
+* 注意：无
+*********************************************************************************************************/
 s32 VOSMsgQueFree(StVOSMsgQueue *pMQ)
 {
-	s32 ret = -1;
+	s32 ret = VERROR_NO_ERROR;
 	u32 irq_save = 0;
 
 	irq_save = __vos_irq_save();
-	if (!list_empty(&gListMsgQue)) {
-
-		if (pMQ->msg_cnts == 0) {//消息为空，释放
-
-			list_del(pMQ);
-			pMQ->distory = 0;
-			pMQ->name = 0;
-			pMQ->pdata = 0;
-			pMQ->length = 0;
-			pMQ->pos_head = 0;
-			pMQ->pos_tail = 0;
-			pMQ->msg_cnts = 0;
-			pMQ->msg_maxs = 0;
-			pMQ->msg_size = 0;
-			ret = 0;
-		}
+	if (pMQ->msg_cnts == 0) {//消息为空，释放
+		list_del(pMQ);
+		pMQ->distory = 0;
+		pMQ->name = 0;
+		pMQ->pdata = 0;
+		pMQ->length = 0;
+		pMQ->pos_head = 0;
+		pMQ->pos_tail = 0;
+		pMQ->msg_cnts = 0;
+		pMQ->msg_maxs = 0;
+		pMQ->msg_size = 0;
+		ret = 0;
+	}
+	else {
+		ret = VERROR_DELETE_RESOURCES;
 	}
 	__vos_irq_restore(irq_save);
 	return ret;

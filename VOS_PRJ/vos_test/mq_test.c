@@ -43,15 +43,17 @@ static void task1(void *param)
 	while(TestExitFlagGet() == 0) {
 		if (gMsgQuePtr) {
 			ret = VOSMsgQueGet(gMsgQuePtr, &tmp, sizeof(tmp), 1000);
-			if (ret == 0) {
-				kprintf("error: VOSMsgQueGet timeout, ret=%d!\r\n", ret);
+			if (ret == VERROR_NO_ERROR) {
+				kprintf("info: VOSMsgQueGet tmp.id=%d, ret=%d!\r\n", tmp.id, ret);
+
+			}
+			else if (ret == VERROR_TIMEOUT) {
+				kprintf("warning: VOSMsgQueGet timeout, ret=%d!\r\n", ret);
 			}
 			else if (ret < 0) {
 				kprintf("error: VOSMsgQueGet error, ret=%d!\r\n", ret);
 			}
-			else {
-				kprintf("info: VOSMsgQueGet tmp.id=%d, ret=%d!\r\n", tmp.id, ret);
-			}
+
 		}
 		else {
 			VOSTaskDelay(1*1000);
