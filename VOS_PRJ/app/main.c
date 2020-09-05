@@ -19,6 +19,8 @@ void main(void *param)
 	dma_printf("hello world!\r\n");
 	kprintf("main function!\r\n");
 
+	void vmem_test();
+	vmem_test();
 	while (1) {
 		VOSTaskDelay(1*1000);
 	}

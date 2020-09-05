@@ -665,9 +665,9 @@ s32 VOSTaskCreate(void (*task_fun)(void *param), void *param,
 
 	ptask->event_mask = 0;
 
-	ptask->list.pTask = ptask;
+	//ptask->list.pTask = ptask;
 
-	ptask->list_delay.pTask = ptask;
+	//ptask->list_delay.pTask = ptask;
 
 	//初始化栈内容,至少18个u32大小
 	ptask->pstack = ptask->pstack_top;
@@ -849,7 +849,7 @@ void VOSTaskSchedule()
 }
 
 /********************************************************************************************************
-* 函数：void VOSTaskSchedule();
+* 函数：void VOSTaskScheduleISR();
 * 描述: 中断上下文调度，这需要工作在中断上下文，如果是任务上下文则调用VOSTaskSchedule
 * 参数: 无
 * 返回：无
