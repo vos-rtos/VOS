@@ -14,7 +14,7 @@
 extern struct StVMemHeap;
 
 struct StVMemHeap *VMemCreate(u8 *mem, s32 len, s32 page_size, s32 align_bytes);
-void *VMemMalloc(struct StVMemHeap *pheap, s32 size);
+void *VMemMalloc(struct StVMemHeap *pheap, u32 size);
 void VMemFree (struct StVMemHeap *pheap, void *p);
-
+void *VMemRealloc(struct StVMemHeap *pheap, void *p, u32 size);
 #endif

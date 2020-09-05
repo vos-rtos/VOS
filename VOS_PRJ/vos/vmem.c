@@ -4,7 +4,7 @@
 * 作    者: 156439848@qq.com; vincent_cws2008@gmail.com
 * 版    本: VOS V1.0
 * 历    史：
-* --20200905：创建文件, 实现buddy内存动态分配算法，速度理论上很快，申请，释放都不用查找链表
+* --20200905：创建文件, 实现buddy内存动态分配算法，速度理论上很快，申请，释放都不用遍历链表
 *********************************************************************************************************/
 
 #include "vtype.h"
@@ -44,7 +44,7 @@ typedef struct StVMemCtrlBlock{
 #define ALIGN_DOWN(mem, align) 	(((u32)(mem)+(align)-1) & ~((align)-1))
 
 /********************************************************************************************************
-* 函数：u32 CutPageClassSize(s32 size, s32 page_size, s32 *index, s32 *count);
+* 函数：u32 CutPageClassSize(u32 size, s32 page_size, s32 *index, s32 *count);
 * 描述:  内存初始化时，需要计算空闲链表的尺寸，然后把他们链接一起
 * 参数:
 * [1] size: 用户需要划分存储空间大小
@@ -56,7 +56,7 @@ typedef struct StVMemCtrlBlock{
 * 注意：如果参数size的尺寸不能完整存放到最大的page_class[MAX_PAGE_CLASS_MAX-1]里，则剩余部分存放到
 *      page_class[x < MAX_PAGE_CLASS_MAX]里，直到最少的page_size的1倍粒度
 *********************************************************************************************************/
-static u32 CutPageClassSize(s32 size, s32 page_size, s32 *index, s32 *count)
+static u32 CutPageClassSize(u32 size, s32 page_size, s32 *index, s32 *count)
 {
 	u32 mast_out = 0;
 	u32 mast = MAX_PAGE_CLASS_MAX;
@@ -112,7 +112,7 @@ s32 GetPageClassIndex(s32 size, s32 page_size)
 * 返回：无
 * 注意：无
 *********************************************************************************************************/
-void VMemDebug (StVMemHeap *pheap)
+void VMemDebug (struct StVMemHeap *pheap)
 {
 	s32 i;
 	struct list_head *list;
@@ -143,7 +143,7 @@ void VMemDebug (StVMemHeap *pheap)
 * 返回：堆管理对象指针
 * 注意：如果提供的内存超出了page_class[n]最大空间，就page_class[n]最大值里链表里链接多个相邻的数据块
 *********************************************************************************************************/
-StVMemHeap *VMemCreate(u8 *mem, s32 len, s32 page_size, s32 align_bytes)
+struct StVMemHeap *VMemCreate(u8 *mem, s32 len, s32 page_size, s32 align_bytes)
 {
 	s32 i;
 	s32 index;
@@ -210,7 +210,7 @@ StVMemHeap *VMemCreate(u8 *mem, s32 len, s32 page_size, s32 align_bytes)
 }
 
 /********************************************************************************************************
-* 函数：void *VMemMalloc(StVMemHeap *pheap, s32 size);
+* 函数：void *VMemMalloc(StVMemHeap *pheap, u32 size);
 * 描述:  指定堆里申请size空间内存
 * 参数:
 * [1] pheap: 指定的堆
@@ -218,7 +218,7 @@ StVMemHeap *VMemCreate(u8 *mem, s32 len, s32 page_size, s32 align_bytes)
 * 返回：申请的内存空间起始地址
 * 注意：buddy算法，如果申请内存块对应的链表为空，则往上申请，直接申请成功或失败。
 *********************************************************************************************************/
-void *VMemMalloc(StVMemHeap *pheap, s32 size)
+void *VMemMalloc(struct StVMemHeap *pheap, u32 size)
 {
 	void *pObj = 0;
 	s32 i;
@@ -286,7 +286,7 @@ END_VMEMMALLOC:
 * 返回：无
 * 注意：buddy算法，如果内存释放后邻居也空闲，则合并到上一级的page_class[n]的链表中，直到最顶链表。
 *********************************************************************************************************/
-void VMemFree (StVMemHeap *pheap, void *p)
+void VMemFree (struct StVMemHeap *pheap, void *p)
 {
 	s32 size = 0;
 	s32 offset = 0;
@@ -369,6 +369,49 @@ void VMemFree (StVMemHeap *pheap, void *p)
 		list_add_tail(&pMCB->list, &pheap->page_class[index]);//添加到空闲链表末尾
 	}
 	return;
+}
+/********************************************************************************************************
+* 函数：void *VMemRealloc(StVMemHeap *pheap, void *p, u32 size);
+* 描述:  指定堆里重新申请内存
+* 参数:
+* [1] pheap: 指定的堆
+* [2] p: 原指针，如果等于0，就malloc(size)
+* [3] size: 申请内存大小，如果等于0，则释放原来p指向的内存，同时返回0
+* 返回：返回指针，指向重新分配大小的内存。如果请求失败，则返回NULL
+* 注意：这个函数如果原来块里足够空间，就直接返回原指针，否则返回新指针。
+*********************************************************************************************************/
+void *VMemRealloc(struct StVMemHeap *pheap, void *p, u32 size)
+{
+	void *ptr = (void*)0;
+	struct StVMemCtrlBlock *pMCB = 0;
+	if (p == 0) { //指针为空，则直接malloc
+		ptr = VMemMalloc(pheap, size);
+		goto END_VMEMREALLOC;
+	}
+	if (size == 0) { //指针不为空，size为0，则释放p, 同时返回0
+		VMemFree(pheap, p);
+		goto END_VMEMREALLOC;
+	}
+	//判断是本堆的malloc
+	if ((u8*)p >= pheap->page_base &&
+		(u8*)p < pheap->mem_end &&
+		((u8*)p - pheap->page_base)%pheap->page_size==0) {
+		pMCB = &pheap->pMCB_base[((u8*)p-pheap->page_base)/pheap->page_size];
+		//判断size是否超出本块最大尺寸
+		if (pMCB->status == VMEM_STATUS_USED && //必须是已经分配出去状态
+			pMCB->page_max * pheap->page_size >= size) { //分配的剩余空间足够多
+			ptr = p;
+			goto END_VMEMREALLOC;
+		}
+	}
+	//超过剩余空间或者不在本区域内，直接malloc和memcpy
+	ptr = VMemMalloc(pheap, size);
+	if (ptr) {
+		memcpy(ptr, p, size);
+	}
+
+END_VMEMREALLOC:
+	return ptr;
 }
 
 u8 arr_heap[1024*10+10];
