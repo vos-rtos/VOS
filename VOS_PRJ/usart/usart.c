@@ -106,7 +106,7 @@ void uart_init(u32 bound)
  	DMA_USART1_Rx_Init(RecvBuff, RECV_BUF_SIZE);
 
  	//≥ı ºªØRingBuf
- 	gRingBuf = VOSRingBufFormat(gRxRingBuf, sizeof(gRxRingBuf));
+ 	gRingBuf = VOSRingBufBuild(gRxRingBuf, sizeof(gRxRingBuf));
 }
 
 /********************************************************************************************************

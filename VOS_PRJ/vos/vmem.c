@@ -118,7 +118,7 @@ s32 GetPageClassIndex(s32 size, s32 page_size)
 }
 
 /********************************************************************************************************
-* 函数：StVMemHeap *VMemCreate(u8 *mem, s32 len, s32 page_size, s32 align_bytes);
+* 函数：StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size, s32 align_bytes);
 * 描述:  堆创建
 * 参数:
 * [1] mem: 用户提供用来划分堆的内存
@@ -128,7 +128,7 @@ s32 GetPageClassIndex(s32 size, s32 page_size)
 * 返回：堆管理对象指针
 * 注意：如果提供的内存超出了page_class[n]最大空间，就page_class[n]最大值里链表里链接多个相邻的数据块
 *********************************************************************************************************/
-struct StVMemHeap *VMemCreate(u8 *mem, s32 len, s32 page_size, s32 align_bytes)
+struct StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size, s32 align_bytes)
 {
 	s32 i;
 	s32 index;
@@ -429,45 +429,6 @@ END_VMEMREALLOC:
 	return ptr;
 }
 
-u8 arr_heap[1024 * 10 + 10];
-extern s32 VBoudaryCheck(struct StVMemHeap *pheap);
-extern s32 VMemInfoDump(struct StVMemHeap *pheap);
-/********************************************************************************************************
-* 函数：void vmem_test();
-* 描述:  测试
-* 参数:  无
-* 返回：无
-* 注意：无
-*********************************************************************************************************/
-void vmem_test()
-{
-
-	kprintf("u32=%d\r\n", sizeof(u32));
-
-	StVMemHeap *pheap = VMemCreate(&arr_heap[0], sizeof(arr_heap), 1024, 8);
-	VMemInfoDump(pheap);
-	VBoudaryCheck(pheap);
-
-	u8 *pnew = (u8*)VMemMalloc(pheap, 1024 * 1 + 1);
-	VMemInfoDump(pheap);
-	VBoudaryCheck(pheap);
-
-	u8 *pnew1 = (u8*)VMemMalloc(pheap, 1024 * 1 + 1);
-
-	VMemInfoDump(pheap);
-	VBoudaryCheck(pheap);
-
-	VMemFree(pheap, pnew);
-
-	VMemInfoDump(pheap);
-	VBoudaryCheck(pheap);
-
-	VMemFree(pheap, pnew1);
-
-	VMemInfoDump(pheap);
-	VBoudaryCheck(pheap);
-}
-
 /********************************************************************************************************
 * 函数：s32 VMemInfoDump(struct StVMemHeap *pheap);
 * 描述:  调试内存
@@ -622,6 +583,46 @@ ERROR_RET:
 	while (1);
 	return 0;
 }
+
+u8 arr_heap[1024 * 10 + 10];
+extern s32 VBoudaryCheck(struct StVMemHeap *pheap);
+extern s32 VMemInfoDump(struct StVMemHeap *pheap);
+/********************************************************************************************************
+* 函数：void vmem_test();
+* 描述:  测试
+* 参数:  无
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
+void vmem_test()
+{
+
+	kprintf("u32=%d\r\n", sizeof(u32));
+
+	StVMemHeap *pheap = VMemBuild(&arr_heap[0], sizeof(arr_heap), 1024, 8);
+	VMemInfoDump(pheap);
+	VBoudaryCheck(pheap);
+
+	u8 *pnew = (u8*)VMemMalloc(pheap, 1024 * 1 + 1);
+	VMemInfoDump(pheap);
+	VBoudaryCheck(pheap);
+
+	u8 *pnew1 = (u8*)VMemMalloc(pheap, 1024 * 1 + 1);
+
+	VMemInfoDump(pheap);
+	VBoudaryCheck(pheap);
+
+	VMemFree(pheap, pnew);
+
+	VMemInfoDump(pheap);
+	VBoudaryCheck(pheap);
+
+	VMemFree(pheap, pnew1);
+
+	VMemInfoDump(pheap);
+	VBoudaryCheck(pheap);
+}
+
 
 
 

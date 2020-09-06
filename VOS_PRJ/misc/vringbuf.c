@@ -48,7 +48,7 @@ void VOSRingBufDelete(StVOSRingBuf *pnew)
 }
 
 /********************************************************************************************************
-* 函数：StVOSRingBuf *VOSRingBufFormat(u8 *buf, s32 len);
+* 函数：StVOSRingBuf *VOSRingBufBuild(u8 *buf, s32 len);
 * 描述: 不用malloc, 直接把用户提供的内存强制格式化出RingBuf头部，所以也不用调用VOSRingBufDelete删除。
 * 参数:
 * [1] buf: 用户提供的buf
@@ -56,7 +56,7 @@ void VOSRingBufDelete(StVOSRingBuf *pnew)
 * 返回：返回RingBuf的对象指针，否则返回NULL
 * 注意：无
 *********************************************************************************************************/
-StVOSRingBuf *VOSRingBufFormat(u8 *buf, s32 len)
+StVOSRingBuf *VOSRingBufBuild(u8 *buf, s32 len)
 {
 	if (len < sizeof(StVOSRingBuf)) return 0;
 	StVOSRingBuf *phead = (StVOSRingBuf*)buf;

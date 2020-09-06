@@ -22,7 +22,7 @@ typedef struct StVOSRingBuf {
 
 StVOSRingBuf *VOSRingBufCreate(u8 *buf, s32 len);
 void VOSRingBufDelete(StVOSRingBuf *pnew);
-StVOSRingBuf *VOSRingBufFormat(u8 *buf, s32 len);
+StVOSRingBuf *VOSRingBufBuild(u8 *buf, s32 len);
 s32 VOSRingBufSet(StVOSRingBuf *ring, u8 *buf, s32 len);
 s32 VOSRingBufGet(StVOSRingBuf *ring, u8 *buf, s32 len);
 s32 VOSRingBufPeekGet(StVOSRingBuf *ring, u8 *buf, s32 len);
