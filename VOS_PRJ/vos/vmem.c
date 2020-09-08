@@ -697,12 +697,12 @@ s32 VBoudaryCheck(struct StVMemHeap *pheap)
 	//所有空闲链表总和+已分配链表总和等于所有内存总和
 	if (used_total + free_total != pheap->page_counts * pheap->page_size) BOUNDARY_ERROR();
 
-	VMEM_LOCK();
+	VMEM_UNLOCK();
 
 	return 1;
 
 ERROR_RET:
-	VMEM_LOCK();
+	VMEM_UNLOCK();
 
 	VMemInfoDump(pheap);
 	kprintf("*************\r\nERROR: %s, please check the code!!!\r\n*************\r\n", __FUNCTION__);

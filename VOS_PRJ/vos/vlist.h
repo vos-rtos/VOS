@@ -5,7 +5,9 @@ extern struct StVosTask;
 struct list_head
 {
 	struct list_head *next, *prev;
-	//struct StVosTask *pTask;
+#if VOS_LIST_DEBUG
+	struct StVosTask *pTask;
+#endif
 };
 
 #define LIST_HEAD_INIT(name) { &(name), &(name) }

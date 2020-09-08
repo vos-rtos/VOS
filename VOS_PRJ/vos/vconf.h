@@ -12,6 +12,8 @@
 #ifndef __VCONF_H__
 #define __VCONF_H__
 
+#define VOS_LIST_DEBUG 0
+
 #define TASK_LEVEL  0 //0:任务工作在特权级+PSP,1：任务工作在线程级+PSP
 
 #define MAX_VOS_SEMAPHONRE_NUM  10

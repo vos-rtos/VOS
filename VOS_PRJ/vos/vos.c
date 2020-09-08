@@ -664,11 +664,10 @@ s32 VOSTaskCreate(void (*task_fun)(void *param), void *param,
 	ptask->ticks_used_start = -1; //禁止统计cpu使用率
 
 	ptask->event_mask = 0;
-
-	//ptask->list.pTask = ptask;
-
-	//ptask->list_delay.pTask = ptask;
-
+#if VOS_LIST_DEBUG
+	ptask->list.pTask = ptask;
+	ptask->list_delay.pTask = ptask;
+#endif
 	//初始化栈内容,至少18个u32大小
 	ptask->pstack = ptask->pstack_top;
 	*(--ptask->pstack) = 0x01000000; //xPSR
