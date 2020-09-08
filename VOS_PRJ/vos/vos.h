@@ -17,6 +17,7 @@
 #include "vlist.h"
 #include "verror.h"
 
+
 //A: 当前全局的tick
 //B: 比较对象的终止tick, 注意终止tick数值不一定少于开始tick，不能直接比较，使用距离比较法
 //C: 比较对象的开始tick

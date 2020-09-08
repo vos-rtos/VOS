@@ -3,6 +3,7 @@
 * 文    件: vmem.c
 * 作    者: 156439848@qq.com; vincent_cws2008@gmail.com
 * 版    本: VOS V1.0
+* 内	    容: 实现单个堆的内存分配和释放等操作
 * 历    史：
 * --20200905：创建文件, 实现buddy内存动态分配算法，速度理论上很快，申请，释放都不用遍历链表
 *********************************************************************************************************/
@@ -14,20 +15,22 @@
 
 //#define kprintf printf
 
-#define AUTO_TEST_RANDOM  0 //AUTO_TEST_RANDOM == 1 在pc上使用vs2017随机测试
+#define VMEM_LOCK() 	pheap->irq_save = __vos_irq_save()
+#define VMEM_UNLOCK()   __vos_irq_restore(pheap->irq_save)
 
-#define VMEM_TRACER_ENABLE	1 //检查内存是否越界
 
-#define ASSERT_TEST(t,s) do {if(t) {/*kprintf("info[%d]: %s test ok!!!\r\n", __LINE__, (s));*/}else{kprintf("error[%d]: %s test failed!!!\r\n", __LINE__, s); while(1);}}while(0)
-
-#define BOUNDARY_ERROR() do {kprintf("BOUNDARY CHECK ERROR: code(%d)\r\n", __LINE__);goto ERROR_RET;} while(0)
+#define BOUNDARY_ERROR() \
+	do { \
+		kprintf("BOUNDARY CHECK ERROR: code(%d)\r\n", __LINE__);\
+		goto ERROR_RET;\
+	} while(0)
 
 #define VMEM_STATUS_UNKNOWN 0
 #define VMEM_STATUS_USED 	1
 #define VMEM_STATUS_FREE 	2
 
 #if AUTO_TEST_RANDOM
-	#define MAX_PAGE_CLASS_MAX 10
+	#define MAX_PAGE_CLASS_MAX 7
 #else
 	#define MAX_PAGE_CLASS_MAX 3
 #endif
@@ -37,7 +40,9 @@
 struct StVMemCtrlBlock;
 
 typedef struct StVMemHeap {
+	s8 *name; //堆名字
 	u8 *mem_end; //内存对齐后的结束地址，用来判断释放是否越界
+	s32 irq_save;//中断状态存储
 	s32 align_bytes; //几字节对齐
 	s32 page_counts; //暂时没什么用
 	u32 page_size; //每页大小，单位字节，通常1024,2048等等
@@ -53,14 +58,36 @@ typedef struct StVMemHeap {
 typedef struct StVMemCtrlBlock {
 	struct list_head list;
 #if VMEM_TRACER_ENABLE
-	u16 used_num; //当前使用了多少字节，用来调试是否越界写入，用法就是剩余空闲去添加指定数据，检查是否越界写入
+	u32 used_num; //当前使用了多少字节，用来调试是否越界写入，用法就是剩余空闲去添加指定数据，检查是否越界写入
 #endif
 	u16 page_max; //最大分配了多少页, 2^n
-	u32 status; //VMEM_STATUS_FREE,VMEM_STATUS_USED,VMEM_STATUS_UNKNOWN
+	s8 status; //VMEM_STATUS_FREE,VMEM_STATUS_USED,VMEM_STATUS_UNKNOWN
+	//已分配内存属于的任务id,注意：如果空闲块，这里设置为0xFF(空闲任务), 但是空闲任务不申请内存（特殊处理）
+	//在中断上下文或者系统任务还没启动前，都设定VMEM_BELONG_TO_NONE, 代码不在任务上下文使用
+	u8 task_id;
 }StVMemCtrlBlock;
 
 #define ALIGN_UP(mem, align) 	((u32)(mem) & ~((align)-1))
 #define ALIGN_DOWN(mem, align) 	(((u32)(mem)+(align)-1) & ~((align)-1))
+
+/********************************************************************************************************
+* 函数：u8 GetCurTaskId();
+* 描述: 获取当前运行的任务id, 如果在ISR上下文或者系统任务没启动，直接返回VMEM_BELONG_TO_NONE
+* 参数: 无
+* 返回：最大存储的字节数（例如：传入参数为1025， 返回1024）
+* 注意：WIN32调试直接设置
+*********************************************************************************************************/
+extern volatile u32 VOSIntNesting;
+extern volatile u32 VOSRunning;
+extern struct StVosTask *pRunningTask;
+u8 GetCurTaskId()
+{
+	u8 ret = VMEM_BELONG_TO_NONE;
+	if (VOSIntNesting == 0 && VOSRunning && pRunningTask) {
+		ret = (u8)pRunningTask->id;
+	}
+	return ret;
+}
 
 /********************************************************************************************************
 * 函数：u32 CutPageClassSize(u32 size, s32 page_size, s32 *index, s32 *count);
@@ -122,10 +149,11 @@ s32 GetPageClassIndex(s32 size, s32 page_size)
 * [2] len: 用户提供内存的大小，单位：字节
 * [3] page_size: 页尺寸，1024,2048等
 * [4] align_bytes: 字节对齐，例如8，就是8字节对齐
+* [5] name: 堆名字
 * 返回：堆管理对象指针
 * 注意：如果提供的内存超出了page_class[n]最大空间，就page_class[n]最大值里链表里链接多个相邻的数据块
 *********************************************************************************************************/
-struct StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size, s32 align_bytes)
+struct StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size, s32 align_bytes, s8 *name)
 {
 	s32 i;
 	s32 index;
@@ -160,6 +188,7 @@ struct StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size, s32 align_bytes)
 
 	pheap->page_size = page_size;
 	pheap->align_bytes = align_bytes;
+	pheap->name = name;
 
 	pheap->page_base = (u8*)ALIGN_DOWN(&pheap->pMCB_base[pheap->page_counts], align_bytes); //第二次才是真正的地址，对齐后紧紧挨着pMCB_base末尾
 	pheap->mem_end = (u8*)ALIGN_DOWN(&pheap->page_base[pheap->page_counts*pheap->page_size], align_bytes);//第二次才是真正的地址，紧紧挨着page_base尾巴
@@ -183,14 +212,21 @@ struct StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size, s32 align_bytes)
 		if (temp == 0) {
 			break;
 		}
+
+		VMEM_LOCK();
 		//当cnts > 1, 证明page[MAX_PAGE_CLASS_MAX-1]不能一次性容纳整块，可以增加MAX_PAGE_CLASS_MAX
 		//否则，将会把内存连续的放到page[MAX_PAGE_CLASS_MAX-1]链表中
 		for (i = 0; i<cnts; i++) {
 			pMCB = &pheap->pMCB_base[(offset_size + i * (1 << index)*page_size) / page_size];
 			pMCB->page_max = 1 << index;
 			pMCB->status = VMEM_STATUS_FREE;
+			pMCB->task_id = VMEM_BELONG_TO_NONE;
+
 			list_add_tail(&pMCB->list, &pheap->page_class[index]);
+
 		}
+		VMEM_UNLOCK();
+
 		offset_size += temp;
 	}
 
@@ -222,10 +258,12 @@ void *VMemMalloc(struct StVMemHeap *pheap, u32 size)
 
 	//往大块找内存
 	index_top = -1;
+
+	VMEM_LOCK();
 	for (i = index; i<MAX_PAGE_CLASS_MAX; i++)
 	{
+
 		if (!list_empty(&pheap->page_class[i])) {
-			//pheap->page_class[index]
 			index_top = i;
 			break;
 		}
@@ -246,16 +284,21 @@ void *VMemMalloc(struct StVMemHeap *pheap, u32 size)
 			pMCBRight->status = pMCB->status = VMEM_STATUS_FREE;
 
 			index_top--;
+
 			//插入到page_class[n]中， 插入有右边的，左边继续分配
 			list_add_tail(&pMCBRight->list, &pheap->page_class[index_top]);
+
 		}
 		//取出分配到的内存
 		pMCB->status = VMEM_STATUS_USED;
+		//设定任务ID
+		pMCB->task_id = GetCurTaskId();
+
 #if VMEM_TRACER_ENABLE
 		pMCB->used_num = size;
 #endif
 		pMCB->page_max = 1 << index_top; //page_class[n]对应的最大页数 ，释放时需要用到。
-		INIT_LIST_HEAD(&pMCB->list); //自己指向自己吧
+
 		//链接到分配链表中，方便调试使用
 		list_add_tail(&pMCB->list, &pheap->mcb_used);
 
@@ -263,10 +306,14 @@ void *VMemMalloc(struct StVMemHeap *pheap, u32 size)
 		pObj = pheap->page_base + (pMCB - pheap->pMCB_base) * pheap->page_size;
 
 #if VMEM_TRACER_ENABLE
-		//填充固定字符， 检查数据越界
+#if	VMEM_TRACE_DESTORY
+		//填充固定字符， 检查数据
 		memset((u8*)pObj+pMCB->used_num, VMEM_MALLOC_PAD, pMCB->page_max * pheap->page_size - pMCB->used_num);
 #endif
+#endif
 	}
+	VMEM_UNLOCK();
+
 
 END_VMEMMALLOC:
 
@@ -303,9 +350,9 @@ void VMemFree(struct StVMemHeap *pheap, void *p)
 		return;
 	}
 
+	VMEM_LOCK();
 	//释放时也得从已分配链表中删除
 	list_del(&pMCB->list);
-
 
 	while (1) {
 		if (page_max >= 1 << (MAX_PAGE_CLASS_MAX - 1)) { //超出的page_class[n]最大的尺寸，跳出
@@ -318,6 +365,7 @@ void VMemFree(struct StVMemHeap *pheap, void *p)
 				pMCBTemp->page_max == pMCB->page_max) { //右块和左块同一个链表中
 														//释放右边
 				list_del(&pMCBTemp->list);
+
 				//清空右边
 #if VMEM_TRACER_ENABLE
 				pMCBTemp->used_num = 0;
@@ -348,6 +396,7 @@ void VMemFree(struct StVMemHeap *pheap, void *p)
 				pMCBTemp->page_max == pMCB->page_max) { //右块和左块同一个链表中
 														//释放左边
 				list_del(&pMCBTemp->list);
+
 				//清空右边
 #if VMEM_TRACER_ENABLE
 				pMCB->used_num = 0;
@@ -378,11 +427,16 @@ void VMemFree(struct StVMemHeap *pheap, void *p)
 	if (index < MAX_PAGE_CLASS_MAX) {
 		//再添加到空闲链表
 		pMCB->status = VMEM_STATUS_FREE;
+		//空闲时任务id设置为空
+		pMCB->task_id = VMEM_BELONG_TO_NONE;
+
 #if VMEM_TRACER_ENABLE
 		pMCB->used_num = 0;
 #endif
+
 		list_add_tail(&pMCB->list, &pheap->page_class[index]);//添加到空闲链表末尾
 	}
+	VMEM_UNLOCK();
 	return;
 }
 /********************************************************************************************************
@@ -408,6 +462,7 @@ void *VMemRealloc(struct StVMemHeap *pheap, void *p, u32 size)
 		goto END_VMEMREALLOC;
 	}
 	//判断是本堆的malloc
+	VMEM_LOCK();
 	if ((u8*)p >= pheap->page_base &&
 		(u8*)p < pheap->mem_end &&
 		((u8*)p - pheap->page_base) % pheap->page_size == 0) {
@@ -416,9 +471,11 @@ void *VMemRealloc(struct StVMemHeap *pheap, void *p, u32 size)
 		if (pMCB->status == VMEM_STATUS_USED && //必须是已经分配出去状态
 			pMCB->page_max * pheap->page_size >= size) { //分配的剩余空间足够多
 			ptr = p;
+			VMEM_UNLOCK();
 			goto END_VMEMREALLOC;
 		}
 	}
+	VMEM_UNLOCK();
 	//超过剩余空间或者不在本区域内，直接malloc和memcpy
 	ptr = VMemMalloc(pheap, size);
 	if (ptr) {
@@ -427,6 +484,59 @@ void *VMemRealloc(struct StVMemHeap *pheap, void *p, u32 size)
 
 END_VMEMREALLOC:
 	return ptr;
+}
+
+/********************************************************************************************************
+* 函数：s32 VMemGetHeapInfo(struct StVMemHeap *pheap, struct StVMemHeapInfo *pheadinfo);
+* 描述: 查询堆的信息,包括总共空闲页，总共已分配页，当前最大分配空间，堆分区最大分配空间等
+* 参数:
+* [1] pheap: 指定的堆
+* [2] pheadinfo: 输出：堆统计信息
+* 返回：true or false
+* 注意：无
+*********************************************************************************************************/
+s32 VMemGetHeapInfo(struct StVMemHeap *pheap, struct StVMemHeapInfo *pheadinfo)
+{
+	s32 i;
+	s32 free_total = 0;
+	s32 used_total = 0;
+	s32 cur_max_size = 0;
+	struct list_head *list;
+	StVMemCtrlBlock *pMCB = 0;
+
+	if (pheap == 0 || pheadinfo == 0) return 0;
+
+	free_total = 0;
+
+	VMEM_LOCK();
+	for (i = 0; i<MAX_PAGE_CLASS_MAX; i++) {
+		if (!list_empty(&pheap->page_class[i])) {//非空
+			list_for_each(list, &pheap->page_class[i]) {
+				pMCB = list_entry(list, struct StVMemCtrlBlock, list);
+				//计算空闲总和
+				free_total += pMCB->page_max*pheap->page_size;
+			}
+			cur_max_size = (1<<i) * pheap->page_size;
+		}
+	}
+	//已分配链表和总和
+	used_total = 0;
+	list_for_each(list, &pheap->mcb_used) {
+		pMCB = list_entry(list, struct StVMemCtrlBlock, list);
+		used_total += pMCB->page_max*pheap->page_size;
+	}
+
+	VMEM_UNLOCK();
+
+	pheadinfo->align_bytes = pheap->align_bytes;
+	pheadinfo->page_counts = pheap->page_counts;
+	pheadinfo->page_size = pheap->page_size;
+	pheadinfo->max_page_class = MAX_PAGE_CLASS_MAX - 1;
+	pheadinfo->cur_max_size = cur_max_size;
+	pheadinfo->used_page_num = used_total;
+	pheadinfo->free_page_num = free_total;
+
+	return 1;
 }
 
 /********************************************************************************************************
@@ -442,6 +552,7 @@ s32 VMemInfoDump(struct StVMemHeap *pheap)
 	s32 i;
 	struct list_head *list;
 	StVMemCtrlBlock *pMCB = 0;
+	VMEM_LOCK();
 	for (i = 0; i<MAX_PAGE_CLASS_MAX; i++) {
 		if (list_empty(&pheap->page_class[i])) {
 			kprintf("page_class[%02d]: head->NULL\r\n", i);
@@ -471,6 +582,7 @@ s32 VMemInfoDump(struct StVMemHeap *pheap)
 		}
 		kprintf("\r\n");
 	}
+	VMEM_UNLOCK();
 
 	return 0;
 }
@@ -480,17 +592,20 @@ s32 VMemInfoDump(struct StVMemHeap *pheap)
 * 描述: 检查当前所有malloc的内存是否有被写破坏，只检查剩余空间。
 * 参数:
 * [1] pheap: 堆对象指针
-* 返回：无
+* 返回：-1：破坏；  0：没被破坏
 * 注意：无
 *********************************************************************************************************/
 s32 VMemTraceDestory(struct StVMemHeap *pheap)
 {
+
 	s32 i;
 	s32 ret = 0;
 	s32 offset = 0;
 	struct list_head *list;
 	StVMemCtrlBlock *pMCB = 0;
 	u8 *pBase = 0;
+
+	VMEM_LOCK();
 	//检查已经分配成的内存是否被篡改
 	list_for_each(list, &pheap->mcb_used) {
 		pMCB = list_entry(list, struct StVMemCtrlBlock, list);
@@ -504,6 +619,8 @@ s32 VMemTraceDestory(struct StVMemHeap *pheap)
 			}
 		}
 	}
+	VMEM_UNLOCK();
+
 	return ret;
 }
 
@@ -533,8 +650,8 @@ s32 VBoudaryCheck(struct StVMemHeap *pheap)
 	if ((u8*)ALIGN_DOWN(&pheap->pMCB_base[pheap->page_counts], pheap->align_bytes) != pheap->page_base) BOUNDARY_ERROR();
 	//页数据区的末尾就是mem_end
 	if ((u8*)ALIGN_DOWN(&pheap->page_base[pheap->page_counts * pheap->page_size], pheap->align_bytes) != pheap->mem_end) BOUNDARY_ERROR();
-	//检查页必须是1024的整数倍
-	if (pheap->page_size % 1024 != 0) BOUNDARY_ERROR();
+
+	VMEM_LOCK();
 	//检查页缓冲区链表头(page_class[n])数据及链表数据是否正常
 	free_total = 0;
 	for (i = 0; i<MAX_PAGE_CLASS_MAX; i++) {
@@ -576,200 +693,23 @@ s32 VBoudaryCheck(struct StVMemHeap *pheap)
 		if (pMCB->status != VMEM_STATUS_USED) BOUNDARY_ERROR();
 		used_total += pMCB->page_max*pheap->page_size;
 	}
+
 	//所有空闲链表总和+已分配链表总和等于所有内存总和
 	if (used_total + free_total != pheap->page_counts * pheap->page_size) BOUNDARY_ERROR();
+
+	VMEM_LOCK();
 
 	return 1;
 
 ERROR_RET:
+	VMEM_LOCK();
+
 	VMemInfoDump(pheap);
-	kprintf("*************\r\nERROR: %s, please check the code!!!\r\n *************\r\n");
+	kprintf("*************\r\nERROR: %s, please check the code!!!\r\n*************\r\n", __FUNCTION__);
 	while (1);
 	return 0;
 }
 
-extern s32 VBoudaryCheck(struct StVMemHeap *pheap);
-extern s32 VMemInfoDump(struct StVMemHeap *pheap);
 
-/********************************************************************************************************
-* 函数：void vmem_test_by_man();
-* 描述: 手动测试, 手动设定参数，结合调试判断是否合法
-* 参数: 无
-* 返回：无
-* 注意：无
-*********************************************************************************************************/
-void vmem_test_by_man()
-{
-	/*****************************************************************************************************
-	* 设定条件： MAX_PAGE_CLASS_MAX == 3
-	* 测试buddy算法合并，分裂过程
-	******************************************************************************************************/
-	static u8 arr_heap[1024 * 10 + 10];
-	u8 *p[10];
-	StVMemHeap *pheap = 0;
-
-	/******************************************************************************************************
-	* 测试一：
-	* 测试对象： 堆分裂和合并测试
-	*******************************************************************************************************/
-	pheap = VMemBuild(&arr_heap[0], sizeof(arr_heap), 1024, 8);
-	VMemInfoDump(pheap);
-	VBoudaryCheck(pheap);
-
-	p[0] = (u8*)VMemMalloc(pheap, 1024 * 1 + 1);
-	VMemInfoDump(pheap);
-	VBoudaryCheck(pheap);
-
-	p[1] = (u8*)VMemMalloc(pheap, 1024 * 1 + 1);
-
-	VMemInfoDump(pheap);
-	VBoudaryCheck(pheap);
-
-	VMemFree(pheap, p[0]);
-
-	VMemInfoDump(pheap);
-	VBoudaryCheck(pheap);
-
-	VMemFree(pheap, p[1]);
-
-	VMemInfoDump(pheap);
-	VBoudaryCheck(pheap);
-
-	/******************************************************************************************************
-	* 测试二：
-	* 测试对象： 每次申请1页，耗尽测试,会内存泄漏
-	*******************************************************************************************************/
-	while (VMemMalloc(pheap, 1024)) {
-		VBoudaryCheck(pheap);
-		VMemInfoDump(pheap);
-	}
-	VBoudaryCheck(pheap);
-	VMemInfoDump(pheap);
-
-	/******************************************************************************************************
-	* 测试三：
-	* 测试对象：内存数据写越界测试
-	*******************************************************************************************************/
-	pheap = VMemBuild(&arr_heap[0], sizeof(arr_heap), 1024, 8);
-	u8 *p1 = VMemMalloc(pheap, 1024 * 2 - 1);
-	VMemInfoDump(pheap);
-	memset(p1, 0, 1024 * 2 - 1);//p1未越界
-	ASSERT_TEST(0==VMemTraceDestory(pheap), __FUNCTION__);	//没越界，通过
-	memset(p1, 0, 1024 * 2);	//p1虽然没越界，但是已经超过自己设定的大小，再写入一个就写入到下一页中导致破坏别的数据
-	ASSERT_TEST(-1==VMemTraceDestory(pheap), __FUNCTION__);	//虽然没越界，但是能抓到这个情况，assert
-}
-
-/********************************************************************************************************
-* 函数：void vmem_test_random();
-* 描述: 随机产生参数进行压力测试
-* 参数: 无
-* 返回：无
-* 注意：无
-*********************************************************************************************************/
-void vmem_test_random()
-{
-	/*****************************************************************************************************
-	* 设定条件： MAX_PAGE_CLASS_MAX == 11
-	* 测试buddy算法合并，分裂过程
-	******************************************************************************************************/
-	static u8 arr_heap[1024 * 1024 * 2]; //2M空间
-	u8 *p[1000];
-	s32 i = 0;
-	s32 j = 0;
-	StVMemHeap *pheap = 0;
-	s32 rand_num;
-	s32 malloc_size = 0;
-	s32 counter = 10000;
-	pheap = VMemBuild(&arr_heap[0], sizeof(arr_heap), 1024, 8);
-	VMemInfoDump(pheap);
-	while (1) {
-		//申请，释放各一次测试
-		counter = 10000;
-		while (counter--) {
-			rand_num = rand() % 1000;
-			for (i = 0; i < rand_num; i++) {
-				malloc_size = rand() % 100000;
-				p[0] = VMemMalloc(pheap, malloc_size);
-				VBoudaryCheck(pheap);
-				VMemFree(pheap, p[0]);
-				VBoudaryCheck(pheap);
-			}
-		}
-		VMemInfoDump(pheap);
-
-		/***************************************************/
-
-		//申请耗尽，或者指针耗尽
-		rand_num = rand() % 1000;
-		j = 0;
-		while (1)
-		{
-			malloc_size = rand() % 100000;
-			if (j < sizeof(p)/sizeof(p[0])) {
-				p[j] = VMemMalloc(pheap, malloc_size);
-				if (p[j] == 0) {//申请失败，跳出，但是还没耗尽
-					VBoudaryCheck(pheap);
-					break;
-				}
-				VBoudaryCheck(pheap);
-				j++;
-			}
-			else {//只是p耗尽，释放后，继续申请直到mallo返回0
-				for (j = 0; j < sizeof(p)/sizeof(p[0]); j++) {
-					VMemFree(pheap, p[j]);
-					VBoudaryCheck(pheap);
-				}
-				j = 0;
-			}
-		}
-		//打印耗尽情况
-		VMemInfoDump(pheap);
-		//重新释放全部
-		for (j = 0; j < sizeof(p) / sizeof(p[0]); j++) {
-			VMemFree(pheap, p[j]);
-			VBoudaryCheck(pheap);
-		}
-		//全部回收
-		VMemInfoDump(pheap);
-
-		/***************************************************/
-
-		//申请随机次，释放随机次测试
-		counter = 100000;
-		j = 0;
-		while (counter--) {
-			j = rand() % (sizeof(p)/sizeof(p[0]));
-			for (i = 0; i < j; i++) {
-				malloc_size = rand() % 100000;
-				p[i] = VMemMalloc(pheap, malloc_size);
-				VBoudaryCheck(pheap);
-			}
-			for (i = 0; i < j; i++) {
-				VMemFree(pheap, p[i]);
-				VBoudaryCheck(pheap);
-			}
-		}
-		VMemInfoDump(pheap);
-
-		//break;
-	}
-}
-
-
-/********************************************************************************************************
-* 函数：void vmem_test();
-* 描述:  测试
-* 参数:  无
-* 返回：无
-* 注意：无
-*********************************************************************************************************/
-void vmem_test()
-{
-#if AUTO_TEST_RANDOM
-	vmem_test_random();
-#else
-	vmem_test_by_man();
-#endif
-}
 
 
