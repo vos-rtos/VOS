@@ -8,8 +8,10 @@
 * --20200828：添加注释
 *********************************************************************************************************/
 
-#include "../vos/vtype.h"
-#include "../vos/vos.h"
+#include "vtype.h"
+#include "vos.h"
+#include "vheap.h"
+#include "vmem.h"
 
 extern unsigned int __data_rw_array_start;
 extern unsigned int __data_rw_array_end;
@@ -80,6 +82,8 @@ void __attribute__((weak,noreturn)) abort(void)
 * 返回：无
 * 注意：无
 *********************************************************************************************************/
+static u8 arr_heap[11*1024];
+static u8 arr_heap1[11*1024];
 void __attribute__ ((section(".after_vectors")))
 vos_start(void)
 {
@@ -92,6 +96,14 @@ vos_start(void)
 	VOSSysTickSet();//设置tick时钟间隔
 
 	irq_save = __vos_irq_save();
+
+	VHeapMgrInit();
+
+	//创建一个通用堆
+	VMemBuild(&arr_heap[0], sizeof(arr_heap), 1024, 8, VHEAP_ATTR_SYS, "system_heap");
+	//创建一个专用堆
+	VMemBuild(&arr_heap1[0], sizeof(arr_heap1), 1024, 8, VHEAP_ATTR_SYS, "private_heap");
+
 	VOSSemInit();
 	VOSMutexInit();
 	VOSMsgQueInit();

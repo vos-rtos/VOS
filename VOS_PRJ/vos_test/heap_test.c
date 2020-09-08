@@ -9,193 +9,50 @@
 *********************************************************************************************************/
 
 #include "vos.h"
+#include "vheap.h"
 #include "vmem.h"
 
-extern s32 VBoudaryCheck(struct StVMemHeap *pheap);
-extern s32 VMemInfoDump(struct StVMemHeap *pheap);
+static long long task_vheap_stack1[256], task_vheap_stack2[256];
 
-/********************************************************************************************************
-* 函数：void vmem_test_by_man();
-* 描述: 手动测试, 手动设定参数，结合调试判断是否合法
-* 参数: 无
-* 返回：无
-* 注意：无
-*********************************************************************************************************/
-void vmem_test_by_man()
+
+static void task_vheap1(void *param)
 {
-	/*****************************************************************************************************
-	* 设定条件： MAX_PAGE_CLASS_MAX == 3
-	* 测试buddy算法合并，分裂过程
-	******************************************************************************************************/
-	static u8 arr_heap[1024 * 10 + 10];
-	u8 *p[10];
-	struct StVMemHeap *pheap = 0;
-
-	/******************************************************************************************************
-	* 测试一：
-	* 测试对象： 堆分裂和合并测试
-	*******************************************************************************************************/
-	pheap = VMemBuild(&arr_heap[0], sizeof(arr_heap), 1024, 8, "test_heap");
-	VMemInfoDump(pheap);
-	VBoudaryCheck(pheap);
-
-	p[0] = (u8*)VMemMalloc(pheap, 1024 * 1 + 1);
-	VMemInfoDump(pheap);
-	VBoudaryCheck(pheap);
-
-	p[1] = (u8*)VMemMalloc(pheap, 1024 * 1 + 1);
-
-	VMemInfoDump(pheap);
-	VBoudaryCheck(pheap);
-
-	VMemFree(pheap, p[0]);
-
-	VMemInfoDump(pheap);
-	VBoudaryCheck(pheap);
-
-	VMemFree(pheap, p[1]);
-
-	VMemInfoDump(pheap);
-	VBoudaryCheck(pheap);
-
-	/******************************************************************************************************
-	* 测试二：
-	* 测试对象： 每次申请1页，耗尽测试,会内存泄漏
-	*******************************************************************************************************/
-	while (VMemMalloc(pheap, 1024)) {
-		VBoudaryCheck(pheap);
-		VMemInfoDump(pheap);
-	}
-	VBoudaryCheck(pheap);
-	VMemInfoDump(pheap);
-
-	/******************************************************************************************************
-	* 测试三：
-	* 测试对象：内存数据写越界测试
-	*******************************************************************************************************/
-#if VMEM_TRACE_DESTORY
-	pheap = VMemBuild(&arr_heap[0], sizeof(arr_heap), 1024, 8, "test_heap");
-	u8 *p1 = VMemMalloc(pheap, 1024 * 2 - 1);
-	VMemInfoDump(pheap);
-	memset(p1, 0, 1024 * 2 - 1);//p1未越界
-	ASSERT_TEST(0==VMemTraceDestory(pheap), __FUNCTION__);	//没越界，通过
-	memset(p1, 0, 1024 * 2);	//p1虽然没越界，但是已经超过自己设定的大小，再写入一个就写入到下一页中导致破坏别的数据
-	ASSERT_TEST(-1==VMemTraceDestory(pheap), __FUNCTION__);	//虽然没越界，但是能抓到这个情况，assert
-#endif
-}
-
-/********************************************************************************************************
-* 函数：void vmem_test_random();
-* 描述: 随机产生参数进行压力测试
-* 参数: 无
-* 返回：无
-* 注意：无
-*********************************************************************************************************/
-void vmem_test_random()
-{
-	/*****************************************************************************************************
-	* 设定条件： MAX_PAGE_CLASS_MAX == 11
-	* 测试buddy算法合并，分裂过程
-	******************************************************************************************************/
-	static u8 arr_heap[1024 * 50]; //50k空间
-	u8 *p[100];
-	s32 i = 0;
-	s32 j = 0;
-	struct StVMemHeap *pheap = 0;
-	s32 rand_num;
-	s32 malloc_size = 0;
-	s32 counter = 10000;
-	pheap = VMemBuild(&arr_heap[0], sizeof(arr_heap), 512, 8, "test_heap");
-	VMemInfoDump(pheap);
-	while (1) {
-		//申请，释放各一次测试
-		counter = 100;
-		while (counter--) {
-			rand_num = rand() % 1000;
-			for (i = 0; i < rand_num; i++) {
-				malloc_size = rand() % 10000;
-				p[0] = VMemMalloc(pheap, malloc_size);
-				VBoudaryCheck(pheap);
-				VMemFree(pheap, p[0]);
-				VBoudaryCheck(pheap);
-			}
-		}
-		VMemInfoDump(pheap);
-
-		/***************************************************/
-
-		//申请耗尽，或者指针耗尽
-		rand_num = rand() % 100;
-		j = 0;
-		while (1)
-		{
-			malloc_size = rand() % 10000;
-			if (j < sizeof(p)/sizeof(p[0])) {
-				p[j] = VMemMalloc(pheap, malloc_size);
-				if (p[j] == 0) {//申请失败，跳出，但是还没耗尽
-					VBoudaryCheck(pheap);
-					break;
-				}
-				VBoudaryCheck(pheap);
-				j++;
-			}
-			else {//只是p耗尽，释放后，继续申请直到mallo返回0
-				for (j = 0; j < sizeof(p)/sizeof(p[0]); j++) {
-					VMemFree(pheap, p[j]);
-					VBoudaryCheck(pheap);
-				}
-				j = 0;
-			}
-		}
-		//打印耗尽情况
-		VMemInfoDump(pheap);
-		//重新释放全部
-		for (j = 0; j < sizeof(p) / sizeof(p[0]); j++) {
-			VMemFree(pheap, p[j]);
-			VBoudaryCheck(pheap);
-		}
-		//全部回收
-		VMemInfoDump(pheap);
-
-		/***************************************************/
-
-		//申请随机次，释放随机次测试
-		counter = 10000;
-		j = 0;
-		while (counter--) {
-			j = rand() % (sizeof(p)/sizeof(p[0]));
-			for (i = 0; i < j; i++) {
-				malloc_size = rand() % 10000;
-				p[i] = VMemMalloc(pheap, malloc_size);
-				VBoudaryCheck(pheap);
-			}
-			for (i = 0; i < j; i++) {
-				VMemFree(pheap, p[i]);
-				VBoudaryCheck(pheap);
-			}
-		}
-		VMemInfoDump(pheap);
-		if (TestExitFlagGet()) break;
+	void *p = 0;
+	s32 size = 0;
+	while (TestExitFlagGet() == 0) {
+		size = rand() % 10000;
+		p = vmalloc(size);
+		if (p) vfree(p);
+		VOSTaskDelay(500);
+		kprintf("%s test ok!\r\n", __FUNCTION__);
 	}
 }
 
-/********************************************************************************************************
-* 函数：void vmem_test();
-* 描述:  测试
-* 参数:  无
-* 返回：无
-* 注意：无
-*********************************************************************************************************/
-s32 TestExitFlagGet();
-void vmem_test()
+static void task_vheap2(void *param)
 {
-#if AUTO_TEST_RANDOM
-	vmem_test_random();
-#else
-	vmem_test_by_man();
-#endif
+	void *p = 0;
+	s32 size = 0;
+	while (TestExitFlagGet() == 0) {
+		size = 0;
+		p = vmalloc(size);
+		if (p) vfree(p);
+		VOSTaskDelay(500);
+		kprintf("%s test ok!\r\n", __FUNCTION__);
+	}
+}
+
+void vheap_test()
+{
+	kprintf("test vheap!\r\n");
+	static u8 arr_heap[11*1024];
+	//先创建一个通用堆
+	struct StVMemHeap *pheap = 0;
+	pheap = VMemBuild(&arr_heap[0], sizeof(arr_heap), 1024, 8, VHEAP_ATTR_SYS, "test_heap");
+
+	s32 task_id;
+	task_id = VOSTaskCreate(task_vheap1, 0, task_vheap_stack1, sizeof(task_vheap_stack1), TASK_PRIO_NORMAL, "task_vheap1");
+	task_id = VOSTaskCreate(task_vheap2, 0, task_vheap_stack2, sizeof(task_vheap_stack2), TASK_PRIO_NORMAL, "task_vheap2");
 	while (TestExitFlagGet() == 0) {
 		VOSTaskDelay(1*1000);
 	}
 }
-

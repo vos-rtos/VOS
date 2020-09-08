@@ -11,5 +11,13 @@
 
 #include "vtype.h"
 
+void VHeapMgrInit();
+void VHeapMgrAdd(struct StVMemHeap *pheap);
+void VHeapMgrDel(struct StVMemHeap *pheap);
+struct StVMemHeap *VHeapFindByName(s8 *name);
+
+void *vmalloc(u32 size);
+void vfree(void *ptr);
+void *vrealloc(void *ptr, u32 size);
 
 #endif

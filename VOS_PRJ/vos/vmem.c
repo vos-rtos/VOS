@@ -10,65 +10,12 @@
 
 #include "vtype.h"
 #include "vos.h"
-#include "vmem.h"
 #include "vlist.h"
-
-//#define kprintf printf
+#include "vmem.h"
+#include "vheap.h"
 
 #define VMEM_LOCK() 	pheap->irq_save = __vos_irq_save()
 #define VMEM_UNLOCK()   __vos_irq_restore(pheap->irq_save)
-
-
-#define BOUNDARY_ERROR() \
-	do { \
-		kprintf("BOUNDARY CHECK ERROR: code(%d)\r\n", __LINE__);\
-		goto ERROR_RET;\
-	} while(0)
-
-#define VMEM_STATUS_UNKNOWN 0
-#define VMEM_STATUS_USED 	1
-#define VMEM_STATUS_FREE 	2
-
-#if AUTO_TEST_RANDOM
-	#define MAX_PAGE_CLASS_MAX 7
-#else
-	#define MAX_PAGE_CLASS_MAX 3
-#endif
-
-#define VMEM_MALLOC_PAD		0xAC //剩余空间填充字符
-
-struct StVMemCtrlBlock;
-
-typedef struct StVMemHeap {
-	s8 *name; //堆名字
-	u8 *mem_end; //内存对齐后的结束地址，用来判断释放是否越界
-	s32 irq_save;//中断状态存储
-	s32 align_bytes; //几字节对齐
-	s32 page_counts; //暂时没什么用
-	u32 page_size; //每页大小，单位字节，通常1024,2048等等
-	struct StVMemCtrlBlock *pMCB_base; //内存控制块基地址，与page_base页地址是平行数组，偏移量一致
-	u8 *page_base; //数据页基地址，与pMCB_base控制块是平行数组，偏移量一致
-	struct list_head page_class[MAX_PAGE_CLASS_MAX]; //page_class[0] 指向2^0个page的链表；page_class[1]指向2^1个page的链表；
-	struct list_head mcb_used; //把所有使用的内存连接到这个链表中，方便调试和排查问题，同时做压力测试可以使用；
-}StVMemHeap;
-
-//每个页对应着一个内存控制块，例如1个页1k字节，估计花销就是sizeof(StVMemCtrlBlock)/1k
-//这里StVMemCtrlBlock数组和所有页是平行数组，偏移值一致，这样设计是为了malloc的输入，写穿后不影响管理书籍
-//平行数组也是为了加速释放内存时，合并相邻的内存，不用遍历链表
-typedef struct StVMemCtrlBlock {
-	struct list_head list;
-#if VMEM_TRACER_ENABLE
-	u32 used_num; //当前使用了多少字节，用来调试是否越界写入，用法就是剩余空闲去添加指定数据，检查是否越界写入
-#endif
-	u16 page_max; //最大分配了多少页, 2^n
-	s8 status; //VMEM_STATUS_FREE,VMEM_STATUS_USED,VMEM_STATUS_UNKNOWN
-	//已分配内存属于的任务id,注意：如果空闲块，这里设置为0xFF(空闲任务), 但是空闲任务不申请内存（特殊处理）
-	//在中断上下文或者系统任务还没启动前，都设定VMEM_BELONG_TO_NONE, 代码不在任务上下文使用
-	u8 task_id;
-}StVMemCtrlBlock;
-
-#define ALIGN_UP(mem, align) 	((u32)(mem) & ~((align)-1))
-#define ALIGN_DOWN(mem, align) 	(((u32)(mem)+(align)-1) & ~((align)-1))
 
 /********************************************************************************************************
 * 函数：u8 GetCurTaskId();
@@ -142,18 +89,20 @@ s32 GetPageClassIndex(s32 size, s32 page_size)
 }
 
 /********************************************************************************************************
-* 函数：StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size, s32 align_bytes);
+* 函数：struct StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size,
+* 											s32 align_bytes, s32 heap_attr, s8 *name);
 * 描述:  堆创建
 * 参数:
 * [1] mem: 用户提供用来划分堆的内存
 * [2] len: 用户提供内存的大小，单位：字节
 * [3] page_size: 页尺寸，1024,2048等
 * [4] align_bytes: 字节对齐，例如8，就是8字节对齐
-* [5] name: 堆名字
+* [5] heap_attr: 分专用堆和通用堆，正常malloc就是通用堆申请
+* [6] name: 堆名字
 * 返回：堆管理对象指针
 * 注意：如果提供的内存超出了page_class[n]最大空间，就page_class[n]最大值里链表里链接多个相邻的数据块
 *********************************************************************************************************/
-struct StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size, s32 align_bytes, s8 *name)
+struct StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size, s32 align_bytes, s32 heap_attr, s8 *name)
 {
 	s32 i;
 	s32 index;
@@ -189,7 +138,7 @@ struct StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size, s32 align_bytes, s
 	pheap->page_size = page_size;
 	pheap->align_bytes = align_bytes;
 	pheap->name = name;
-
+	pheap->heap_attr = heap_attr;
 	pheap->page_base = (u8*)ALIGN_DOWN(&pheap->pMCB_base[pheap->page_counts], align_bytes); //第二次才是真正的地址，对齐后紧紧挨着pMCB_base末尾
 	pheap->mem_end = (u8*)ALIGN_DOWN(&pheap->page_base[pheap->page_counts*pheap->page_size], align_bytes);//第二次才是真正的地址，紧紧挨着page_base尾巴
 
@@ -228,6 +177,10 @@ struct StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size, s32 align_bytes, s
 		VMEM_UNLOCK();
 
 		offset_size += temp;
+	}
+	//添加到堆管理链表
+	if (pheap) {
+		VHeapMgrAdd(pheap);
 	}
 
 	return pheap;
