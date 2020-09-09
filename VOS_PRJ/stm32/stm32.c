@@ -101,5 +101,94 @@ void SVC_Handler_C(u32 *svc_args, s32 is_psp)
 }
 
 
+void __attribute__ ((section(".after_vectors"),noreturn))
+Reset_Handler (void)
+{
+	vos_start ();
+}
+
+void __attribute__ ((section(".after_vectors"),weak))
+HardFault_Handler (void)
+{
+  asm volatile(
+		  "b .\n"
+		  "bx lr\n"
+      " tst lr,#4       \n"
+      " ite eq          \n"
+      " mrseq r0,msp    \n"
+      " mrsne r0,psp    \n"
+      " mov r1,lr       \n"
+      " ldr r2,=vexcept_do \n"
+      " bx r2"
+
+      : /* Outputs */
+      : /* Inputs */
+      : /* Clobbers */
+  );
+}
+
+void __attribute__ ((section(".after_vectors"),weak))
+MemManage_Handler (void)
+{
+  while (1)
+    {
+    }
+}
+
+void __attribute__ ((section(".after_vectors"),weak,naked))
+BusFault_Handler (void)
+{
+  asm volatile(
+      " tst lr,#4       \n"
+      " ite eq          \n"
+      " mrseq r0,msp    \n"
+      " mrsne r0,psp    \n"
+      " mov r1,lr       \n"
+      " ldr r2,=vexcept_do \n"
+      " bx r2"
+
+      : /* Outputs */
+      : /* Inputs */
+      : /* Clobbers */
+  );
+}
+
+void __attribute__ ((section(".after_vectors"),weak,naked))
+UsageFault_Handler (void)
+{
+  asm volatile(
+      " tst lr,#4       \n"
+      " ite eq          \n"
+      " mrseq r0,msp    \n"
+      " mrsne r0,psp    \n"
+      " mov r1,lr       \n"
+      " ldr r2,=vexcept_do \n"
+      " bx r2"
+
+      : /* Outputs */
+      : /* Inputs */
+      : /* Clobbers */
+  );
+}
+void __attribute__ ((section(".after_vectors"),weak))
+DebugMon_Handler (void)
+{
+
+  while (1)
+    {
+    }
+}
+
+void __attribute__ ((section(".after_vectors"),weak))
+NMI_Handler (void)
+{
+  while (1)
+    {
+    }
+}
+
+
+
+
 
 
