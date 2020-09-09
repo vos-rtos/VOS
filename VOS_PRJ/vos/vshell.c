@@ -208,7 +208,7 @@ s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode);
 s32 GetTaskIdByName(u8 *name);
 s32 test_exit_flag = 0;
 
-
+#if VOS_SHELL_TEST
 /********************************************************************************************************
 * 函数：s32 TestExitFlagGet();
 * 描述: 测试标志获取
@@ -435,7 +435,7 @@ void VSHELL_FUN(vheap_t)(s8 **parr, s32 cnts)
 	TestExitFlagSet(0);
 	vheap_test();
 }
-
+#endif
 /********************************************************************************************************
 * 函数：void VSHELL_FUN(task)(s8 **parr, s32 cnts);
 * 描述: task 命令

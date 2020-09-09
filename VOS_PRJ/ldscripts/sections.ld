@@ -62,13 +62,13 @@ PROVIDE ( _Main_Stack_Limit = __Main_Stack_Limit ) ;
  */
 _Minimum_Stack_Size = 256 ;
 
-/*
- * Default heap definitions.
- * The heap start immediately after the last statically allocated 
- * .sbss/.noinit section, and extends up to the main stack limit.
- */
+/* RAM: 系统堆1，就是正常的vmalloc使用的堆  */
 PROVIDE ( _Heap_Begin = _end_noinit ) ;
 PROVIDE ( _Heap_Limit = __stack - __Main_Stack_Size ) ;
+
+/* CCMRAM: 系统堆2，就是正常的vmalloc使用的堆  */
+PROVIDE ( _Heap_ccmram_Begin = _end_ccmram_noinit ) ;
+PROVIDE ( _Heap_ccmram_Limit = ORIGIN(CCMRAM)+LENGTH(CCMRAM)) ;
 
 /* 
  * The entry point is informative, for debuggers and simulators,
@@ -362,7 +362,8 @@ SECTIONS
 
     .noinit_CCMRAM (NOLOAD) : ALIGN(4)
     {
-        *(.noinit.CCMRAM .noinit.CCMRAM.*)         
+        *(.noinit.CCMRAM .noinit.CCMRAM.*)
+        _end_ccmram_noinit = .;         
     } > CCMRAM
     
     .noinit (NOLOAD) : ALIGN(4)

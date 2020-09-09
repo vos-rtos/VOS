@@ -16,6 +16,8 @@
 
 #define TASK_LEVEL  0 //0:任务工作在特权级+PSP,1：任务工作在线程级+PSP
 
+#define VOS_SHELL_TEST 1 //是否打开测试命令
+
 #define MAX_VOS_SEMAPHONRE_NUM  10
 #define MAX_VOS_MUTEX_NUM   10
 #define MAX_VOS_MSG_QUE_NUM   10
@@ -32,6 +34,7 @@
 //
 //#define TIMEOUT_INFINITY_U64 (0xFFFFFFFFFFFFFFFF)
 //#define TIMEOUT_INFINITY_S64 (0x7FFFFFFFFFFFFFFF)
+
 
 
 #define MAX_INFINITY_U32 (0xFFFFFFFFU)

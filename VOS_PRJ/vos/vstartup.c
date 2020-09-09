@@ -18,6 +18,13 @@ extern unsigned int __data_rw_array_end;
 extern unsigned int __bss_zero_array_start;
 extern unsigned int __bss_zero_array_end;
 
+//RAM系统堆1的分配空间
+extern unsigned int _Heap_Begin;
+extern unsigned int _Heap_Limit;
+//CCRAM系统堆2
+extern unsigned int _Heap_ccmram_Begin;
+extern unsigned int _Heap_ccmram_Limit;
+
 extern void misc_init ();
 extern void main(void *param);
 long long main_stack[1024];
@@ -82,8 +89,6 @@ void __attribute__((weak,noreturn)) abort(void)
 * 返回：无
 * 注意：无
 *********************************************************************************************************/
-static u8 arr_heap[11*1024];
-static u8 arr_heap1[11*1024];
 void __attribute__ ((section(".after_vectors")))
 vos_start(void)
 {
@@ -99,10 +104,12 @@ vos_start(void)
 
 	VHeapMgrInit();
 
-	//创建一个通用堆
-	VMemBuild(&arr_heap[0], sizeof(arr_heap), 1024, 8, VHEAP_ATTR_SYS, "system_heap");
-	//创建一个专用堆
-	VMemBuild(&arr_heap1[0], sizeof(arr_heap1), 1024, 8, VHEAP_ATTR_SYS, "private_heap");
+	//创建RAM系统堆
+	struct StVMemHeap *pheap1 = VMemBuild((u8*)&_Heap_Begin, (u32)&_Heap_Limit-(u32)&_Heap_Begin,
+			1024, 8, VHEAP_ATTR_SYS, "vos_sys_ram_heap");
+	//创建CCRAM系统堆
+	struct StVMemHeap *pheap2 = VMemBuild((u8*)&_Heap_ccmram_Begin, (u32)&_Heap_ccmram_Limit-(u32)&_Heap_ccmram_Begin,
+			1024, 8, VHEAP_ATTR_SYS, "vos_sys_ccram_heap");
 
 	VOSSemInit();
 	VOSMutexInit();
