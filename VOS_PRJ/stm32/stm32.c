@@ -1,6 +1,6 @@
 /********************************************************************************************************
 * 版    权: Copyright (c) 2020, VOS Open source. All rights reserved.
-* 文    件: stm32.c
+* 文    件: tm32.c
 * 作    者: 156439848@qq.com; vincent_cws2008@gmail.com
 * 版    本: VOS V1.0
 * 历    史：
@@ -14,6 +14,8 @@
 
 void SystemInit(void);
 void HAL_IncTick(void);
+void VOSExceptHandler(u32 *sp, s32 is_psp);
+
 
 
 /********************************************************************************************************
@@ -81,7 +83,7 @@ void SVC_Handler_C(u32 *svc_args, s32 is_psp)
 	irq_save = __local_irq_save();
 	svc_number = ((char *)svc_args[6+offset])[-2]; //+1是汇编里把lr也push一个，所以这里要加1
 	switch(svc_number) {
-	case VOS_SVC_NUM_SYSCALL: //系统调用
+	case VOS_SVC_NUM_SYSCALL://系统调用
 //		psa = (StVosSysCallParam *)svc_args[0+offset];
 //		VOSSysCall(psa);
 		break;
@@ -100,91 +102,160 @@ void SVC_Handler_C(u32 *svc_args, s32 is_psp)
 	VOSIntExit ();
 }
 
-
+/********************************************************************************************************
+* 函数：void Reset_Handler ();
+* 描述:  复位后执行的第一行代码
+* 参数:  无
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
 void __attribute__ ((section(".after_vectors"),noreturn))
-Reset_Handler (void)
+Reset_Handler ()
 {
 	vos_start ();
 }
 
+/********************************************************************************************************
+* 函数：void HardFault_Handler ();
+* 描述:  硬件错误异常复位，多次异常也会上升到硬件异常复位
+* 参数:  无
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
 void __attribute__ ((section(".after_vectors"),weak))
-HardFault_Handler (void)
+HardFault_Handler ()
 {
-  asm volatile(
-		  "b .\n"
-		  "bx lr\n"
-      " tst lr,#4       \n"
-      " ite eq          \n"
-      " mrseq r0,msp    \n"
-      " mrsne r0,psp    \n"
-      " mov r1,lr       \n"
-      " ldr r2,=vexcept_do \n"
-      " bx r2"
-
-      : /* Outputs */
-      : /* Inputs */
-      : /* Clobbers */
-  );
+	asm volatile(
+		  " push 	{lr}    \n" //保存lr到msp栈
+		  " tst 	lr, #4  \n" //判断进入异常前是哪个栈
+		  " ite 	eq      \n"
+		  " mrseq 	r0, msp \n" //r0参数是异常进入前使用的栈
+		  " mrsne 	r0, psp \n" //r0参数是异常进入前使用的栈
+		  " mrs 	r1, msp \n"
+		  " sub 	r1, r0  \n" //r1参数存储的是哪个栈，1：psp, 0: msp
+		  " bl 		VOSExceptHandler		\n"
+		  " b		. 		\n" //暂停在这里
+		  " pop		{pc}	\n" //异常返回
+	);
 }
 
+/********************************************************************************************************
+* 函数：void MemManage_Handler ();
+* 描述:  内存异常处理
+* 参数:  无
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
 void __attribute__ ((section(".after_vectors"),weak))
-MemManage_Handler (void)
+MemManage_Handler ()
 {
-  while (1)
-    {
-    }
+	asm volatile(
+		  " push 	{lr}    \n" //保存lr到msp栈
+		  " tst 	lr, #4  \n" //判断进入异常前是哪个栈
+		  " ite 	eq      \n"
+		  " mrseq 	r0, msp \n" //r0参数是异常进入前使用的栈
+		  " mrsne 	r0, psp \n" //r0参数是异常进入前使用的栈
+		  " mrs 	r1, msp \n"
+		  " sub 	r1, r0  \n" //r1参数存储的是哪个栈，1：psp, 0: msp
+		  " bl 		VOSExceptHandler		\n"
+		  " b		. 		\n" //暂停在这里
+		  " pop		{pc}	\n" //异常返回
+	);
 }
 
+/********************************************************************************************************
+* 函数：void BusFault_Handler ();
+* 描述:  总线异常异常处理
+* 参数:  无
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
 void __attribute__ ((section(".after_vectors"),weak,naked))
-BusFault_Handler (void)
+BusFault_Handler ()
 {
-  asm volatile(
-      " tst lr,#4       \n"
-      " ite eq          \n"
-      " mrseq r0,msp    \n"
-      " mrsne r0,psp    \n"
-      " mov r1,lr       \n"
-      " ldr r2,=vexcept_do \n"
-      " bx r2"
-
-      : /* Outputs */
-      : /* Inputs */
-      : /* Clobbers */
-  );
+	asm volatile(
+		  " push 	{lr}    \n" //保存lr到msp栈
+		  " tst 	lr, #4  \n" //判断进入异常前是哪个栈
+		  " ite 	eq      \n"
+		  " mrseq 	r0, msp \n" //r0参数是异常进入前使用的栈
+		  " mrsne 	r0, psp \n" //r0参数是异常进入前使用的栈
+		  " mrs 	r1, msp \n"
+		  " sub 	r1, r0  \n" //r1参数存储的是哪个栈，1：psp, 0: msp
+		  " bl 		VOSExceptHandler		\n"
+		  " b		. 		\n" //暂停在这里
+		  " pop		{pc}	\n" //异常返回
+	);
 }
-
+/********************************************************************************************************
+* 函数：void UsageFault_Handler ();
+* 描述:  用法异常异常处理
+* 参数:  无
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
 void __attribute__ ((section(".after_vectors"),weak,naked))
-UsageFault_Handler (void)
+UsageFault_Handler ()
 {
-  asm volatile(
-      " tst lr,#4       \n"
-      " ite eq          \n"
-      " mrseq r0,msp    \n"
-      " mrsne r0,psp    \n"
-      " mov r1,lr       \n"
-      " ldr r2,=vexcept_do \n"
-      " bx r2"
-
-      : /* Outputs */
-      : /* Inputs */
-      : /* Clobbers */
-  );
-}
-void __attribute__ ((section(".after_vectors"),weak))
-DebugMon_Handler (void)
-{
-
-  while (1)
-    {
-    }
+	asm volatile(
+		  " push 	{lr}    \n" //保存lr到msp栈
+		  " tst 	lr, #4  \n" //判断进入异常前是哪个栈
+		  " ite 	eq      \n"
+		  " mrseq 	r0, msp \n" //r0参数是异常进入前使用的栈
+		  " mrsne 	r0, psp \n" //r0参数是异常进入前使用的栈
+		  " mrs 	r1, msp \n"
+		  " sub 	r1, r0  \n" //r1参数存储的是哪个栈，1：psp, 0: msp
+		  " bl 		VOSExceptHandler		\n"
+		  " b		. 		\n" //暂停在这里
+		  " pop		{pc}	\n" //异常返回
+	);
 }
 
+/********************************************************************************************************
+* 函数：void DebugMon_Handler ();
+* 描述:  调试监控异常异常处理
+* 参数:  无
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
 void __attribute__ ((section(".after_vectors"),weak))
-NMI_Handler (void)
+DebugMon_Handler ()
 {
-  while (1)
-    {
-    }
+	asm volatile(
+		  " push 	{lr}    \n" //保存lr到msp栈
+		  " tst 	lr, #4  \n" //判断进入异常前是哪个栈
+		  " ite 	eq      \n"
+		  " mrseq 	r0, msp \n" //r0参数是异常进入前使用的栈
+		  " mrsne 	r0, psp \n" //r0参数是异常进入前使用的栈
+		  " mrs 	r1, msp \n"
+		  " sub 	r1, r0  \n" //r1参数存储的是哪个栈，1：psp, 0: msp
+		  " bl 		VOSExceptHandler		\n"
+		  " b		. 		\n" //暂停在这里
+		  " pop		{pc}	\n" //异常返回
+	);
+}
+
+/********************************************************************************************************
+* 函数：void NMI_Handler ();
+* 描述:  不可屏蔽中断处理
+* 参数:  无
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
+void __attribute__ ((section(".after_vectors"),weak))
+NMI_Handler ()
+{
+	asm volatile(
+		  " push 	{lr}    \n" //保存lr到msp栈
+		  " tst 	lr, #4  \n" //判断进入异常前是哪个栈
+		  " ite 	eq      \n"
+		  " mrseq 	r0, msp \n" //r0参数是异常进入前使用的栈
+		  " mrsne 	r0, psp \n" //r0参数是异常进入前使用的栈
+		  " mrs 	r1, msp \n"
+		  " sub 	r1, r0  \n" //r1参数存储的是哪个栈，1：psp, 0: msp
+		  " bl 		VOSExceptHandler		\n"
+		  " b		. 		\n" //暂停在这里
+		  " pop		{pc}	\n" //异常返回
+	);
 }
 
 
