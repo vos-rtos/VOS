@@ -143,7 +143,8 @@ s32 VOSSemWait(StVOSSemaphore *pSem, u32 timeout_ms)
 	irq_save = __vos_irq_save();
 
 	if (pSem->left > 0) {
-		pSem->left--;	}
+		pSem->left--;
+	}
 	else if (VOSIntNesting==0) {
 		//把当前任务切换到阻塞队列
 		pRunningTask->status = VOS_STA_BLOCK; //添加到阻塞队列

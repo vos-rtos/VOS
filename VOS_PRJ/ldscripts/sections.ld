@@ -222,42 +222,7 @@ SECTIONS
     {
         . = . + _Minimum_Stack_Size ;
     } >RAM
-    
-    .b1text : ALIGN(4)
-    {
-        *(.b1text)                   /* remaining code */
-        *(.b1rodata)                 /* read-only data (constants) */
-        *(.b1rodata.*)
-    } >FLASHB1
-    
-    .eb0text : ALIGN(4)
-    {
-        *(.eb0text)
-        *(.eb0rodata)
-        *(.eb0rodata.*)
-    } >EXTMEMB0
-    
-
-    .eb1text : ALIGN(4)
-    {
-        *(.eb1text)                   /* remaining code */
-        *(.eb1rodata)                 /* read-only data (constants) */
-        *(.eb1rodata.*)
-    } >EXTMEMB1
-    
-    .eb2text : ALIGN(4)
-    {
-        *(.eb2text)                   /* remaining code */
-        *(.eb2rodata)                 /* read-only data (constants) */
-        *(.eb2rodata.*)
-    } >EXTMEMB2
-    
-    .eb3text : ALIGN(4)
-    {
-        *(.eb3text)                   /* remaining code */
-        *(.eb3rodata)                 /* read-only data (constants) */
-        *(.eb3rodata.*)
-    } >EXTMEMB3
+   
    
     /* Stabs debugging sections.  */
     .stab          0 : { *(.stab) }

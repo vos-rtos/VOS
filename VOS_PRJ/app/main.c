@@ -12,6 +12,7 @@
 #include "../usart/usart.h"
 #include "vtype.h"
 #include "vos.h"
+
 int kprintf(char* format, ...);
 void main(void *param)
 {
