@@ -63,7 +63,7 @@ typedef struct StVMemHeapInfo {
 #elif AUTO_TEST_BY_MAN
 	#define MAX_PAGE_CLASS_MAX 3
 #else
-	#define MAX_PAGE_CLASS_MAX 9
+	#define MAX_PAGE_CLASS_MAX 11
 #endif
 
 #define VMEM_MALLOC_PAD		0xAC //Ê£Óà¿Õ¼äÌî³ä×Ö·û

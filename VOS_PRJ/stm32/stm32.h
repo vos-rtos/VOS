@@ -13,6 +13,8 @@ void PendSV_Handler(void);
 void SysTick_Handler(void);
 void Reset_Handler (void);
 
+void SDIO_IRQHandler(void);
+
 void __attribute__((weak))
 Default_Handler(void);
 
@@ -114,8 +116,8 @@ void __attribute__ ((weak, alias ("Default_Handler")))
 DMA1_Stream7_IRQHandler(void);
 void __attribute__ ((weak, alias ("Default_Handler")))
 FSMC_IRQHandler(void);
-void __attribute__ ((weak, alias ("Default_Handler")))
-SDIO_IRQHandler(void);
+//void __attribute__ ((weak, alias ("Default_Handler")))
+//SDIO_IRQHandler(void);
 void __attribute__ ((weak, alias ("Default_Handler")))
 TIM5_IRQHandler(void);
 void __attribute__ ((weak, alias ("Default_Handler")))

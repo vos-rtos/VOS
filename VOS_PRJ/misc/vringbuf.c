@@ -20,7 +20,7 @@
 *********************************************************************************************************/
 StVOSRingBuf *VOSRingBufCreate(u8 *buf, s32 len)
 {
-	StVOSRingBuf *pnew = (StVOSRingBuf *)malloc(sizeof(StVOSRingBuf));
+	StVOSRingBuf *pnew = (StVOSRingBuf *)vmalloc(sizeof(StVOSRingBuf));
 	if (pnew) {
 		pnew->buf = buf;
 		pnew->max = len;
@@ -42,7 +42,7 @@ StVOSRingBuf *VOSRingBufCreate(u8 *buf, s32 len)
 void VOSRingBufDelete(StVOSRingBuf *pnew)
 {
 	if (pnew) {
-		free(pnew);
+		vfree(pnew);
 		pnew = 0;
 	}
 }

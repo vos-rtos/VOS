@@ -9,9 +9,11 @@
 *********************************************************************************************************/
 
 #include "vtype.h"
+#include "ex_sram.h"
 #include "vos.h"
 #include "vheap.h"
 #include "vmem.h"
+
 
 extern unsigned int __data_rw_array_start;
 extern unsigned int __data_rw_array_end;
@@ -110,6 +112,11 @@ vos_start(void)
 	//创建CCRAM系统堆
 	struct StVMemHeap *pheap2 = VMemBuild((u8*)&_Heap_ccmram_Begin, (u32)&_Heap_ccmram_Limit-(u32)&_Heap_ccmram_Begin,
 			1024, 8, VHEAP_ATTR_SYS, "vos_sys_ccram_heap");
+
+	ExSRamInit();
+	struct StVMemHeap *pheap3 = VMemBuild(ExSRamGetBaseAddr(), ExSRamGetTotalSize(),
+			1024, 8, VHEAP_ATTR_SYS, "vos_sys_exsram_heap");
+
 
 	VOSSemInit();
 	VOSMutexInit();
