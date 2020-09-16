@@ -10,14 +10,6 @@
 #include "diskio.h"		/* FatFs lower layer API */
 #include "sdio_sdcard.h"
 #include "w25qxx.h"
-//#include "malloc.h"
-//////////////////////////////////////////////////////////////////////////////////	 
- 
-//FATFS底层(diskio) 驱动代码	   
-//STM32F4工程-库函数版本
-//淘宝店铺：http://mcudev.taobao.com								  
-////////////////////////////////////////////////////////////////////////////////// 	 
-
 
 #define SD_CARD	 0  //SD卡,卷标为0
 #define EX_FLASH 1	//外部flash,卷标为1

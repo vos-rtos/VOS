@@ -1,16 +1,8 @@
 #ifndef __SDIO_SDCARD_H
 #define __SDIO_SDCARD_H																			   
-#include "stm32f4xx.h" 													   
-//////////////////////////////////////////////////////////////////////////////////	 
- 
-//SDIO 驱动代码	   
-//STM32F4工程-库函数版本
-//淘宝店铺：http://mcudev.taobao.com		
-//********************************************************************************
- 
-////////////////////////////////////////////////////////////////////////////////// 	 
+#include "stm32f4xx.h"
 
-
+ 
 //SDIO相关标志位,拷贝自:stm32f4xx_sdio.h
 #define SDIO_FLAG_CCRCFAIL                  ((uint32_t)0x00000001)
 #define SDIO_FLAG_DCRCFAIL                  ((uint32_t)0x00000002)
@@ -338,7 +330,8 @@ extern SD_CardInfo SDCardInfo;//SD卡信息
 //相关函数定义
 SD_Error SD_Init(void);
 void SDIO_Clock_Set(u8 clkdiv);
-
+void SDIO_Send_Cmd(u8 cmdindex,u8 waitrsp,u32 arg);
+void SDIO_Send_Data_Cfg(u32 datatimeout,u32 datalen,u8 blksize,u8 dir);
 SD_Error SD_PowerON(void);    
 SD_Error SD_PowerOFF(void);
 SD_Error SD_InitializeCards(void);
@@ -347,18 +340,23 @@ SD_Error SD_EnableWideBusOperation(u32 wmode);
 SD_Error SD_SetDeviceMode(u32 mode);
 SD_Error SD_SelectDeselect(u32 addr); 
 SD_Error SD_SendStatus(uint32_t *pcardstatus);
-SDCardState SD_GetState(void);
-SD_Error SD_ReadBlock(u8 *buf,long long addr,u16 blksize);  
-SD_Error SD_ReadMultiBlocks(u8 *buf,long long  addr,u16 blksize,u32 nblks);  
-SD_Error SD_WriteBlock(u8 *buf,long long addr,  u16 blksize);	
-SD_Error SD_WriteMultiBlocks(u8 *buf,long long addr,u16 blksize,u32 nblks);
+SDCardState SD_GetState(void);  
+SD_Error SD_ReadBlocks(u8 *buf,long long  addr,u16 blksize,u32 nblks);   
+SD_Error SD_WriteBlocks(u8 *buf,long long addr,u16 blksize,u32 nblks);
 SD_Error SD_ProcessIRQSrc(void);
+SD_Error CmdError(void);  
+SD_Error CmdResp7Error(void);
+SD_Error CmdResp1Error(u8 cmd);
+SD_Error CmdResp3Error(void);
+SD_Error CmdResp2Error(void);
+SD_Error CmdResp6Error(u8 cmd,u16*prca);  
+SD_Error SDEnWideBus(u8 enx);	  
+SD_Error IsCardProgramming(u8 *pstatus); 
+SD_Error FindSCR(u16 rca,u32 *pscr); 
+void SD_DMA_Config(u32*mbuf,u32 bufsize,u8 dir); 
 
-void SD_DMA_Config(u32*mbuf,u32 bufsize,u32 dir);
-//void SD_DMA_Config(u32*mbuf,u32 bufsize,u8 dir); 
-
-u8 SD_ReadDisk(u8*buf,u32 sector,u8 cnt); 	//读SD卡,fatfs/usb调用
-u8 SD_WriteDisk(u8*buf,u32 sector,u8 cnt);	//写SD卡,fatfs/usb调用
+u8 SD_ReadDisk(u8*buf,u32 sector,u32 cnt); 	//读SD卡,fatfs/usb调用
+u8 SD_WriteDisk(u8*buf,u32 sector,u32 cnt);	//写SD卡,fatfs/usb调用
 
 
 #endif 
