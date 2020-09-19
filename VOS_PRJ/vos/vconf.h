@@ -62,7 +62,7 @@
 
 #define MAX_VOS_TIEMR_NUM 10
 #define VOS_TASK_TIMER_PRIO  10
-#define VOS_TASK_VSHELL_PRIO  10
+#define VOS_TASK_VSHELL_PRIO  1
 #define MAX_TICKS_TIMESLICE 10
 
 #endif

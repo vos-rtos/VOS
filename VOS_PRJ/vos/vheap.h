@@ -19,5 +19,6 @@ struct StVMemHeap *VHeapFindByName(s8 *name);
 void *vmalloc(u32 size);
 void vfree(void *ptr);
 void *vrealloc(void *ptr, u32 size);
+void *vcalloc(u32 size);
 
 #endif

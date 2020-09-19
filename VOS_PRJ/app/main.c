@@ -16,9 +16,12 @@
 int kprintf(char* format, ...);
 #define printf kprintf
 
+void lwip_test();
+
 void main(void *param)
 {
 	s32 res;
+	lwip_test();
 //	kprintf("total: %d, free: %d!\r\n", total, free);
 	dma_printf("hello world!\r\n");
 	kprintf("main function!\r\n");

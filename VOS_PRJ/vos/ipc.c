@@ -785,6 +785,7 @@ s32 VOSMsgQuePut(StVOSMsgQueue *pMQ, void *pmsg, s32 len)
 	}
 	return ret;
 }
+
 /********************************************************************************************************
 * 函数：s32 VOSMsgQueGet(StVOSMsgQueue *pMQ, void *pmsg, s32 len, u32 timeout_ms);
 * 描述: 从消息队列里获取一则消息，
