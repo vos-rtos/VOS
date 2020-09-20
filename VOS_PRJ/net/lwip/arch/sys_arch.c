@@ -111,13 +111,15 @@ void sys_mbox_set_invalid(sys_mbox_t *mbox)
 
 err_t sys_sem_new(sys_sem_t* sem, u8_t count)
 {
-	*sem = VOSSemCreate(count, count, "sem_lwip");
+	kprintf("sys_sem_new\r\n");
+	*sem = VOSSemCreate(0xFFFF, count, "sem_lwip");
 	if (*sem == NULL) return ERR_MEM;
 	return ERR_OK;
 }
 
 u32_t sys_arch_sem_wait(sys_sem_t *sem, u32_t timeout)
 {
+	kprintf("sys_arch_sem_wait\r\n");
 	struct StMsgItem item;
 	u32 time_mark = VOSGetTimeMs();
 	if (VERROR_NO_ERROR != VOSSemWait(*sem, timeout)){
@@ -128,23 +130,27 @@ u32_t sys_arch_sem_wait(sys_sem_t *sem, u32_t timeout)
 
 void sys_sem_signal(sys_sem_t *sem)
 {
+	kprintf("sys_sem_signal\r\n");
 	VOSSemRelease(*sem);
 }
 
 void sys_sem_free(sys_sem_t *sem)
 {
+	kprintf("sys_sem_free\r\n");
 	VOSSemDelete(*sem);
 	*sem = (void*)0;
 }
 
 int sys_sem_valid(sys_sem_t *sem)
 {
+	kprintf("sys_sem_valid\r\n");
 	return *sem != 0;
 } 
 
 void sys_sem_set_invalid(sys_sem_t *sem)
 {
-	*sem = NULL;
+	kprintf("sys_sem_set_invalid\r\n");
+	//*sem = NULL;
 } 
 
 void sys_init()
@@ -157,8 +163,8 @@ sys_thread_t sys_thread_new(const char *name, lwip_thread_fn thread, void *arg, 
 	u8 *pstack = 0;
 	if(strcmp(name,TCPIP_THREAD_NAME)==0)//创建TCP IP内核任务
 	{
-		pstack = (u8*)vmalloc(stacksize);
-		task_id = VOSTaskCreate(thread, arg, pstack, stacksize, prio, name);
+		pstack = (u8*)vmalloc(stacksize*4);
+		task_id = VOSTaskCreate(thread, arg, pstack, stacksize*4, prio, name);
 	} 
 	return task_id;
 } 

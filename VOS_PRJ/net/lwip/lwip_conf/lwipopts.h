@@ -23,9 +23,11 @@ extern void *vcalloc(unsigned int size);
 
 #define LWIP_NETIF_HOSTNAME 	1
 
+#define LWIP_AUTOIP 			1
+
 /*----------------Thread Priority---------------------------------------------*/
 #ifndef TCPIP_THREAD_PRIO
-#define TCPIP_THREAD_PRIO		5	//定义内核任务的优先级为5
+#define TCPIP_THREAD_PRIO		11	//定义内核任务的优先级为5
 #endif
 #undef  DEFAULT_THREAD_PRIO
 #define DEFAULT_THREAD_PRIO		2
@@ -137,8 +139,8 @@ extern void *vcalloc(unsigned int size);
 
 
 /* ---------- Statistics options ---------- */
-#define LWIP_STATS 0
-#define LWIP_PROVIDE_ERRNO 1
+#define LWIP_STATS 				1
+#define LWIP_PROVIDE_ERRNO 		1
 
 
 /*
@@ -209,7 +211,7 @@ extern void *vcalloc(unsigned int size);
    ---------------------------------
 */
 
-#define TCPIP_THREAD_STACKSIZE          1500	//内核任务堆栈大小
+#define TCPIP_THREAD_STACKSIZE          2048//1500	//内核任务堆栈大小
 #define DEFAULT_UDP_RECVMBOX_SIZE       1000
 #define DEFAULT_THREAD_STACKSIZE        512
 
@@ -218,9 +220,9 @@ extern void *vcalloc(unsigned int size);
    ---------- Lwip调试选项----------
    ----------------------------------------
 */
-#define LWIP_DEBUG                     1 //开启DEBUG选项
+#define LWIP_DEBUG                     0
 
-#define ICMP_DEBUG                      LWIP_DBG_OFF //开启/关闭ICMPdebug
+#define ICMP_DEBUG                      LWIP_DBG_OFF
 
 #endif /* __LWIPOPTS_H__ */
 

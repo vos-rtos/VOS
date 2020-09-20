@@ -50,9 +50,9 @@ extern int tcpip_tcp_timer_active;      //timers.c文件
 
 //lwip DHCP任务
 //设置任务优先级
-#define LWIP_DHCP_TASK_PRIO       		9 
+#define LWIP_DHCP_TASK_PRIO       		150
 //设置任务堆栈大小
-#define LWIP_DHCP_STK_SIZE  		    128
+#define LWIP_DHCP_STK_SIZE  		    2048
 //任务堆栈，采用内存管理的方式控制申请	
 //OS_STK * LWIP_DHCP_TASK_STK;
 //任务函数
@@ -202,7 +202,6 @@ void lwip_dhcp_task(void *pdata)
 	u32 ip=0,netmask=0,gw=0;
 	dhcp_start(&lwip_netif);//开启DHCP 
 	lwipdev.dhcpstatus=0;	//正在DHCP
-	printf("正在查找DHCP服务器,请稍等...........\r\n");   
 	lwipdev.dhcpstatus=1;	//正在DHCP获取中
 	while(1)
 	{ 
