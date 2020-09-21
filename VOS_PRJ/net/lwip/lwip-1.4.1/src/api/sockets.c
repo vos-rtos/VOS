@@ -52,6 +52,9 @@
 #include "lwip/udp.h"
 #include "lwip/tcpip.h"
 #include "lwip/pbuf.h"
+
+#include "lwip/err.h"
+
 #if LWIP_CHECKSUM_ON_COPY
 #include "lwip/inet_chksum.h"
 #endif
@@ -176,6 +179,20 @@ static void event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len
 static void lwip_getsockopt_internal(void *arg);
 static void lwip_setsockopt_internal(void *arg);
 
+static struct lwip_sock *get_socket(int s);
+int get_socket_err(int s)
+{
+	int err = 1;
+	struct lwip_sock *psocket = get_socket(s);
+	if (psocket) {
+		err = (psocket->err);
+	}
+	else {
+		err = errno;
+	}
+	return err;
+}
+
 /**
  * Initialize this module. This function has to be called before any other
  * functions in this module!
@@ -212,6 +229,8 @@ get_socket(int s)
 
   return sock;
 }
+
+
 
 /**
  * Same as get_socket but doesn't set errno

@@ -25,12 +25,24 @@ extern void *vcalloc(unsigned int size);
 
 #define LWIP_AUTOIP 			1
 
+#define ERRNO	1
+
+#define LWIP_PROVIDE_ERRNO 		1
+
 /*----------------Thread Priority---------------------------------------------*/
 #ifndef TCPIP_THREAD_PRIO
 #define TCPIP_THREAD_PRIO		11	//定义内核任务的优先级为5
 #endif
 #undef  DEFAULT_THREAD_PRIO
 #define DEFAULT_THREAD_PRIO		2
+
+#include "lwip/debug.h"
+
+#define SOCKETS_DEBUG		LWIP_DBG_ON|LWIP_DBG_TYPES_ON
+#define IP_DEBUG 			LWIP_DBG_ON|LWIP_DBG_TYPES_ON
+#define TCP_DEBUG			LWIP_DBG_ON|LWIP_DBG_TYPES_ON
+#define TCP_INPUT_DEBUG 	LWIP_DBG_ON|LWIP_DBG_TYPES_ON
+#define TCP_OUTPUT_DEBUG	LWIP_DBG_ON|LWIP_DBG_TYPES_ON
 
 
 #define SYS_LIGHTWEIGHT_PROT    1

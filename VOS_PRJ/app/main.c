@@ -65,10 +65,10 @@ void rtp_test(void)
 void main(void *param)
 {
 	s32 res;
- 	LCD_Init();
-	tp_dev.init();
-	rtp_test();
-	//lwip_test();
+// 	LCD_Init();
+//	tp_dev.init();
+//	rtp_test();
+	lwip_test();
 
 //	kprintf("total: %d, free: %d!\r\n", total, free);
 	dma_printf("hello world!\r\n");

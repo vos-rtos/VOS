@@ -51,16 +51,18 @@ err_t sys_mbox_new(sys_mbox_t *mbox, int size)
 
 void sys_mbox_free(sys_mbox_t *mbox)
 {
-	u8_t ucErr;
 	VOSMsgQueFree(mbox->MsgQuePtr);
+	mbox->MsgQuePtr = NULL;
 	vfree(mbox->vmalloc);
-	mbox = NULL;
+	mbox->vmalloc = NULL;
 }
 
 void sys_mbox_post(sys_mbox_t *mbox, void *msg)
 {	    
 	if (msg == 0) return;
 	struct StMsgItem item;
+	if (mbox==0 || msg==0) return ERR_MEM;
+	if (mbox->MsgQuePtr == NULL) return ERR_MEM;
 	item.msg = msg;
 	while (VERROR_NO_ERROR != VOSMsgQuePut(mbox->MsgQuePtr, &item, sizeof(item))) {
 		VOSTaskDelay(10*1000);
@@ -70,7 +72,8 @@ void sys_mbox_post(sys_mbox_t *mbox, void *msg)
 err_t sys_mbox_trypost(sys_mbox_t *mbox, void *msg)
 { 
 	struct StMsgItem item;
-	if (msg == 0) return ERR_MEM;
+	if (mbox==0 || msg == 0) return ERR_MEM;
+	if (mbox->MsgQuePtr == NULL) return ERR_MEM;
 	item.msg = msg;
 	if (VERROR_NO_ERROR == VOSMsgQuePut(mbox->MsgQuePtr, &item, sizeof(item))) {
 		return ERR_OK;
@@ -81,6 +84,8 @@ err_t sys_mbox_trypost(sys_mbox_t *mbox, void *msg)
 u32_t sys_arch_mbox_fetch(sys_mbox_t *mbox, void **msg, u32_t timeout)
 { 
 	struct StMsgItem item;
+	if (mbox == 0) return SYS_ARCH_TIMEOUT;
+	if (mbox->MsgQuePtr == NULL) return SYS_ARCH_TIMEOUT;
 	u32 time_mark = VOSGetTimeMs();
 	if (VERROR_NO_ERROR != VOSMsgQueGet(mbox->MsgQuePtr, &item, sizeof(item), timeout)){
 		return SYS_ARCH_TIMEOUT;
@@ -97,6 +102,8 @@ u32_t sys_arch_mbox_tryfetch(sys_mbox_t *mbox, void **msg)
 int sys_mbox_valid(sys_mbox_t *mbox)
 {  
 	int ret = 0;
+	if (mbox == 0) return 0;
+	if (mbox->MsgQuePtr == NULL) return 0;
 	ret = mbox->MsgQuePtr->msg_cnts < mbox->MsgQuePtr->msg_maxs;
 	if (mbox->MsgQuePtr->msg_cnts == mbox->MsgQuePtr->msg_maxs) {
 		kprintf("warning: sys_mbox_valid overflow!\r\n");
@@ -106,7 +113,9 @@ int sys_mbox_valid(sys_mbox_t *mbox)
 
 void sys_mbox_set_invalid(sys_mbox_t *mbox)
 {
-	//mbox=NULL;
+	if (mbox) {
+
+	}
 } 
 
 err_t sys_sem_new(sys_sem_t* sem, u8_t count)
@@ -121,6 +130,7 @@ u32_t sys_arch_sem_wait(sys_sem_t *sem, u32_t timeout)
 {
 	kprintf("sys_arch_sem_wait\r\n");
 	struct StMsgItem item;
+	if (*sem==0) return SYS_ARCH_TIMEOUT;
 	u32 time_mark = VOSGetTimeMs();
 	if (VERROR_NO_ERROR != VOSSemWait(*sem, timeout)){
 		return SYS_ARCH_TIMEOUT;
@@ -131,6 +141,7 @@ u32_t sys_arch_sem_wait(sys_sem_t *sem, u32_t timeout)
 void sys_sem_signal(sys_sem_t *sem)
 {
 	kprintf("sys_sem_signal\r\n");
+	if (*sem==0) return ;
 	VOSSemRelease(*sem);
 }
 
@@ -150,7 +161,7 @@ int sys_sem_valid(sys_sem_t *sem)
 void sys_sem_set_invalid(sys_sem_t *sem)
 {
 	kprintf("sys_sem_set_invalid\r\n");
-	//*sem = NULL;
+	*sem = NULL;
 } 
 
 void sys_init()

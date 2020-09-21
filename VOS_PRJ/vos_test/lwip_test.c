@@ -17,10 +17,11 @@ void lwip_test_init()
 	//lwip_comm_destroy();
 }
 
-
+int get_socket_err(int s);
 void  sock_tcp_test()
 {
-    int    sockfd, n;
+	int ret = 0;
+    int sockfd, n;
     struct sockaddr_in    servaddr;
 
     if( (sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
@@ -36,9 +37,16 @@ void  sock_tcp_test()
     	kprintf("ERROR!\r\n");
     }
     kprintf("send msg to server: \n");
-    if( send(sockfd, "hello world!", strlen("hello world!"), 0) < 0)
-    {
-    	kprintf("ERROR!\r\n");
+    while(1) {
+		if( send(sockfd, "hello world!", strlen("hello world!"), 0) < 0)
+		{
+			kprintf("ERROR!\r\n");
+			//break;
+		}
+		if ((ret = get_socket_err(sockfd)) < 0) {
+			kprintf("get_socket_err: %d, \"%s\"!\r\n", ret, lwip_strerr(ret));
+		}
+		VOSTaskDelay(1000*1000);
     }
     close(sockfd);
 }
