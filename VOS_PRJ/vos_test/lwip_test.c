@@ -11,7 +11,7 @@ void lwip_test_init()
 		lwip_comm_dhcp_creat();
 		while(lwipdev.dhcpstatus==0||lwipdev.dhcpstatus==1)
 		{
-			VOSTaskDelay(10*1000);
+			VOSTaskDelay(100);
 		}
 	}
 	//lwip_comm_destroy();
@@ -30,14 +30,15 @@ void  sock_tcp_test()
     memset(&servaddr, 0, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(6666);
-    if( inet_aton("192.168.2.100", &servaddr.sin_addr) <= 0){
+    if( inet_aton("192.168.2.104", &servaddr.sin_addr) <= 0){
     	kprintf("ERROR!\r\n");
     }
     if( connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0){
     	kprintf("ERROR!\r\n");
     }
     kprintf("send msg to server: \n");
-    while(1) {
+    while(1)
+    {
 		if( send(sockfd, "hello world!", strlen("hello world!"), 0) < 0)
 		{
 			kprintf("ERROR!\r\n");
@@ -46,7 +47,7 @@ void  sock_tcp_test()
 		if ((ret = get_socket_err(sockfd)) < 0) {
 			kprintf("get_socket_err: %d, \"%s\"!\r\n", ret, lwip_strerr(ret));
 		}
-		VOSTaskDelay(1000*1000);
+		VOSTaskDelay(1*1000);
     }
     close(sockfd);
 }

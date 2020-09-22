@@ -18,6 +18,14 @@
 #include "verror.h"
 
 
+enum {
+	CONTEXT_SYS = 0,
+	CONTEXT_ISR,
+	CONTEXT_TASK,
+};
+
+
+
 //A: 当前全局的tick
 //B: 比较对象的终止tick, 注意终止tick数值不一定少于开始tick，不能直接比较，使用距离比较法
 //C: 比较对象的开始tick
@@ -202,6 +210,8 @@ typedef struct StVOSTimer{
 	u32 status; //状态
 	struct list_head list;
 } StVOSTimer;
+
+s32 VOSCurContexStatus();
 
 void VOSTaskBlockListInsert(StVosTask *pInsertTask, struct list_head *phead);
 void VOSTaskBlockListRelease(StVosTask *pReleaseTask);
