@@ -24,6 +24,7 @@
 #include "stm32f4x7_eth.h"
 #include <string.h>
 
+/* vincent:  该定义放到ethernetif.c里定义*/
 #if 0
 #if defined   (__CC_ARM) /*!< ARM Compiler */
   __align(4)

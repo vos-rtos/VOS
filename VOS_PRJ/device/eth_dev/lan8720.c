@@ -2,12 +2,7 @@
 #include "stm32f4x7_eth.h"
 #include "usart.h"  
 
-#define PCF8574_WriteBit
-
-ETH_DMADESCTypeDef *DMARxDscrTab;	//以太网DMA接收描述符数据结构体指针
-ETH_DMADESCTypeDef *DMATxDscrTab;	//以太网DMA发送描述符数据结构体指针 
-uint8_t *Rx_Buff; 					//以太网底层驱动接收buffers指针 
-uint8_t *Tx_Buff; 					//以太网底层驱动发送buffers指针
+void VOSDelayUs(u32 us);
 
 void Lan8720ResetPinInit()
 {
@@ -24,7 +19,7 @@ void Lan8720ResetPinInit()
 
   GPIO_SetBits(GPIOB, GPIO_Pin_0);
 }
-void VOSDelayUs(u32 us);
+
 void Lan8720Reset()
 {
 	GPIO_ResetBits(GPIOB,GPIO_Pin_0);
@@ -84,8 +79,6 @@ u8 LAN8720_Get_Speed(void)
 	speed=((ETH_ReadPHYRegister(0x00,31)&0x1C)>>2); //从LAN8720的31号寄存器中读取网络速度和双工模式
 	return speed;
 }
-/////////////////////////////////////////////////////////////////////////////////////////////////
-//以下部分为STM32网卡配置/接口函数.
 
 //初始化ETH MAC层及DMA配置
 //返回值:ETH_ERROR,发送失败(0)
@@ -149,21 +142,20 @@ int dumphex(const unsigned char *buf, int size)
 }
 
 
-//以太网中断服务函数
+void lwip_packet_handler();
+
 void ETH_IRQHandler(void)
 { 
 	int len = 0;
-	//OSIntEnter();		//进入中断
 	VOSIntEnter();
 	while((len=ETH_GetRxPktSize(DMARxDescToGet))!=0) 	//检测是否收到数据包
 	{ 		
-		//kprintf("------------------------------------\r\n");
-		//dumphex((unsigned char*)(DMARxDescToGet->Buffer1Addr), len);
+//		kprintf("------------------------------------\r\n");
+//		dumphex((unsigned char*)(DMARxDescToGet->Buffer1Addr), len);
 		lwip_packet_handler();
 	} 
 	ETH_DMAClearITPendingBit(ETH_DMA_IT_R);
 	ETH_DMAClearITPendingBit(ETH_DMA_IT_NIS); 
-	//OSIntExit();        //触发任务切换软中断
 	VOSIntExit ();
 }  
 //接收一个网卡数据包
@@ -218,38 +210,11 @@ u8 ETH_Tx_Packet(u16 FrameLength)
 	DMATxDescToSet=(ETH_DMADESCTypeDef*)(DMATxDescToSet->Buffer2NextDescAddr);    
 	return ETH_SUCCESS;   
 }
-//得到当前描述符的Tx buffer地址
-//返回值:Tx buffer地址
+
 u32 ETH_GetCurrentTxBuffer(void)
 {  
-  return DMATxDescToSet->Buffer1Addr;//返回Tx buffer地址  
+  return DMATxDescToSet->Buffer1Addr;
 }
-//为ETH底层驱动申请内存
-//返回值:0,正常
-//    其他,失败
-u8 ETH_Mem_Malloc(void)
-{ 
-	DMARxDscrTab=vmalloc(ETH_RXBUFNB*sizeof(ETH_DMADESCTypeDef));//申请内存
-	DMATxDscrTab=vmalloc(ETH_TXBUFNB*sizeof(ETH_DMADESCTypeDef));//申请内存
-	Rx_Buff=vmalloc(ETH_RX_BUF_SIZE*ETH_RXBUFNB);	//申请内存
-	Tx_Buff=vmalloc(ETH_TX_BUF_SIZE*ETH_TXBUFNB);	//申请内存
-	if(!DMARxDscrTab||!DMATxDscrTab||!Rx_Buff||!Tx_Buff)
-	{
-		ETH_Mem_Free();
-		return 1;	//申请失败
-	}	
-	return 0;		//申请成功
-}
-//释放ETH 底层驱动申请的内存
-void ETH_Mem_Free(void)
-{ 
-	vfree(DMARxDscrTab);//释放内存
-	vfree(DMATxDscrTab);//释放内存
-	vfree(Rx_Buff);		//释放内存
-	vfree(Tx_Buff);		//释放内存
-}
-
-
 
 
 

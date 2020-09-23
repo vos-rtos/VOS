@@ -717,6 +717,7 @@ END_CREATE:
 *********************************************************************************************************/
 s32 VOSTaskDelete(s32 task_id)
 {
+	kprintf("XXXXXXXXXXXXXXXX %s:%d\r\n", __FUNCTION__, task_id);
 	return 0;
 }
 

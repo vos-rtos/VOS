@@ -1,20 +1,19 @@
 #include "lwip/sockets.h"
-#include "lwip_comm.h"
 #include "vos.h"
 
+struct netif;
+void net_init();
+struct netif *GetNetIfPtr();
+void NetAddrInfoPrt(struct netif *pNetIf);
 void lwip_test_init()
 {
-	s32 res = 0;
-	res=lwip_comm_init();
-	if(res==0)
-	{
-		lwip_comm_dhcp_creat();
-		while(lwipdev.dhcpstatus==0||lwipdev.dhcpstatus==1)
-		{
-			VOSTaskDelay(100);
-		}
+	net_init();
+
+	dhcp_start(GetNetIfPtr());
+	while (DhcpClientCheck(GetNetIfPtr()) == 0) {
+		VOSTaskDelay(10);
 	}
-	//lwip_comm_destroy();
+	NetAddrInfoPrt(GetNetIfPtr());
 }
 
 int get_socket_err(int s);
@@ -44,10 +43,10 @@ void  sock_tcp_test()
 			kprintf("ERROR!\r\n");
 			//break;
 		}
-		if ((ret = get_socket_err(sockfd)) < 0) {
-			kprintf("get_socket_err: %d, \"%s\"!\r\n", ret, lwip_strerr(ret));
-		}
-		VOSTaskDelay(1*1000);
+//		if ((ret = get_socket_err(sockfd)) < 0) {
+//			kprintf("get_socket_err: %d, \"%s\"!\r\n", ret, lwip_strerr(ret));
+//		}
+		//VOSTaskDelay(1*1000);
     }
     close(sockfd);
 }

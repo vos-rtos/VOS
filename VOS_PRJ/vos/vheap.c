@@ -210,19 +210,19 @@ void *vrealloc(void *ptr, u32 size)
 }
 
 /********************************************************************************************************
-* 函数：void *vcalloc(u32 size);
+* 函数：void *vcalloc(u32 nitems, u32 size);
 * 描述: 通用堆里申请内存，并初始化为0
 * 参数:
 * [1] size: 指定申请空间大小，单位字节
 * 返回：无
 * 注意：vrealloc为了区分库的realloc冲突
 *********************************************************************************************************/
-void *vcalloc(u32 size)
+void *vcalloc(u32 nitems, u32 size)
 {
 	void *ptr_tmp = 0;
-	ptr_tmp = vmalloc(size);
+	ptr_tmp = vmalloc(nitems*size);
 	if (ptr_tmp) {
-		memset(ptr_tmp, 0, size);
+		memset(ptr_tmp, 0, nitems*size);
 	}
 	return ptr_tmp;
 }
