@@ -281,11 +281,21 @@ sys_thread_t sys_thread_new(const char *name, lwip_thread_fn thread, void *arg, 
 {
 	s32 task_id = -1;
 	u8 *pstack = 0;
-	if(strcmp(name,TCPIP_THREAD_NAME)==0)//创建TCP IP内核任务
-	{
-		pstack = (u8*)vmalloc(stacksize*4);
-		task_id = VOSTaskCreate(thread, arg, pstack, stacksize*4, prio, name);
+
+	if (stacksize <= 0) {
+		stacksize = 0x4000;
+		pstack = (u8*)vmalloc(stacksize);
 	}
+	else {
+		pstack = (u8*)vmalloc(stacksize);
+	}
+
+	if (prio <= 0) {
+		prio = TASK_PRIO_NORMAL;
+	}
+
+	task_id = VOSTaskCreate(thread, arg, pstack, stacksize, prio, name);
+
 	return task_id;
 }
 

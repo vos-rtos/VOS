@@ -9,13 +9,14 @@
 #ifndef __LWIPOPTS_H__
 #define __LWIPOPTS_H__
 
-#define LWIP_TIMEVAL_PRIVATE	0
-
-
 extern void *vmalloc(unsigned int size);
 extern void vfree(void *ptr);
 extern void *vrealloc(void *ptr, unsigned int size);
 extern void *vcalloc(unsigned int nitems, unsigned int size);
+
+#define LWIP_RAND() rand()
+
+#define LWIP_TIMEVAL_PRIVATE	0
 
 #define mem_clib_free vfree
 
@@ -233,7 +234,7 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
    ---------------------------------
 */
 
-#define TCPIP_THREAD_STACKSIZE          2048//1500	//内核任务堆栈大小
+#define TCPIP_THREAD_STACKSIZE          (4*1024)//1500	//内核任务堆栈大小
 #define DEFAULT_UDP_RECVMBOX_SIZE       1000
 #define DEFAULT_THREAD_STACKSIZE        512
 

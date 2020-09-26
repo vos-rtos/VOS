@@ -2,19 +2,58 @@
 #include "vos.h"
 
 struct netif;
-void net_init();
+s32 net_init();
 struct netif *GetNetIfPtr();
 void NetAddrInfoPrt(struct netif *pNetIf);
-void lwip_test_init()
+s32 NetDhcpClient(u32 timeout)
 {
-	net_init();
-
-	dhcp_start(GetNetIfPtr());
-	while (DhcpClientCheck(GetNetIfPtr()) == 0) {
-		VOSTaskDelay(10);
+	s32 ret = 0;
+	u32 spend_ms = 0;
+	ret = net_init();
+	if (ret < 0) {
+		kprintf("error: net_init failed!\r\n");
+		return ret;
 	}
-	NetAddrInfoPrt(GetNetIfPtr());
+	ret = 0;
+	if (GetNetIfPtr()) {
+		dhcp_start(GetNetIfPtr());
+		while (DhcpClientCheck(GetNetIfPtr()) == 0) {
+			VOSTaskDelay(10);
+			spend_ms += 10;
+			if (spend_ms > timeout) {
+				kprintf("error: dhcp client timeout %d (ms)!\r\n", timeout);
+				ret = -2;
+				break;
+			}
+		}
+		if (ret == 0) { //打印IP地址信息
+			NetAddrInfoPrt(GetNetIfPtr());
+		}
+	}
+	return ret;
 }
+
+s32 SetNetWorkInfo (s8 *ipAddr, s8 *netMask, s8 *gateWay)
+{
+	s32 ret = 0;
+	ip4_addr_t addr;
+	ip4_addr_t mask;
+	ip4_addr_t gw;
+	ret = net_init();
+	if (ret < 0) {
+		kprintf("error: net_init failed!\r\n");
+		return ret;
+	}
+    if (inet_aton(ipAddr, &addr.addr) <= 0 ||
+    	inet_aton(netMask, &mask.addr) <= 0 ||
+		inet_aton(gateWay, &gw.addr) <= 0 )
+    {
+    	return -1;
+    }
+    netif_set_addr(GetNetIfPtr(), &addr, &mask, &gw);
+	return ret;
+}
+
 
 int get_socket_err(int s);
 void  sock_tcp_test()
@@ -52,11 +91,87 @@ void  sock_tcp_test()
 }
 void lwip_test_task(void *arg)
 {
-	lwip_test_init();
+	s32 ret = 0;
+	ret = DhcpClient(10*1000);
+	if (ret < 0) {
+		kprintf("dhcp error!\r\n");
+	}
 	sock_tcp_test();
 	while(1) {
 		VOSTaskDelay(1*1000);
 	}
+}
+
+void lan8720Regs()
+{
+	u32 data = 0;
+	u32 eth_addr = 0;
+	u8 binData[17];
+
+	data = ETH_ReadPHYRegister(eth_addr, 0x00);
+	memset(binData, 0, sizeof(binData));
+	itoa(data, binData, 2);
+	kprintf("0x00 = 0x%04x, %04s\r\n", data, binData);
+	VOSTaskDelay(200);
+	data = ETH_ReadPHYRegister(eth_addr, 0x01);
+	memset(binData, 0, sizeof(binData));
+	itoa(data, binData, 2);
+	kprintf("0x01 = 0x%04x, %04s\r\n", data, binData);
+	VOSTaskDelay(200);
+	data = ETH_ReadPHYRegister(eth_addr, 0x02);
+	memset(binData, 0, sizeof(binData));
+	itoa(data, binData, 2);
+	kprintf("0x02 = 0x%04x, %04s\r\n", data, binData);
+	VOSTaskDelay(200);
+	data = ETH_ReadPHYRegister(eth_addr, 0x03);
+	memset(binData, 0, sizeof(binData));
+	itoa(data, binData, 2);
+	kprintf("0x03 = 0x%04x, %04s\r\n", data, binData);
+	VOSTaskDelay(200);
+	data = ETH_ReadPHYRegister(eth_addr, 0x04);
+	memset(binData, 0, sizeof(binData));
+	itoa(data, binData, 2);
+	kprintf("0x04 = 0x%04x, %04s\r\n", data, binData);
+	VOSTaskDelay(200);
+	data = ETH_ReadPHYRegister(eth_addr, 0x05);
+	memset(binData, 0, sizeof(binData));
+	itoa(data, binData, 2);
+	kprintf("0x05 = 0x%04x, %04s\r\n", data, binData);
+	VOSTaskDelay(200);
+	data = ETH_ReadPHYRegister(eth_addr, 0x06);
+	memset(binData, 0, sizeof(binData));
+	itoa(data, binData, 2);
+	kprintf("0x06 = 0x%04x, %04s\r\n", data, binData);
+	VOSTaskDelay(200);
+	data = ETH_ReadPHYRegister(eth_addr, 0x09);
+	memset(binData, 0, sizeof(binData));
+	itoa(data, binData, 2);
+	kprintf("0x09 = 0x%04x, %04s\r\n", data, binData);
+	VOSTaskDelay(200);
+	data = ETH_ReadPHYRegister(eth_addr, 0x11);
+	memset(binData, 0, sizeof(binData));
+	itoa(data, binData, 2);
+	kprintf("0x11 = 0x%04x, %04s\r\n", data, binData);
+	VOSTaskDelay(200);
+	data = ETH_ReadPHYRegister(eth_addr, 0x12);
+	memset(binData, 0, sizeof(binData));
+	itoa(data, binData, 2);
+	kprintf("0x12 = 0x%04x, %04s\r\n", data, binData);
+	VOSTaskDelay(200);
+	data = ETH_ReadPHYRegister(eth_addr, 0x1F);
+	memset(binData, 0, sizeof(binData));
+	itoa(data, binData, 2);
+	kprintf("0x1F = 0x%04x, %04s\r\n", data, binData);
+	VOSTaskDelay(3000);
+}
+
+
+void sockets_stresstest_init_loopback(int addr_family);
+void sockets_stresstest_init_server(int addr_family, u16_t server_port);
+void sockets_stresstest_init_client(const char *remote_ip, u16_t remote_port);
+void lwip_inner_test()
+{
+	sockets_stresstest_init_client("192.168.2.104", 6666);
 }
 
 

@@ -16,6 +16,8 @@ void VHeapMgrAdd(struct StVMemHeap *pheap);
 void VHeapMgrDel(struct StVMemHeap *pheap);
 struct StVMemHeap *VHeapFindByName(s8 *name);
 
+void *VHeapMgrGetPageBaseAddr(void *and_addr, u8 *heap_name, s32 len);
+
 void *vmalloc(u32 size);
 void vfree(void *ptr);
 void *vrealloc(void *ptr, u32 size);

@@ -62,19 +62,26 @@ void rtp_test(void)
 	}
 }
 
+s32 NetDhcpClient(u32 timeout);
 void main(void *param)
 {
 	s32 res;
+
+	VSlabTest();
+	return ;
 // 	LCD_Init();
 //	tp_dev.init();
 //	rtp_test();
-	lwip_test();
+	//lwip_test();
+	NetDhcpClient(30*1000);
+	//SetNetWorkInfo ("192.168.2.150", "255.255.255.0", "192.168.2.101");
+	//lwip_inner_test();
 
 //	kprintf("total: %d, free: %d!\r\n", total, free);
 	dma_printf("hello world!\r\n");
 	kprintf("main function!\r\n");
 	while (1) {
-		kprintf(".");
+//		kprintf(".");
 		VOSTaskDelay(1*1000);
 	}
 }

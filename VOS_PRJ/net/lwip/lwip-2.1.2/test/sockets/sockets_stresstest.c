@@ -433,8 +433,8 @@ sockets_stresstest_conn_client(void *arg)
   struct sockaddr_storage addr;
   struct sockaddr_in *addr_in;
   int s, ret;
-  char txbuf[TEST_TXRX_BUFSIZE];
-  char rxbuf[TEST_TXRX_BUFSIZE];
+  static char txbuf[TEST_TXRX_BUFSIZE];
+  static char rxbuf[TEST_TXRX_BUFSIZE];
   size_t rxoff = 0;
   u32_t max_time = sys_now() + (TEST_TIME_SECONDS * 1000);
   int do_rx = 1;
@@ -442,8 +442,8 @@ sockets_stresstest_conn_client(void *arg)
 
   memcpy(&addr, arg, sizeof(addr));
   LWIP_ASSERT("", addr.ss_family == AF_INET);
-  addr_in = (struct sockaddr_in *)&addr;
-  addr_in->sin_addr.s_addr = inet_addr("127.0.0.1");
+  //addr_in = (struct sockaddr_in *)&addr;
+  //addr_in->sin_addr.s_addr = inet_addr("127.0.0.1");
 
   /* sleep a random time between 1 and 2 seconds */
   sys_msleep(1000 + (LWIP_RAND() % 1000));
@@ -563,7 +563,7 @@ static int
 sockets_stresstest_start_clients(const struct sockaddr_storage *remote_addr)
 {
   /* limit the number of connections */
-  const int max_connections = LWIP_MIN(TEST_MAX_CONNECTIONS, MEMP_NUM_TCP_PCB/3);
+  const int max_connections = LWIP_MIN(TEST_MAX_CONNECTIONS, 1/*MEMP_NUM_TCP_PCB/3*/);
   int i;
 
   for (i = 0; i < max_connections; i++) {
@@ -719,7 +719,7 @@ sockets_stresstest_init_client(const char *remote_ip, u16_t remote_port)
     /* todo: copy ipv6 address */
   }
 #endif
-  ((struct sockaddr_in *)addr)->sin_port = remote_port;
+  ((struct sockaddr_in *)addr)->sin_port = htons(remote_port);
   sockets_stresstest_start_clients(addr);
 }
 

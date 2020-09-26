@@ -384,7 +384,7 @@ uint32_t ETH_Init(ETH_InitTypeDef* ETH_InitStruct, uint16_t PHYAddress)
     
     /* Read the result of the auto-negotiation */
     RegValue = ETH_ReadPHYRegister(PHYAddress, PHY_SR);
-  
+
     /* Configure the MAC with the Duplex Mode fixed by the auto-negotiation process */
     if((RegValue & PHY_DUPLEX_STATUS) != (uint32_t)RESET)
     {
@@ -1862,6 +1862,7 @@ ITStatus ETH_GetDMAITStatus(uint32_t ETH_DMA_IT)
   ITStatus bitstatus = RESET;
   /* Check the parameters */
   assert_param(IS_ETH_DMA_GET_IT(ETH_DMA_IT));
+  kprintf("======>0x%08x!\r\n", ETH->DMASR);
   if ((ETH->DMASR & ETH_DMA_IT) != (uint32_t)RESET)
   {
     bitstatus = SET;

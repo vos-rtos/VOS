@@ -227,5 +227,37 @@ void *vcalloc(u32 nitems, u32 size)
 	return ptr_tmp;
 }
 
-
+/********************************************************************************************************
+* 函数：void *VHeapMgrGetPageBaseAddr(void *any_addr, u8 *heap_name, s32 len);
+* 描述: 根据用户提供的任何地址，找出对应的堆和返回对应的页基地址
+* 参数:
+* [1] any_addr: 指定任何地址
+* [2] heap_name: 获取堆名字，可以为0，则不输出名字
+* [3] len: heap_name的内存长度
+* 返回：页基地址
+* 注意：提供给slab分配器使用
+*********************************************************************************************************/
+void *VHeapMgrGetPageBaseAddr(void *any_addr, u8 *heap_name, s32 len)
+{
+	void *ptr = 0;
+	s32 min = 0;
+	struct list_head *list;
+	struct StVMemHeap *pheap = 0;
+	VHEAP_LOCK();
+	list_for_each(list, &gVheapMgr.heap) {
+		pheap = list_entry(list, struct StVMemHeap, list_heap);
+		ptr = VMemGetPageBaseAddr(pheap, any_addr);
+		if (ptr) {
+			if (pheap->name && len > 0) {
+				min = strlen(pheap->name) - 1;
+				min = min < len ? min : len;
+				memcpy(heap_name, pheap->name, min);
+				heap_name[min] = 0;
+			}
+			break;
+		}
+	}
+	VHEAP_UNLOCK();
+	return ptr;
+}
 

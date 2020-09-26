@@ -122,7 +122,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="net/lwip/lwip-2.1.2/src/netif/ppp|net/lwip/lwip-2.1.2/src/core/ipv6|net/lwip/lwip-2.1.2/src/apps|net/lwip/lwip-2.1.2/test|net/lwip/lwip-2.1.2/doc|net/lwip/lwip-1.4.1/test|net/lwip/lwip-1.4.1/src/core/ipv6|net/lwip/lwip_app/web_server_demo|net/lwip/lwip_app/udp_demo|net/lwip/lwip_app/tcp_server_demo|net/lwip/lwip-1.4.1/doc|vfs/fatfs/doc|3th/stm32f4xx/src/stm32f4xx_fmc.c|stm32f4xx/src/stm32f4xx_fmc.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="net/lwip/lwip-2.1.2/test/unit|net/lwip/lwip-2.1.2/test/fuzz|net/lwip/lwip-2.1.2/src/netif/ppp|net/lwip/lwip-2.1.2/src/core/ipv6|net/lwip/lwip-2.1.2/src/apps|net/lwip/lwip-2.1.2/doc|net/lwip/lwip-1.4.1/test|net/lwip/lwip-1.4.1/src/core/ipv6|net/lwip/lwip_app/web_server_demo|net/lwip/lwip_app/udp_demo|net/lwip/lwip_app/tcp_server_demo|net/lwip/lwip-1.4.1/doc|vfs/fatfs/doc|3th/stm32f4xx/src/stm32f4xx_fmc.c|stm32f4xx/src/stm32f4xx_fmc.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -216,7 +216,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="net/lwip/lwip-2.1.2/src/netif/ppp|net/lwip/lwip-2.1.2/src/core/ipv6|net/lwip/lwip-2.1.2/src/apps|net/lwip/lwip-2.1.2/test|net/lwip/lwip-2.1.2/doc|net/lwip/lwip-1.4.1/test|net/lwip/lwip-1.4.1/src/core/ipv6|net/lwip/lwip_app/web_server_demo|net/lwip/lwip_app/udp_demo|net/lwip/lwip_app/tcp_server_demo|net/lwip/lwip-1.4.1/doc|vfs/fatfs/doc|3th/stm32f4xx/src/stm32f4xx_fmc.c|stm32f4xx/src/stm32f4xx_fmc.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="net/lwip/lwip-2.1.2/test/unit|net/lwip/lwip-2.1.2/test/fuzz|net/lwip/lwip-2.1.2/src/netif/ppp|net/lwip/lwip-2.1.2/src/core/ipv6|net/lwip/lwip-2.1.2/src/apps|net/lwip/lwip-2.1.2/doc|net/lwip/lwip-1.4.1/test|net/lwip/lwip-1.4.1/src/core/ipv6|net/lwip/lwip_app/web_server_demo|net/lwip/lwip_app/udp_demo|net/lwip/lwip_app/tcp_server_demo|net/lwip/lwip-1.4.1/doc|vfs/fatfs/doc|3th/stm32f4xx/src/stm32f4xx_fmc.c|stm32f4xx/src/stm32f4xx_fmc.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

@@ -21,16 +21,22 @@ struct netif *GetNetIfPtr()
 	return &gVosNetIf;
 }
 
-
+void lan8720Regs();
 s32 net_init()
 {
+	static s32 init_flag = 0;
   	u32 irq_save = 0;
   	struct netif *new_netif;
   	struct ip4_addr ipaddr;
   	struct ip4_addr netmask;
   	struct ip4_addr gw;
 
+  	if (init_flag == 1) return 1; //已经初始化
+
   	if (LAN8720_Init())	return -2;
+
+  	lan8720Regs();
+
   	tcpip_init(NULL, NULL);
 
   	ipaddr.addr 	= 0;
@@ -44,6 +50,8 @@ s32 net_init()
   		netif_set_default(&gVosNetIf);
   		netif_set_up(&gVosNetIf);
   	}
+  	init_flag = 1;
+  	return 0;
 }
 
 s32 DhcpClientCheck(struct netif *pNetIf)

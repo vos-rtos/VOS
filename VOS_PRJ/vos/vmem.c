@@ -440,6 +440,24 @@ END_VMEMREALLOC:
 }
 
 /********************************************************************************************************
+* 函数：void *VMemGetPageBaseAddr(struct StVMemHeap *pheap, void *any_addr);
+* 描述: 从指定堆里找到任何地址对应的页，如果地址不在堆地址范围内，返回0
+* 参数:
+* [1] pheap: 指定的堆
+* [2] any_addr: 任何地址信息
+* 返回：对应堆中某个页的基地址
+* 注意：该函数用在slab分配器里查找堆基地址。
+*********************************************************************************************************/
+void *VMemGetPageBaseAddr(struct StVMemHeap *pheap, void *any_addr)
+{
+	//地址不在堆里的范围内
+	if ((u8*)any_addr < pheap->page_base || (u8*)any_addr >= pheap->mem_end) {
+		return 0;
+	}
+	return ((u8*)any_addr - pheap->page_base)/pheap->page_size*pheap->page_size + pheap->page_base;
+}
+
+/********************************************************************************************************
 * 函数：s32 VMemGetHeapInfo(struct StVMemHeap *pheap, struct StVMemHeapInfo *pheadinfo);
 * 描述: 查询堆的信息,包括总共空闲页，总共已分配页，当前最大分配空间，堆分区最大分配空间等
 * 参数:

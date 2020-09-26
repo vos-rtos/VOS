@@ -97,6 +97,7 @@ u8 ETH_MACDMA_Config(void)
 	ETH_StructInit(&ETH_InitStructure); 	 	//初始化网络为默认值
 
 	///网络MAC参数设置
+	//ETH_InitStructure.ETH_Speed = ETH_Speed_100M;
 	ETH_InitStructure.ETH_AutoNegotiation = ETH_AutoNegotiation_Enable;   			//开启网络自适应功能
 	ETH_InitStructure.ETH_LoopbackMode = ETH_LoopbackMode_Disable;					//关闭反馈
 	ETH_InitStructure.ETH_RetryTransmission = ETH_RetryTransmission_Enable; 		//关闭重传功能kp
@@ -127,7 +128,7 @@ u8 ETH_MACDMA_Config(void)
 	rval=ETH_Init(&ETH_InitStructure, LAN8720_PHY_ADDRESS);//配置ETH
 	if(rval==ETH_SUCCESS)//配置成功
 	{
-		ETH_DMAITConfig(ETH_DMA_IT_NIS|ETH_DMA_IT_R,ENABLE);//使能以太网接收中断	
+		ETH_DMAITConfig(ETH_DMA_IT_NIS|ETH_DMA_IT_R,ENABLE);//使能以太网接收中断
 	}
 	return rval;
 }
@@ -153,9 +154,10 @@ void ETH_IRQHandler(void)
 //		kprintf("------------------------------------\r\n");
 //		dumphex((unsigned char*)(DMARxDescToGet->Buffer1Addr), len);
 		lwip_packet_handler();
+		//ETH_Rx_Packet();
 	} 
 	ETH_DMAClearITPendingBit(ETH_DMA_IT_R);
-	ETH_DMAClearITPendingBit(ETH_DMA_IT_NIS); 
+	ETH_DMAClearITPendingBit(ETH_DMA_IT_NIS);
 	VOSIntExit ();
 }  
 //接收一个网卡数据包
@@ -165,28 +167,30 @@ FrameTypeDef ETH_Rx_Packet(void)
 	u32 framelength=0;
 	FrameTypeDef frame={0,0};   
 	//检查当前描述符,是否属于ETHERNET DMA(设置的时候)/CPU(复位的时候)
-	if((DMARxDescToGet->Status&ETH_DMARxDesc_OWN)!=(u32)RESET)
+	if((DMARxDescToGet->Status & ETH_DMARxDesc_OWN) != (u32)RESET)
 	{	
 		frame.length=ETH_ERROR; 
-		if ((ETH->DMASR&ETH_DMASR_RBUS)!=(u32)RESET)  
+		if ((ETH->DMASR&ETH_DMASR_RBUS) != (u32)RESET)
 		{ 
 			ETH->DMASR = ETH_DMASR_RBUS;//清除ETH DMA的RBUS位 
-			ETH->DMARPDR=0;//恢复DMA接收
+			ETH->DMARPDR = 0;//恢复DMA接收
 		}
 		return frame;//错误,OWN位被设置了
 	}  
-	if(((DMARxDescToGet->Status&ETH_DMARxDesc_ES)==(u32)RESET)&& 
-	((DMARxDescToGet->Status & ETH_DMARxDesc_LS)!=(u32)RESET)&&  
-	((DMARxDescToGet->Status & ETH_DMARxDesc_FS)!=(u32)RESET))  
+	if( ((DMARxDescToGet->Status & ETH_DMARxDesc_ES)==(u32)RESET)&&
+		((DMARxDescToGet->Status & ETH_DMARxDesc_LS)!=(u32)RESET)&&
+		((DMARxDescToGet->Status & ETH_DMARxDesc_FS)!=(u32)RESET))
 	{       
-		framelength=((DMARxDescToGet->Status&ETH_DMARxDesc_FL)>>ETH_DMARxDesc_FrameLengthShift)-4;//得到接收包帧长度(不包含4字节CRC)
+		framelength = ((DMARxDescToGet->Status&ETH_DMARxDesc_FL) >> ETH_DMARxDesc_FrameLengthShift)-4;//得到接收包帧长度(不包含4字节CRC)
  		frame.buffer = DMARxDescToGet->Buffer1Addr;//得到包数据所在的位置
-	}else framelength=ETH_ERROR;//错误  
-	frame.length=framelength; 
-	frame.descriptor=DMARxDescToGet;  
+	}
+	else
+		framelength = ETH_ERROR;//错误
+	frame.length = framelength;
+	frame.descriptor = DMARxDescToGet;
 	//更新ETH DMA全局Rx描述符为下一个Rx描述符
 	//为下一次buffer读取设置下一个DMA Rx描述符
-	DMARxDescToGet=(ETH_DMADESCTypeDef*)(DMARxDescToGet->Buffer2NextDescAddr);   
+	DMARxDescToGet = (ETH_DMADESCTypeDef*)(DMARxDescToGet->Buffer2NextDescAddr);
 	return frame;  
 }
 //发送一个网卡数据包

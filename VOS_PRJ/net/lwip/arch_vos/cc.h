@@ -67,7 +67,6 @@ typedef int sys_prot_t;
 #define LWIP_PLATFORM_ASSERT(x) \
     do \
     {   kprintf("Assertion \"%s\" failed at line %d in %s\r\n", x, __LINE__, __FILE__); \
-    	while(1);\
     } while(0)
 #endif
 
