@@ -349,6 +349,8 @@ void *VSlabBlockAlloc(struct StVSlabMgr *pSlabMgr, s32 size)
 	struct StVSlabPage *slab_page = 0;
 	s32 step_size = 0;
 
+	if (pSlabMgr == 0 || size <= 0) return 0;
+
 	step_size = pSlabMgr->step_size;
 
 	//计算size对应到哪个slab_class中
