@@ -118,7 +118,16 @@ struct StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size, s32 align_bytes,
 	StVMemCtrlBlock *pMCB = 0;
 	StVMemHeap *pheap = 0;
 
-	if (mem == 0 || len < 0 || len < sizeof(StVMemHeap) ||
+	s32 slag_header_size = 0;
+
+#if VOS_SLAB_ENABLE
+	//计算SLAB分配器管理区空间
+	if (enable_slab) {
+		slag_header_size = SlabMgrHeaderGetSize(page_size, align_bytes, VOS_SLAB_STEP_SIZE);
+	}
+#endif
+
+	if (mem == 0 || len < 0 || len < sizeof(StVMemHeap)+slag_header_size ||
 		len < page_size * 2) return 0;
 
 	pheap = (StVMemHeap*)ALIGN_DOWN(mem, align_bytes);
@@ -130,9 +139,25 @@ struct StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size, s32 align_bytes,
 
 	size = pheap->mem_end - (u8*)pheap;
 
-	head_size = sizeof(StVMemHeap) + (size / page_size) * sizeof(StVMemCtrlBlock);
+	head_size = sizeof(StVMemHeap) + slag_header_size + (size / page_size) * sizeof(StVMemCtrlBlock);
+#if VOS_SLAB_ENABLE
+	if (pheap && enable_slab) {
+		pheap->slab_ptr = (struct StVSlabMgr *)(pheap + 1);
+		pheap->slab_ptr = VSlabBuild(pheap->slab_ptr, slag_header_size, page_size,
+						align_bytes, VOS_SLAB_STEP_SIZE, "vslab", pheap);
+	}
+	else
+#endif
+	{
+		pheap->slab_ptr = 0;
+	}
 
-	pheap->pMCB_base = (StVMemCtrlBlock*)(pheap + 1);
+	if (pheap->slab_ptr == 0) {
+		pheap->pMCB_base = (StVMemCtrlBlock*)(pheap + 1);
+	}
+	else {
+		pheap->pMCB_base = (StVMemCtrlBlock*)((u8*)pheap->slab_ptr + slag_header_size);
+	}
 
 	pheap->page_base = (u8*)ALIGN_DOWN((u8*)pheap + head_size, align_bytes); //第一次page_base估算地址，不是真正的地址
 	pheap->page_counts = (pheap->mem_end - pheap->page_base) / page_size;
@@ -141,6 +166,7 @@ struct StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size, s32 align_bytes,
 	pheap->align_bytes = align_bytes;
 	pheap->name = name;
 	pheap->heap_attr = heap_attr;
+
 	pheap->page_base = (u8*)ALIGN_DOWN(&pheap->pMCB_base[pheap->page_counts], align_bytes); //第二次才是真正的地址，对齐后紧紧挨着pMCB_base末尾
 	pheap->mem_end = (u8*)ALIGN_DOWN(&pheap->page_base[pheap->page_counts*pheap->page_size], align_bytes);//第二次才是真正的地址，紧紧挨着page_base尾巴
 
@@ -184,7 +210,7 @@ struct StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size, s32 align_bytes,
 	if (pheap) {
 		VHeapMgrAdd(pheap);
 	}
-
+#if 0 //如果slab管理区动态分配，也可以，不过目前把slab作为buddy的管理区中的一部分可能更好，防止写穿数据区破坏slab头数据
 #if VOS_SLAB_ENABLE
 	/******** 初始化SLAB分配器 ***********/
 	if (pheap && enable_slab) {
@@ -198,7 +224,7 @@ struct StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size, s32 align_bytes,
 	{
 		pheap->slab_ptr = 0;
 	}
-
+#endif
 	/******** *********** ***********/
 	return pheap;
 }
@@ -607,6 +633,13 @@ s32 VMemInfoDump(struct StVMemHeap *pheap)
 	}
 	VMEM_UNLOCK();
 
+#if VOS_SLAB_ENABLE
+	s32 VSlabInfoDump(struct StVSlabMgr *pSlabMgr);
+	if (pheap && pheap->slab_ptr) {
+		VSlabInfoDump(pheap->slab_ptr);
+	}
+#endif
+
 	return 0;
 }
 
@@ -667,8 +700,15 @@ s32 VBoudaryCheck(struct StVMemHeap *pheap)
 	StVMemCtrlBlock *pMCB = 0;
 	StVMemCtrlBlock *pMCBTemp = 0;
 
+
+#if VOS_SLAB_ENABLE
+	if ((u8*)(pheap + 1) != (u8*)pheap->slab_ptr) BOUNDARY_ERROR();
+	s32 slag_header_size = SlabMgrHeaderGetSize(pheap->page_size, pheap->align_bytes, VOS_SLAB_STEP_SIZE);
+	if ((u8*)((u8*)pheap->slab_ptr+slag_header_size) != (u8*)pheap->pMCB_base) BOUNDARY_ERROR();
+#else
 	//判断pheap内部所有元素是否正常
 	if ((u8*)(pheap + 1) != (u8*)pheap->pMCB_base) BOUNDARY_ERROR();
+#endif
 	//控制区的末尾是页数据区的开始
 	if ((u8*)ALIGN_DOWN(&pheap->pMCB_base[pheap->page_counts], pheap->align_bytes) != pheap->page_base) BOUNDARY_ERROR();
 	//页数据区的末尾就是mem_end
@@ -721,6 +761,13 @@ s32 VBoudaryCheck(struct StVMemHeap *pheap)
 	if (used_total + free_total != pheap->page_counts * pheap->page_size) BOUNDARY_ERROR();
 
 	VMEM_UNLOCK();
+
+#if VOS_SLAB_ENABLE
+	s32 VSlabBoudaryCheck(struct StVSlabMgr *pSlabMgr);
+	if (pheap && pheap->slab_ptr) {
+		VSlabBoudaryCheck(pheap->slab_ptr);
+	}
+#endif
 
 	return 1;
 

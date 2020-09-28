@@ -97,7 +97,9 @@ void vmem_test_random()
 	* 设定条件： MAX_PAGE_CLASS_MAX == 11
 	* 测试buddy算法合并，分裂过程
 	******************************************************************************************************/
-	static u8 arr_heap[1024 * 50]; //50k空间
+	const s32 new_size = 1024 * 50;
+	//static u8 arr_heap[new_size]; //50k空间
+	u8 *arr_heap = vmalloc(new_size);
 	u8 *p[100];
 	s32 i = 0;
 	s32 j = 0;
@@ -105,7 +107,7 @@ void vmem_test_random()
 	s32 rand_num;
 	s32 malloc_size = 0;
 	s32 counter = 10000;
-	pheap = VMemBuild(&arr_heap[0], sizeof(arr_heap), 512, 8, VHEAP_ATTR_SYS, "test_heap", 1);
+	pheap = VMemBuild(arr_heap, new_size/*sizeof(arr_heap)*/, 1024/*512*/, 8, VHEAP_ATTR_SYS, "test_heap", 1);
 	VMemInfoDump(pheap);
 	while (1) {
 		//申请，释放各一次测试
@@ -175,7 +177,7 @@ void vmem_test_random()
 			}
 		}
 		VMemInfoDump(pheap);
-		if (TestExitFlagGet()) break;
+		//if (TestExitFlagGet()) break;
 	}
 }
 

@@ -73,6 +73,8 @@ void main(void *param)
 //	tp_dev.init();
 //	rtp_test();
 	//lwip_test();
+	vmem_test_by_man();
+	vmem_test_random();
 	u8 *ppp = (u8*)vmalloc(18);
 	vfree(ppp);
 	NetDhcpClient(30*1000);

@@ -11,6 +11,8 @@
 #ifndef __VSLAB_H__
 #define __VSLAB_H__
 
+#define VSLAB_FREE_PAGES_THREHOLD   (0U) //每种尺寸，如果空闲页达到超过这个门槛，多出的将被释放
+
 #define bitmap_get(n, bitmap)		(!!(((u8*)(bitmap))[(n)>>3] & 1<<((n)&0x07)))
 #define bitmap_clr(n, bitmap)		(((u8*)(bitmap))[(n)>>3] &= ~(1<<((n)&0x07)))
 #define bitmap_set(n, bitmap)		(((u8*)(bitmap))[(n)>>3] |= 1<<((n)&0x07))

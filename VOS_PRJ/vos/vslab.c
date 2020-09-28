@@ -367,8 +367,10 @@ void *VSlabBlockAlloc(struct StVSlabMgr *pSlabMgr, s32 size)
 
 			slab_page = 0;
 			if (pSlabMgr->pheap) { //从堆里申请一页
-				slab_page = VSlabPageBuild(VMemMalloc(pSlabMgr->pheap, pSlabMgr->page_size),
-									pSlabMgr->page_size, (index+1)*pSlabMgr->step_size, pSlabMgr);
+				VSLAB_UNLOCK();
+				u8 *tmp_ptr = (u8*)VMemMalloc(pSlabMgr->pheap, pSlabMgr->page_size);
+				VSLAB_LOCK();
+				slab_page = VSlabPageBuild(tmp_ptr, pSlabMgr->page_size, (index+1)*pSlabMgr->step_size, pSlabMgr);
 			}
 			if (slab_page == 0) {
 				goto END_SLAB_BLOCK_ALLOC;
@@ -477,9 +479,14 @@ s32 VSlabBlockFree(struct StVSlabMgr *pSlabMgr, void *ptr)
 	slab_page = (struct StVSlabPage *)(pPageBase + pSlabMgr->page_size - pSlabMgr->page_header_size);
 	//校验magic数
 	if (slab_page->magic != VSLAB_MAGIC_NUM) {
-		kprintf("error: %s, slab_page->magic match failed!\r\n", __FUNCTION__);
+		//kprintf("error: %s, slab_page->magic match failed!\r\n", __FUNCTION__);
 		goto END_SLAB_BLOCK_FREE;
 	}
+	//校验状态，free的当前状态不可能是SLAB_BITMAP_FREE链表的，只能是partial或full链表中过来。
+	if (slab_page->status == SLAB_BITMAP_FREE) {
+		goto END_SLAB_BLOCK_FREE;
+	}
+
 	//根据页管理区里的block_size块尺寸，计算slab_class索引号地址
 	index =  (slab_page->block_size + pSlabMgr->step_size - 1) / pSlabMgr->step_size - 1;
 	if (index >= pSlabMgr->class_max) {
@@ -503,12 +510,27 @@ s32 VSlabBlockFree(struct StVSlabMgr *pSlabMgr, void *ptr)
 		list_del(&slab_page->list);
 		pSlabMgr->class_base[index].page_partial_num--;
 
-		//插入到free链表
-		head_free = &pSlabMgr->class_base[index].page_free;
-		list_add(&slab_page->list, head_free);
-		//设置状态
-		slab_page->status = SLAB_BITMAP_FREE;
-		pSlabMgr->class_base[index].page_free_num++;
+		//根据设定的空闲页的阈值，来释放页回buddy系统中
+		if (pSlabMgr->class_base[index].page_free_num >= VSLAB_FREE_PAGES_THREHOLD) {
+			//清除一下magic, 防止随便释放内存地址，碰巧到中一个释放掉的页
+			//还有一个原因必须清除magic， 因为VMemFree会尝试先从slab释放
+			slab_page->magic = 0;
+			slab_page->status = SLAB_BITMAP_FREE;
+			if (pSlabMgr->pheap) {
+				VSLAB_UNLOCK();
+				VMemFree (pSlabMgr->pheap , pPageBase);
+				VSLAB_LOCK();
+			}
+		}
+		else {
+			//插入到free链表
+			head_free = &pSlabMgr->class_base[index].page_free;
+			list_add(&slab_page->list, head_free);
+			//设置状态
+			slab_page->status = SLAB_BITMAP_FREE;
+			pSlabMgr->class_base[index].page_free_num++;
+		}
+
 	}
 	else {//返回SLAB_BITMAP_PARTIAL，要判断slab_page的链表是从满链过来，还是从部分链过来
 		if (slab_page->status == SLAB_BITMAP_FULL) {//从满链过过来，还要从满链移到部分链中
