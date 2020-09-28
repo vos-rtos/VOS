@@ -98,29 +98,29 @@ u32 bitmap[10];//4*10 bits
 * 返回：最高优先级（最低位）的第n位。2^n
 * 注意：无
 *********************************************************************************************************/
-s32 bitmap_iterate(void **iter)
-{
-	u32 pos = (u32)*iter;
-	u8 *p8 = (u8*)bitmap;
-	while (pos < sizeof(bitmap) * 8) {
-		if ((pos & 0x7) == 0 && p8[pos>>3] == 0) {//处理一个字节
-			pos += 8;
-		}
-		else {//处理8bit
-			do {
-				if (p8[pos>>3] & 1 << (pos & 0x7)) {
-					*iter = (void*)(pos + 1);
-					goto END_ITERATE;
-				}
-				pos++;
-			} while (pos & 0x7);
-		}
-	}
-	return -1;
-
-END_ITERATE:
-	return pos;
-}
+//s32 bitmap_iterate(void **iter)
+//{
+//	u32 pos = (u32)*iter;
+//	u8 *p8 = (u8*)bitmap;
+//	while (pos < sizeof(bitmap) * 8) {
+//		if ((pos & 0x7) == 0 && p8[pos>>3] == 0) {//处理一个字节
+//			pos += 8;
+//		}
+//		else {//处理8bit
+//			do {
+//				if (p8[pos>>3] & 1 << (pos & 0x7)) {
+//					*iter = (void*)(pos + 1);
+//					goto END_ITERATE;
+//				}
+//				pos++;
+//			} while (pos & 0x7);
+//		}
+//	}
+//	return -1;
+//
+//END_ITERATE:
+//	return pos;
+//}
 
 /********************************************************************************************************
 * 函数：int bitmap_test();

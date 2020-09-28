@@ -35,7 +35,7 @@ void vmem_test_by_man()
 	* 测试一：
 	* 测试对象： 堆分裂和合并测试
 	*******************************************************************************************************/
-	pheap = VMemBuild(&arr_heap[0], sizeof(arr_heap), 1024, 8, VHEAP_ATTR_SYS, "test_heap");
+	pheap = VMemBuild(&arr_heap[0], sizeof(arr_heap), 1024, 8, VHEAP_ATTR_SYS, "test_heap", 1);
 	VMemInfoDump(pheap);
 	VBoudaryCheck(pheap);
 
@@ -105,7 +105,7 @@ void vmem_test_random()
 	s32 rand_num;
 	s32 malloc_size = 0;
 	s32 counter = 10000;
-	pheap = VMemBuild(&arr_heap[0], sizeof(arr_heap), 512, 8, VHEAP_ATTR_SYS, "test_heap");
+	pheap = VMemBuild(&arr_heap[0], sizeof(arr_heap), 512, 8, VHEAP_ATTR_SYS, "test_heap", 1);
 	VMemInfoDump(pheap);
 	while (1) {
 		//申请，释放各一次测试

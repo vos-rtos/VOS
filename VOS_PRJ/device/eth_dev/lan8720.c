@@ -7,7 +7,7 @@ void VOSDelayUs(u32 us);
 void Lan8720ResetPinInit()
 {
   GPIO_InitTypeDef  GPIO_InitStructure;
-
+#if 0
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
 
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
@@ -18,13 +18,31 @@ void Lan8720ResetPinInit()
   GPIO_Init(GPIOB, &GPIO_InitStructure);
 
   GPIO_SetBits(GPIOB, GPIO_Pin_0);
+#else
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
+
+   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
+   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+   GPIO_Init(GPIOD, &GPIO_InitStructure);
+
+   GPIO_SetBits(GPIOD, GPIO_Pin_3);
+#endif
 }
 
 void Lan8720Reset()
 {
+#if 0
 	GPIO_ResetBits(GPIOB,GPIO_Pin_0);
 	VOSDelayUs(50*1000);
 	GPIO_SetBits(GPIOB, GPIO_Pin_0);
+#else
+	GPIO_ResetBits(GPIOD,GPIO_Pin_3);
+	VOSDelayUs(50*1000);
+	GPIO_SetBits(GPIOD, GPIO_Pin_3);
+#endif
 }
 
 //LAN8720≥ı ºªØ

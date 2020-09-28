@@ -11,6 +11,9 @@
 
 #include "vtype.h"
 
+#define VOS_SLAB_ENABLE		(1) //打开slab分配器开关
+#define VOS_SLAB_STEP_SIZE 	(8) //slab分配器步长
+
 #define VMEM_BELONG_TO_NONE (0xFF)  //指向空闲任务，或者ISR上下文，或系统未启动
 
 
@@ -69,10 +72,12 @@ typedef struct StVMemHeapInfo {
 #define VMEM_MALLOC_PAD		0xAC //剩余空间填充字符
 
 struct StVMemCtrlBlock;
+struct StVSlabMgr;
 
 typedef struct StVMemHeap {
 	s8 *name; //堆名字
 	u8 *mem_end; //内存对齐后的结束地址，用来判断释放是否越界
+	struct StVSlabMgr *slab_ptr; //指向slab分配器
 	s32 irq_save;//中断状态存储
 	s32 heap_attr; //堆属性有两种，一种是专用堆，另一种是通用堆（系统堆）
 	s32 align_bytes; //几字节对齐
@@ -104,7 +109,8 @@ typedef struct StVMemCtrlBlock {
 #define ALIGN_DOWN(mem, align) 	(((u32)(mem)+(align)-1) & ~((align)-1))
 
 
-struct StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size, s32 align_bytes, s32 heap_attr, s8 *name);
+struct StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size, s32 align_bytes,
+												s32 heap_attr, s8 *name, s32 enable_slab);
 void *VMemMalloc(struct StVMemHeap *pheap, u32 size);
 void VMemFree (struct StVMemHeap *pheap, void *p);
 void *VMemRealloc(struct StVMemHeap *pheap, void *p, u32 size);

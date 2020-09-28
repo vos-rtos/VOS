@@ -89,8 +89,8 @@ s32 GetPageClassIndex(s32 size, s32 page_size)
 }
 
 /********************************************************************************************************
-* 函数：struct StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size,
-* 											s32 align_bytes, s32 heap_attr, s8 *name);
+* 函数：struct StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size, s32 align_bytes,
+*														s32 heap_attr, s8 *name, s32 enable_slab);
 * 描述:  堆创建
 * 参数:
 * [1] mem: 用户提供用来划分堆的内存
@@ -99,10 +99,12 @@ s32 GetPageClassIndex(s32 size, s32 page_size)
 * [4] align_bytes: 字节对齐，例如8，就是8字节对齐
 * [5] heap_attr: 分专用堆和通用堆，正常malloc就是通用堆申请
 * [6] name: 堆名字
+* [7] enable_slab: 是否打开slab分配器
 * 返回：堆管理对象指针
 * 注意：如果提供的内存超出了page_class[n]最大空间，就page_class[n]最大值里链表里链接多个相邻的数据块
 *********************************************************************************************************/
-struct StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size, s32 align_bytes, s32 heap_attr, s8 *name)
+struct StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size, s32 align_bytes,
+												s32 heap_attr, s8 *name, s32 enable_slab)
 {
 	s32 i;
 	s32 index;
@@ -183,6 +185,21 @@ struct StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size, s32 align_bytes, s
 		VHeapMgrAdd(pheap);
 	}
 
+#if VOS_SLAB_ENABLE
+	/******** 初始化SLAB分配器 ***********/
+	if (pheap && enable_slab) {
+		s32 vslab_size = SlabMgrHeaderGetSize(page_size, align_bytes, VOS_SLAB_STEP_SIZE);
+		u8 *vslab_ptr = (u8*)VMemMalloc(pheap, SlabMgrHeaderGetSize(page_size, align_bytes, VOS_SLAB_STEP_SIZE));
+		pheap->slab_ptr = VSlabBuild(vslab_ptr, vslab_size, page_size,
+				align_bytes, VOS_SLAB_STEP_SIZE, "vslab", pheap);
+	}
+	else
+#endif
+	{
+		pheap->slab_ptr = 0;
+	}
+
+	/******** *********** ***********/
 	return pheap;
 }
 
@@ -203,6 +220,17 @@ void *VMemMalloc(struct StVMemHeap *pheap, u32 size)
 	s32 index_top;//这层是有内存空间可以分配
 	StVMemCtrlBlock *pMCB = 0;//分裂，左边那个
 	StVMemCtrlBlock *pMCBRight = 0; //分裂，右边那个
+
+
+#if VOS_SLAB_ENABLE
+	/******** 先查找SLAB分配器 ***********/
+	if (pheap && pheap->slab_ptr) {
+		pObj = VSlabBlockAlloc(pheap->slab_ptr, size);
+		if (pObj) return pObj;
+	}
+	/******** *********** ***********/
+#endif
+
 	if (size > pheap->page_size * (1 << (MAX_PAGE_CLASS_MAX - 1))) {//申请大小 大于 最大块
 		return 0;
 	}
@@ -290,6 +318,16 @@ void VMemFree(struct StVMemHeap *pheap, void *p)
 	s32 index = 0;
 	struct StVMemCtrlBlock *pMCB = 0;
 	struct StVMemCtrlBlock *pMCBTemp = 0;
+
+#if VOS_SLAB_ENABLE
+	/******** 先释放SLAB分配器 ***********/
+	if (pheap && pheap->slab_ptr && VSlabBlockFree(pheap->slab_ptr, p)) {
+		//指针在slab范围内，直接返回
+		return ;
+	}
+	/******** *********** ***********/
+#endif
+	//指针在slab范围外，交给slab释放
 	if ((u8*)p < pheap->page_base || (u8*)p >= pheap->mem_end) return; //地址范围溢出
 																	   //判断p地址必须是页面对齐，否者不释放
 	size = (u8*)p - pheap->page_base;
@@ -414,6 +452,20 @@ void *VMemRealloc(struct StVMemHeap *pheap, void *p, u32 size)
 		VMemFree(pheap, p);
 		goto END_VMEMREALLOC;
 	}
+
+#if VOS_SLAB_ENABLE
+	/******** 先释放SLAB分配器 ***********/
+	if (pheap && pheap->slab_ptr && VSlabBlockFree(pheap->slab_ptr, p)) {
+		//指针在slab范围内，直接返回
+		ptr = VMemMalloc(pheap, size);
+		if (ptr) {
+			memcpy(ptr, p, size);
+		}
+		goto END_VMEMREALLOC;
+	}
+	/******** *********** ***********/
+#endif
+
 	//判断是本堆的malloc
 	VMEM_LOCK();
 	if ((u8*)p >= pheap->page_base &&

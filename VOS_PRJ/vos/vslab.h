@@ -23,9 +23,11 @@ enum {
 };
 
 struct StVSlabMgr;
+struct StVMemHeap;
 
-struct StVSlabMgr *VSlabBuild(u8 *mem, s32 len, s32 page_size, s32 align_bytes);
+struct StVSlabMgr *VSlabBuild(u8 *mem, s32 len, s32 page_size,
+		s32 align_bytes, s32 step_size, s8 *name, struct StVMemHeap *pheap);
 void *VSlabBlockAlloc(struct StVSlabMgr *pSlabMgr, s32 size);
-void VSlabBlockFree(struct StVSlabMgr *pSlabMgr, void *ptr);
+s32 VSlabBlockFree(struct StVSlabMgr *pSlabMgr, void *ptr);
 
 #endif

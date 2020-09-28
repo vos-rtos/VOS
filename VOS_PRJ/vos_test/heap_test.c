@@ -47,7 +47,7 @@ void vheap_test()
 	static u8 arr_heap[11*1024];
 	//先创建一个通用堆
 	struct StVMemHeap *pheap = 0;
-	pheap = VMemBuild(&arr_heap[0], sizeof(arr_heap), 1024, 8, VHEAP_ATTR_SYS, "test_heap");
+	pheap = VMemBuild(&arr_heap[0], sizeof(arr_heap), 1024, 8, VHEAP_ATTR_SYS, "test_heap", 1);
 
 	s32 task_id;
 	task_id = VOSTaskCreate(task_vheap1, 0, task_vheap_stack1, sizeof(task_vheap_stack1), TASK_PRIO_NORMAL, "task_vheap1");

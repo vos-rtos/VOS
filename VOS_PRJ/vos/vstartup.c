@@ -108,14 +108,14 @@ vos_start(void)
 
 	//创建RAM系统堆
 	struct StVMemHeap *pheap1 = VMemBuild((u8*)&_Heap_Begin, (u32)&_Heap_Limit-(u32)&_Heap_Begin,
-			1024, 8, VHEAP_ATTR_SYS, "vos_sys_ram_heap");
+			1024, 8, VHEAP_ATTR_SYS, "vos_sys_ram_heap", 1);//启动slab分配器
 	//创建CCRAM系统堆
 	struct StVMemHeap *pheap2 = VMemBuild((u8*)&_Heap_ccmram_Begin, (u32)&_Heap_ccmram_Limit-(u32)&_Heap_ccmram_Begin,
-			1024, 8, VHEAP_ATTR_SYS, "vos_sys_ccram_heap");
+			1024, 8, VHEAP_ATTR_SYS, "vos_sys_ccram_heap", 1);//启动slab分配器
 
 	ExSRamInit();
 	struct StVMemHeap *pheap3 = VMemBuild(ExSRamGetBaseAddr(), ExSRamGetTotalSize(),
-			1024, 8, VHEAP_ATTR_SYS, "vos_sys_exsram_heap");
+			1024, 8, VHEAP_ATTR_SYS, "vos_sys_exsram_heap", 1);//启动slab分配器);
 
 
 	VOSSemInit();
