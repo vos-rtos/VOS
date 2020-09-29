@@ -377,15 +377,17 @@ void *VSlabBlockAlloc(struct StVSlabMgr *pSlabMgr, s32 size)
 			if (slab_page == 0) {
 				goto END_SLAB_BLOCK_ALLOC;
 			}
-			//插入到partial链表
-			list_add(&slab_page->list, head_partial);
-			pSlabMgr->class_base[index].page_partial_num++;
-			slab_page->status = SLAB_BITMAP_PARTIAL;
 		}
 		else { //获取第一个page
 			slab_page = list_entry(head_free->next, struct StVSlabPage, list);
 			pSlabMgr->class_base[index].page_free_num--;
+			//从free链表中断开
+			list_del(&slab_page->list);
 		}
+		//插入到partial链表
+		list_add(&slab_page->list, head_partial);
+		pSlabMgr->class_base[index].page_partial_num++;
+		slab_page->status = SLAB_BITMAP_PARTIAL;
 	}
 	else { //直接从partial链表取出一个来分配
 		slab_page = list_entry(head_partial->next, struct StVSlabPage, list);
@@ -733,7 +735,7 @@ s32 VSlabBoudaryCheck(struct StVSlabMgr *pSlabMgr)
 					}
 					//检查位图，满页应该都置位
 					iter = 0; //从头遍历,查找空闲块，返回-1才是正确的
-					while (bitmap_iterate(&iter, 0, pPage->bitmap, pPage->block_max) > 0) {
+					while (bitmap_iterate(&iter, 0, pPage->bitmap, pPage->block_max) >= 0) {
 						BOUNDARY_ERROR();
 					}
 					counter_full++;
@@ -775,13 +777,13 @@ s32 VSlabBoudaryCheck(struct StVSlabMgr *pSlabMgr)
 					}
 					//检查位图，满页应该都置位
 					iter = 0; //从头遍历,查找分配块，返回-1才是正确的
-					while (bitmap_iterate(&iter, 1, pPage->bitmap, pPage->block_max) > 0) {
+					while (bitmap_iterate(&iter, 1, pPage->bitmap, pPage->block_max) >= 0) {
 						BOUNDARY_ERROR();
 					}
 					counter_free++;
 				}
 			}
-			if (pClass->page_free_num != counter_free) BOUNDARY_ERROR();
+			if (pClass->page_free_num > VSLAB_FREE_PAGES_THREHOLD) BOUNDARY_ERROR();
 		}
 	}
 
