@@ -115,7 +115,7 @@ void vmem_test_random()
 		while (counter--) {
 			rand_num = rand() % 1000;
 			for (i = 0; i < rand_num; i++) {
-				malloc_size = rand() % 10000;
+				malloc_size = rand() % 1024;
 				p[0] = VMemMalloc(pheap, malloc_size);
 				VBoudaryCheck(pheap);
 				VMemFree(pheap, p[0]);
@@ -131,7 +131,7 @@ void vmem_test_random()
 		j = 0;
 		while (1)
 		{
-			malloc_size = rand() % 10000;
+			malloc_size = rand() % 1024;
 			if (j < sizeof(p)/sizeof(p[0])) {
 				p[j] = VMemMalloc(pheap, malloc_size);
 				if (p[j] == 0) {//申请失败，跳出，但是还没耗尽
@@ -167,14 +167,16 @@ void vmem_test_random()
 		while (counter--) {
 			j = rand() % (sizeof(p)/sizeof(p[0]));
 			for (i = 0; i < j; i++) {
-				malloc_size = rand() % 10000;
+				malloc_size = rand() % 1024;
 				p[i] = VMemMalloc(pheap, malloc_size);
 				VBoudaryCheck(pheap);
 			}
+			VMemInfoDump(pheap);
 			for (i = 0; i < j; i++) {
 				VMemFree(pheap, p[i]);
 				VBoudaryCheck(pheap);
 			}
+			VMemInfoDump(pheap);
 		}
 		VMemInfoDump(pheap);
 		//if (TestExitFlagGet()) break;
