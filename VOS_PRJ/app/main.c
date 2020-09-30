@@ -66,17 +66,11 @@ s32 NetDhcpClient(u32 timeout);
 void main(void *param)
 {
 	s32 res;
-
-//	VSlabTest();
 //	return ;
 // 	LCD_Init();
 //	tp_dev.init();
 //	rtp_test();
 	//lwip_test();
-	vmem_test_by_man();
-	vmem_test_random();
-	u8 *ppp = (u8*)vmalloc(18);
-	vfree(ppp);
 	NetDhcpClient(30*1000);
 	//SetNetWorkInfo ("192.168.2.150", "255.255.255.0", "192.168.2.101");
 	//lwip_inner_test();

@@ -61,19 +61,20 @@ u8 LAN8720_Init(void)
 
 	GPIO_Set(GPIOA, GPIO_Pin_1|GPIO_Pin_2|GPIO_Pin_7, GPIO_Mode_AF,GPIO_OType_PP, GPIO_Speed_100MHz, GPIO_PuPd_UP);		//PA1,2,7复用输出
 	GPIO_Set(GPIOC, GPIO_Pin_1|GPIO_Pin_4|GPIO_Pin_5, GPIO_Mode_AF,GPIO_OType_PP, GPIO_Speed_100MHz, GPIO_PuPd_UP);		//PC1,4,5复用输出
-	GPIO_Set(GPIOG, GPIO_Pin_13|GPIO_Pin_14, GPIO_Mode_AF,GPIO_OType_PP, GPIO_Speed_100MHz, GPIO_PuPd_UP);		//PG13,14复用输出
-	GPIO_Set(GPIOB, GPIO_Pin_11, GPIO_Mode_AF, GPIO_OType_PP, GPIO_Speed_100MHz, GPIO_PuPd_UP);				//PB11复用输出
+	GPIO_Set(GPIOG, GPIO_Pin_11|GPIO_Pin_13|GPIO_Pin_14, GPIO_Mode_AF,GPIO_OType_PP, GPIO_Speed_100MHz, GPIO_PuPd_UP);		//PG11, PG13,14复用输出
+	//GPIO_Set(GPIOB, GPIO_Pin_11, GPIO_Mode_AF, GPIO_OType_PP, GPIO_Speed_100MHz, GPIO_PuPd_UP);				//PB11复用输出
  
 	GPIO_AF_Set(GPIOA,1,11);	//PA1,AF11
  	GPIO_AF_Set(GPIOA,2,11);	//PA2,AF11
  	GPIO_AF_Set(GPIOA,7,11);	//PA7,AF11
 	
-  	GPIO_AF_Set(GPIOB,11,11);	//PB11,AF11
+  	//GPIO_AF_Set(GPIOB,11,11);	//PB11,AF11
  
 	GPIO_AF_Set(GPIOC,1,11);	//PC1,AF11
  	GPIO_AF_Set(GPIOC,4,11);	//PC4,AF11
  	GPIO_AF_Set(GPIOC,5,11);	//PC5,AF11
  
+ 	GPIO_AF_Set(GPIOG,11,11);	//PG13,AF11
   	GPIO_AF_Set(GPIOG,13,11);	//PG13,AF11
  	GPIO_AF_Set(GPIOG,14,11);	//PG14,AF11  
 	
@@ -169,10 +170,9 @@ void ETH_IRQHandler(void)
 	VOSIntEnter();
 	while((len=ETH_GetRxPktSize(DMARxDescToGet))!=0) 	//检测是否收到数据包
 	{ 		
-//		kprintf("------------------------------------\r\n");
-//		dumphex((unsigned char*)(DMARxDescToGet->Buffer1Addr), len);
+		//kprintf("------------------------------------\r\n");
+		//dumphex((unsigned char*)(DMARxDescToGet->Buffer1Addr), len);
 		lwip_packet_handler();
-		//ETH_Rx_Packet();
 	} 
 	ETH_DMAClearITPendingBit(ETH_DMA_IT_R);
 	ETH_DMAClearITPendingBit(ETH_DMA_IT_NIS);

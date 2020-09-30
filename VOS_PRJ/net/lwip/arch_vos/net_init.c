@@ -35,7 +35,7 @@ s32 net_init()
 
   	if (LAN8720_Init())	return -2;
 
-  	lan8720Regs();
+  	//lan8720Regs();
 
   	tcpip_init(NULL, NULL);
 
