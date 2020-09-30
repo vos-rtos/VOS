@@ -6,7 +6,7 @@
 * 内	容: slab主要的意义是处理小内存分配，释放策略会延迟，对频繁分配意义比较大，还有内存浪费有好处
 * 注	意: 一个堆对应一个slab, 如果多个堆的的page_size和align_size相同，也可以多个堆
 * 历    史：
-* --20200925：创建文件, 实现slab内存池分配算法，这里如果申请的内存大于obj_size_max大小，直接从buddy分配
+* --20200925：创建文件, 实现slab内存池分配算法，这里如果申请的内存大于某个尺寸，直接从buddy分配
 
 *********************************************************************************************************/
 #include "vtype.h"
@@ -286,7 +286,11 @@ struct StVSlabPage *VSlabPageBuild(u8 *mem, s32 len, s32 block_size, struct StVS
 	pSlabPage->block_max = nBlocks;
 	pSlabPage->block_base = mem;
 	//pSlabPage->align_bytes = align_bytes;
-	pSlabPage->bitmap_max = (nBlocks+8-1)/8;
+	//注意：这里实际不使用最大值，按8字节对齐就可以，这样可以加速访问位图速度
+	//但是，计算的空间必须要按最大值计算，这样就可以固定的页管理空间，方便查找。
+	pSlabPage->bitmap_max = (nBlocks + 8 - 1) / 8;
+	//bitmap_max计算页管理区位图数组大小（最大值）
+	//pSlabPage->bitmap_max = (page_size / step_size + 8 - 1) / 8;
 
 
 	return pSlabPage;
@@ -307,7 +311,7 @@ void *SlabBitMapSet(struct StVSlabPage *page, s32 *status)
 {
 	void *pnew = 0;
 	s32 offset = FirstFreeBlockGet(page->bitmap, page->bitmap_max, 0);
-	if (offset < 0 || offset > page->block_max) {//超过最大的偏移
+	if (offset < 0 || offset >= page->block_max) {//超过最大的偏移
 		*status = SLAB_BITMAP_FULL;
 		pnew = 0;
 	}
@@ -486,10 +490,6 @@ s32 VSlabBlockFree(struct StVSlabMgr *pSlabMgr, void *ptr)
 		//kprintf("error: %s, slab_page->magic match failed!\r\n", __FUNCTION__);
 		goto END_SLAB_BLOCK_FREE;
 	}
-	//校验状态，free的当前状态不可能是SLAB_BITMAP_FREE链表的，只能是partial或full链表中过来。
-	if (slab_page->status == SLAB_BITMAP_FREE) {
-		goto END_SLAB_BLOCK_FREE;
-	}
 
 	//根据页管理区里的block_size块尺寸，计算slab_class索引号地址
 	index =  (slab_page->block_size + pSlabMgr->step_size - 1) / pSlabMgr->step_size - 1;
@@ -519,7 +519,7 @@ s32 VSlabBlockFree(struct StVSlabMgr *pSlabMgr, void *ptr)
 			//清除一下magic, 防止随便释放内存地址，碰巧到中一个释放掉的页
 			//还有一个原因必须清除magic， 因为VMemFree会尝试先从slab释放
 			slab_page->magic = 0;
-			slab_page->status = SLAB_BITMAP_FREE;
+
 			if (pSlabMgr->pheap) {
 				VSLAB_UNLOCK();
 				VMemFree (pSlabMgr->pheap , pPageBase);
