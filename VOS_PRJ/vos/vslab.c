@@ -628,6 +628,68 @@ s32 VSlabBitMapGetFreeBlocks(u8 *bitmap, s32 nbits)
 	}
 	return free_cnts;
 }
+
+/********************************************************************************************************
+* 函数：s32 VSlabInfoShow(struct StVSlabMgr *pSlabMgr);
+* 描述: 打印slab分配器信息,被用于shell命令heap
+* 参数:
+* [1] pSlabMgr: slab对象指针
+* 返回：无
+* 注意：无
+*********************************************************************************************************/
+s32 VSlabInfohow(struct StVSlabMgr *pSlabMgr)
+{
+	s32 i;
+	struct list_head *list;
+	struct StVSlabClass *pClass = 0;
+	struct StVSlabPage *pPage = 0;
+	kprintf(" slab 管理区信息：\r\n");
+	kprintf(" slab 名字: \"%s\", slab 头总大小: %d, 页管理区总大小: %d\r\n",
+			pSlabMgr->name, pSlabMgr->slab_header_size, pSlabMgr->page_header_size);
+	kprintf(" 对齐字节数: %d, 每页大小: %d, 步长字节: %d, 种类划分大小: %d\r\n",
+			pSlabMgr->align_bytes, pSlabMgr->page_size,
+			pSlabMgr->step_size, pSlabMgr->class_max);
+
+	kprintf(" 页管理区信息：\r\n");
+	for (i = 0; i<pSlabMgr->class_max; i++) {
+		pClass = &pSlabMgr->class_base[i];
+		if (!list_empty(&pClass->page_full)||
+			!list_empty(&pClass->page_partial) ||
+			!list_empty(&pClass->page_free)) {
+
+			kprintf(" <种类编号: %d>\r\n", i);
+			if (!list_empty(&pClass->page_full)) {
+				kprintf("   == 全满页链: 步长<%d>, 页数<%04d>\r\n", (i+1)*pSlabMgr->step_size, pClass->page_full_num);
+				list_for_each(list, &pClass->page_full) {
+					pPage = list_entry(list, struct StVSlabPage, list);
+					kprintf("   [页头信息: 魔数-0x%08x, 页基址-0x%08x, 位图:位数-<%04d>,空闲块数-<%04d>]\r\n",
+						pPage->magic, pPage->block_base, pPage->block_max,
+						VSlabBitMapGetFreeBlocks(pPage->bitmap, pPage->block_max));//pPage->block_max才是位图有效总位数
+				}
+			}
+			if (!list_empty(&pClass->page_partial)) {
+				kprintf("   == 部分页链: 步长<%d>, 页数<%04d>\r\n", (i + 1)*pSlabMgr->step_size, pClass->page_partial_num);
+				list_for_each(list, &pClass->page_partial) {
+					pPage = list_entry(list, struct StVSlabPage, list);
+					kprintf("   [页头信息: 魔数-0x%08x, 页基址-0x%08x, 位图:位数-<%04d>,空闲块数-<%04d>]\r\n",
+						pPage->magic, pPage->block_base, pPage->block_max,
+						VSlabBitMapGetFreeBlocks(pPage->bitmap, pPage->block_max));//pPage->block_max才是位图有效总位数
+				}
+			}
+			if (!list_empty(&pClass->page_free)) {
+				kprintf("   == 全空页链: 步长<%d>, 页数<%04d>\r\n", (i + 1)*pSlabMgr->step_size, pClass->page_free_num);
+				list_for_each(list, &pClass->page_free) {
+					pPage = list_entry(list, struct StVSlabPage, list);
+					kprintf("   [页头信息: 魔数-0x%08x, 页基址-0x%08x, 位图:位数-<%04d>,空闲块数-<%04d>]\r\n",
+						pPage->magic, pPage->block_base, pPage->block_max,
+						VSlabBitMapGetFreeBlocks(pPage->bitmap, pPage->block_max));//pPage->block_max才是位图有效总位数
+				}
+			}
+		}
+	}
+	return 0;
+}
+
 /********************************************************************************************************
 * 函数：s32 VSlabInfoDump(struct StVSlabMgr *pSlabMgr);
 * 描述: 打印slab分配器信息
@@ -638,55 +700,8 @@ s32 VSlabBitMapGetFreeBlocks(u8 *bitmap, s32 nbits)
 *********************************************************************************************************/
 s32 VSlabInfoDump(struct StVSlabMgr *pSlabMgr)
 {
-	s32 i;
-	struct list_head *list;
-	struct StVSlabClass *pClass = 0;
-	struct StVSlabPage *pPage = 0;
 	kprintf("###################################\r\n");
-	kprintf("slab name: \t\t\"%s\"\r\n", pSlabMgr->name);
-	kprintf("page_header_size: \t%d(B)\r\n", pSlabMgr->page_header_size);
-	kprintf("slab_header_size: \t%d(B)\r\n", pSlabMgr->slab_header_size);
-	kprintf("align_bytes: \t\t%d(B)\r\n", pSlabMgr->align_bytes);
-	kprintf("page_size: \t\t%d(B)\r\n", pSlabMgr->page_size);
-	kprintf("step_size: \t\t%d(B)\r\n", pSlabMgr->step_size);
-	kprintf("class_max: \t\t%d(B)\r\n", pSlabMgr->class_max);
-
-	for (i = 0; i<pSlabMgr->class_max; i++) {
-		pClass = &pSlabMgr->class_base[i];
-		if (!list_empty(&pClass->page_full)||
-			!list_empty(&pClass->page_partial) ||
-			!list_empty(&pClass->page_free)) {
-			
-			kprintf("<class: %d>\r\n", i);
-			if (!list_empty(&pClass->page_full)) {
-				kprintf("   == page_full: step=%d(B), total=%d  ==\r\n", (i+1)*pSlabMgr->step_size, pClass->page_full_num);
-				list_for_each(list, &pClass->page_full) {
-					pPage = list_entry(list, struct StVSlabPage, list);
-					kprintf("   [page header: magic=0x%08x, block_base=0x%08x, bitmap=<%d>-<%d>]->\r\n", 
-						pPage->magic, pPage->block_base, pPage->block_max, 
-						VSlabBitMapGetFreeBlocks(pPage->bitmap, pPage->block_max));//pPage->block_max才是位图有效总位数
-				}
-			}
-			if (!list_empty(&pClass->page_partial)) {
-				kprintf("   == page_partial: step=%d(B), total=%d  ==\r\n", (i + 1)*pSlabMgr->step_size, pClass->page_partial_num);
-				list_for_each(list, &pClass->page_partial) {
-					pPage = list_entry(list, struct StVSlabPage, list);
-					kprintf("   [page header: magic=0x%08x, block_base=0x%08x, bitmap=<%d>-<%d>]->\r\n",
-						pPage->magic, pPage->block_base, pPage->block_max,
-						VSlabBitMapGetFreeBlocks(pPage->bitmap, pPage->block_max));//pPage->block_max才是位图有效总位数
-				}
-			}
-			if (!list_empty(&pClass->page_free)) {
-				kprintf("   == page_free: step=%d(B), total=%d  ==\r\n", (i + 1)*pSlabMgr->step_size, pClass->page_free_num);
-				list_for_each(list, &pClass->page_free) {
-					pPage = list_entry(list, struct StVSlabPage, list);
-					kprintf("   [page header: magic=0x%08x, block_base=0x%08x, bitmap=<%d>-<%d>]->\r\n",
-						pPage->magic, pPage->block_base, pPage->block_max,
-						VSlabBitMapGetFreeBlocks(pPage->bitmap, pPage->block_max));//pPage->block_max才是位图有效总位数
-				}
-			}
-		}
-	}
+	VSlabInfohow(pSlabMgr);
 	kprintf("------    end   ------\r\n");
 	return 0;
 }

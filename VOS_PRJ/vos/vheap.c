@@ -10,6 +10,7 @@
 #include "vos.h"
 #include "vmem.h"
 #include "vlist.h"
+#include "vslab.h"
 
 
 #define VHEAP_LOCK() 	gVheapMgr.irq_save = __vos_irq_save()
@@ -109,11 +110,12 @@ void VHeapShellShow()
 	struct StVMemHeap *pheap = 0;
 	StVMemHeapInfo heap_info;
 	VHEAP_LOCK();
-	kprintf("+----------------------------------------------------------------------+\r\n");
+	kprintf("+---------------------------------------------------------------------------------+\r\n");
 	list_for_each(list, &gVheapMgr.heap) {
 		pheap = list_entry(list, struct StVMemHeap, list_heap);
 		VMemGetHeapInfo(pheap, &heap_info);
-		kprintf(" 编号[%d]: %s, 分配地址范围: 0x%08x ~ 0x%08x\r\n",
+		kprintf(" buddy分配器信息：\r\n");
+		kprintf(" 编号[%d]: \"%s\", 分配地址范围: 0x%08x ~ 0x%08x\r\n",
 				i, pheap->name ? pheap->name : "", (u32)pheap->page_base, (u32)pheap->mem_end);
 		kprintf(" 对齐字节: 0x%08x, 页属性: %s, 页大小: 0x%08x\r\n"
 				" 空闲页数: 0x%08x, 已分配页数：0x%08x, 页总数: 0x%08x\r\n"
@@ -125,12 +127,17 @@ void VHeapShellShow()
 				heap_info.used_page_num,
 				heap_info.page_counts,
 				heap_info.cur_max_size);
+
+		if (pheap->slab_ptr) {
+			VSlabInfohow(pheap->slab_ptr);
+		}
+
 		i++;
-		kprintf("+----------------------------------------------------------------------+\r\n");
+		kprintf("+---------------------------------------------------------------------------------+\r\n");
 	}
 	if (list_empty(&gVheapMgr.heap)) {
 		kprintf("没堆内存分配空间\r\n");
-		kprintf("+----------------------------------------------------------------------+\r\n");
+		kprintf("+---------------------------------------------------------------------------------+\r\n");
 	}
 	VHEAP_UNLOCK();
 }
