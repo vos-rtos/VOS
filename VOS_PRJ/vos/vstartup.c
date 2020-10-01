@@ -117,7 +117,6 @@ vos_start(void)
 	struct StVMemHeap *pheap3 = VMemBuild(ExSRamGetBaseAddr(), ExSRamGetTotalSize(),
 			1024, 8, VHEAP_ATTR_SYS, "vos_sys_exsram_heap", 1);//∆Ù∂Øslab∑÷≈‰∆˜);
 
-
 	VOSSemInit();
 	VOSMutexInit();
 	VOSMsgQueInit();

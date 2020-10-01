@@ -1,36 +1,8 @@
 #include "sdio_sdcard.h"
-#include "string.h"  
-#include "usart.h"	 
+#include "string.h"	 
 
 #define INTX_DISABLE() 	int irq_save = __vos_irq_save();
 #define INTX_ENABLE() __vos_irq_restore(irq_save)
-
-//GPIO设置专用宏定义
-#define GPIO_MODE_IN    	0		//普通输入模式
-#define GPIO_MODE_OUT		1		//普通输出模式
-#define GPIO_MODE_AF		2		//AF功能模式
-#define GPIO_MODE_AIN		3		//模拟输入模式
-
-#define GPIO_SPEED_2M		0		//GPIO速度2Mhz
-#define GPIO_SPEED_25M		1		//GPIO速度25Mhz
-#define GPIO_SPEED_50M		2		//GPIO速度50Mhz
-#define GPIO_SPEED_100M		3		//GPIO速度100Mhz
-
-#define GPIO_PUPD_NONE		0		//不带上下拉
-#define GPIO_PUPD_PU		1		//上拉
-#define GPIO_PUPD_PD		2		//下拉
-#define GPIO_PUPD_RES		3		//保留
-
-#define GPIO_OTYPE_PP		0		//推挽输出
-#define GPIO_OTYPE_OD		1		//开漏输出
-
-static u8 CardType=SDIO_STD_CAPACITY_SD_CARD_V1_1;		//SD卡类型（默认为1.x卡）
-static u32 CSD_Tab[4],CID_Tab[4],RCA=0;					//SD卡CSD,CID以及相对地址(RCA)数据
-static u8 DeviceMode=SD_DMA_MODE;		   				//工作模式,注意,工作模式必须通过SD_SetDeviceMode,后才算数.这里只是定义一个默认的模式(SD_DMA_MODE)
-static u8 StopCondition=0; 								//是否发送停止传输标志位,DMA多块读写的时候用到  
-volatile SD_Error TransferError=SD_OK;					//数据传输错误标志,DMA读写时使用	    
-volatile u8 TransferEnd=0;								//传输结束标志,DMA读写时使用
-SD_CardInfo SDCardInfo;									//SD卡信息
 
 //GPIO通用设置
 //GPIOx:GPIOA~GPIOI.
@@ -115,33 +87,40 @@ void GPIO_AF_Set(GPIO_TypeDef* GPIOx,u8 BITx,u8 AFx)
 	GPIOx->AFR[BITx>>3]|=(u32)AFx<<((BITx&0X07)*4);
 }
 
+
+/*用于sdio初始化的结构体*/
+SDIO_InitTypeDef SDIO_InitStructure;
+SDIO_CmdInitTypeDef SDIO_CmdInitStructure;
+SDIO_DataInitTypeDef SDIO_DataInitStructure;   
+
+SD_Error CmdError(void);  
+SD_Error CmdResp7Error(void);
+SD_Error CmdResp1Error(u8 cmd);
+SD_Error CmdResp3Error(void);
+SD_Error CmdResp2Error(void);
+SD_Error CmdResp6Error(u8 cmd,u16*prca);  
+SD_Error SDEnWideBus(u8 enx);	  
+SD_Error IsCardProgramming(u8 *pstatus); 
+SD_Error FindSCR(u16 rca,u32 *pscr);
+u8 convert_from_bytes_to_power_of_two(u16 NumberOfBytes); 
+
+
+static u8 CardType=SDIO_STD_CAPACITY_SD_CARD_V1_1;		//SD卡类型（默认为1.x卡）
+static u32 CSD_Tab[4],CID_Tab[4],RCA=0;					//SD卡CSD,CID以及相对地址(RCA)数据
+static u8 DeviceMode=SD_DMA_MODE;		   				//工作模式,注意,工作模式必须通过SD_SetDeviceMode,后才算数.这里只是定义一个默认的模式(SD_DMA_MODE)
+static u8 StopCondition=0; 								//是否发送停止传输标志位,DMA多块读写的时候用到  
+volatile SD_Error TransferError=SD_OK;					//数据传输错误标志,DMA读写时使用	    
+volatile u8 TransferEnd=0;								//传输结束标志,DMA读写时使用
+SD_CardInfo SDCardInfo;									//SD卡信息
+
 //SD_ReadDisk/SD_WriteDisk函数专用buf,当这两个函数的数据缓存区地址不是4字节对齐的时候,
 //需要用到该数组,确保数据缓存区地址是4字节对齐的.
+//__align(4) u8 SDIO_DATA_BUFFER[512];
 u8 SDIO_DATA_BUFFER[512] __attribute__ ((aligned (4)));
  
-
-//初始化SD卡
-//返回值:错误代码;(0,无错误)
-SD_Error SD_Init(void)
+ 
+void SDIO_Register_Deinit()
 {
-	SD_Error errorstatus=SD_OK;	  
-	u8 clkdiv=0;
-	//SDIO IO口初始化   	 
-	RCC->AHB1ENR|=1<<2;    		//使能PORTC时钟
-	RCC->AHB1ENR|=1<<3;    		//使能PORTD时钟 
-	RCC->AHB1ENR|=1<<22;		//DMA2时钟使能
-	RCC->APB2ENR|=1<<11;		//SDIO时钟使能
-	RCC->APB2RSTR|=1<<11;		//SDIO复位
-	GPIO_Set(GPIOC,0X1F<<8,GPIO_MODE_AF,GPIO_OTYPE_PP,GPIO_SPEED_50M,GPIO_PUPD_PU);	//PC8,9,10,11,12复用功能输出	
- 	GPIO_Set(GPIOD,1<<2,GPIO_MODE_AF,GPIO_OTYPE_PP,GPIO_SPEED_50M,GPIO_PUPD_PU);	//PD2复用功能输出	
-  	GPIO_AF_Set(GPIOC,8,12);	//PC8,AF12
- 	GPIO_AF_Set(GPIOC,9,12);	//PC9,AF12
- 	GPIO_AF_Set(GPIOC,10,12);	//PC10,AF12 
- 	GPIO_AF_Set(GPIOC,11,12);	//PC11,AF12 
- 	GPIO_AF_Set(GPIOC,12,12);	//PC12,AF12 
- 	GPIO_AF_Set(GPIOD,2,12);	//PD2,AF12    
-	RCC->APB2RSTR&=~(1<<11);	//SDIO结束复位
- 	//SDIO外设寄存器设置为默认值 			   
 	SDIO->POWER=0x00000000;
 	SDIO->CLKCR=0x00000000;
 	SDIO->ARG=0x00000000;
@@ -150,13 +129,95 @@ SD_Error SD_Init(void)
 	SDIO->DLEN=0x00000000;
 	SDIO->DCTRL=0x00000000;
 	SDIO->ICR=0x00C007FF;
-	SDIO->MASK=0x00000000;	  
- 	MY_NVIC_Init(0,0,SDIO_IRQn,2);		//SDIO中断配置
+	SDIO->MASK=0x00000000;	 
+}
+
+int kprintf(char* format, ...);
+#define PRT_REG(x) kprintf(#x"=0x%08x\r\n", x)
+
+void SDIO_SET_REGS(unsigned int v) {
+	SDIO->CLKCR = v;
+}
+
+void SDIO_SHOW_REGS()
+{
+
+  PRT_REG(SDIO->POWER);
+  PRT_REG(SDIO->CLKCR);
+  PRT_REG(SDIO->ARG);
+  PRT_REG(SDIO->CMD);
+  PRT_REG(SDIO->RESPCMD);
+  PRT_REG(SDIO->RESP1);
+  PRT_REG(SDIO->RESP2);
+  PRT_REG(SDIO->RESP3);
+  PRT_REG(SDIO->RESP4);
+  PRT_REG(SDIO->DTIMER);
+	PRT_REG(SDIO->DLEN);
+  PRT_REG(SDIO->DCTRL);
+  PRT_REG(SDIO->DCOUNT);
+  PRT_REG(SDIO->STA);
+	PRT_REG(SDIO->ICR);
+  PRT_REG(SDIO->MASK);
+  //PRT_REG(SDIO->RESERVED0[2]);
+  PRT_REG(SDIO->FIFOCNT);
+  //PRT_REG(SDIO->RESERVED1[13]);
+  PRT_REG(SDIO->FIFO);
+
+}
+
+
+//初始化SD卡
+//返回值:错误代码;(0,无错误)
+SD_Error SD_Init(void)
+{
+ 	GPIO_InitTypeDef  GPIO_InitStructure;
+	NVIC_InitTypeDef NVIC_InitStructure;
+	
+	SD_Error errorstatus=SD_OK;	 
+  u8 clkdiv=0;
+	
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC|RCC_AHB1Periph_GPIOD|RCC_AHB1Periph_DMA2, ENABLE);//使能GPIOC,GPIOD DMA2时钟
+	
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_SDIO, ENABLE);//SDIO时钟使能
+	
+	RCC_APB2PeriphResetCmd(RCC_APB2Periph_SDIO, ENABLE);//SDIO复位
+	
+	
+  GPIO_InitStructure.GPIO_Pin =GPIO_Pin_8|GPIO_Pin_9|GPIO_Pin_10|GPIO_Pin_11|GPIO_Pin_12; 	//PC8,9,10,11,12复用功能输出	
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;//复用功能
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;//100M
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;//上拉
+  GPIO_Init(GPIOC, &GPIO_InitStructure);// PC8,9,10,11,12复用功能输出
+
+	
+	GPIO_InitStructure.GPIO_Pin =GPIO_Pin_2;
+  GPIO_Init(GPIOD, &GPIO_InitStructure);//PD2复用功能输出
+	
+	 //引脚复用映射设置
+	GPIO_PinAFConfig(GPIOC,GPIO_PinSource8,GPIO_AF_SDIO); //PC8,AF12
+  GPIO_PinAFConfig(GPIOC,GPIO_PinSource9,GPIO_AF_SDIO);
+  GPIO_PinAFConfig(GPIOC,GPIO_PinSource10,GPIO_AF_SDIO);
+  GPIO_PinAFConfig(GPIOC,GPIO_PinSource11,GPIO_AF_SDIO);
+  GPIO_PinAFConfig(GPIOC,GPIO_PinSource12,GPIO_AF_SDIO);	
+  GPIO_PinAFConfig(GPIOD,GPIO_PinSource2,GPIO_AF_SDIO);	
+	
+	RCC_APB2PeriphResetCmd(RCC_APB2Periph_SDIO, DISABLE);//SDIO结束复位
+		
+ 	//SDIO外设寄存器设置为默认值 			   
+	SDIO_Register_Deinit();
+	
+  NVIC_InitStructure.NVIC_IRQChannel = SDIO_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=0;//抢占优先级3
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority =0;		//子优先级3
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;			//IRQ通道使能
+	NVIC_Init(&NVIC_InitStructure);	//根据指定的参数初始化VIC寄存器、
+	
    	errorstatus=SD_PowerON();			//SD卡上电
  	if(errorstatus==SD_OK)errorstatus=SD_InitializeCards();			//初始化SD卡														  
   	if(errorstatus==SD_OK)errorstatus=SD_GetCardInfo(&SDCardInfo);	//获取卡信息
  	if(errorstatus==SD_OK)errorstatus=SD_SelectDeselect((u32)(SDCardInfo.RCA<<16));//选中SD卡   
-   	if(errorstatus==SD_OK)errorstatus=SD_EnableWideBusOperation(1);	//4位宽度,如果是MMC卡,则不能用4位模式 
+   	if(errorstatus==SD_OK)errorstatus=SD_EnableWideBusOperation(SDIO_BusWide_4b);	//4位宽度,如果是MMC卡,则不能用4位模式 
   	if((errorstatus==SD_OK)||(SDIO_MULTIMEDIA_CARD==CardType))
 	{  		    
 		if(SDCardInfo.CardType==SDIO_STD_CAPACITY_SD_CARD_V1_1||SDCardInfo.CardType==SDIO_STD_CAPACITY_SD_CARD_V2_0)
@@ -176,43 +237,11 @@ void SDIO_Clock_Set(u8 clkdiv)
 {
 	u32 tmpreg=SDIO->CLKCR; 
   	tmpreg&=0XFFFFFF00; 
- 	tmpreg|=clkdiv;   
+ 	//tmpreg|=clkdiv;
+  	tmpreg = tmpreg/clkdiv;
 	SDIO->CLKCR=tmpreg;
 } 
-//SDIO发送命令函数
-//cmdindex:命令索引,低六位有效
-//waitrsp:期待的相应.00/10,无响应;01,短响应;11,长响应
-//arg:参数
-void SDIO_Send_Cmd(u8 cmdindex,u8 waitrsp,u32 arg)
-{			
-	u32 tmpreg;
-	SDIO->ARG=arg;
-	tmpreg=SDIO->CMD; 
-	tmpreg&=0XFFFFF800;		//清除index和waitrsp
-	tmpreg|=cmdindex&0X3F;	//设置新的index			 
-	tmpreg|=waitrsp<<6;		//设置新的wait rsp 
-	tmpreg|=0<<8;			//无等待
-  	tmpreg|=1<<10;			//命令通道状态机使能
-	SDIO->CMD=tmpreg;
-}
-//SDIO发送数据配置函数
-//datatimeout:超时时间设置
-//datalen:传输数据长度,低25位有效,必须为块大小的整数倍
-//blksize:块大小.实际大小为:2^blksize字节
-//dir:数据传输方向:0,控制器到卡;1,卡到控制器;
-void SDIO_Send_Data_Cfg(u32 datatimeout,u32 datalen,u8 blksize,u8 dir)
-{
-	u32 tmpreg;
-	SDIO->DTIMER=datatimeout;
-  	SDIO->DLEN=datalen&0X1FFFFFF;	//低25位有效
-	tmpreg=SDIO->DCTRL; 
-	tmpreg&=0xFFFFFF08;		//清除之前的设置.
-	tmpreg|=blksize<<4;		//设置块大小
-	tmpreg|=0<<2;			//块数据传输
-	tmpreg|=(dir&0X01)<<1;	//方向控制
-	tmpreg|=1<<0;			//数据传输使能,DPSM状态机
-	SDIO->DCTRL=tmpreg;		
-}  
+
 
 //卡上电
 //查询所有SDIO接口上的卡设备,并查询其电压和配置时钟
@@ -223,46 +252,86 @@ SD_Error SD_PowerON(void)
 	SD_Error errorstatus=SD_OK;
 	u32 response=0,count=0,validvoltage=0;
 	u32 SDType=SD_STD_CAPACITY;
-	//配置CLKCR寄存器 
-	SDIO->CLKCR=0;				//清空CLKCR之前的设置
-	SDIO->CLKCR|=0<<9;			//非省电模式
-	SDIO->CLKCR|=0<<10;			//关闭旁路,CK根据分频设置输出
-	SDIO->CLKCR|=0<<11;			//1位数据宽度
-	SDIO->CLKCR|=0<<13;			//SDIOCLK上升沿产生SDIOCK
-	SDIO->CLKCR|=0<<14;			//关闭硬件流控制    
-	SDIO_Clock_Set(SDIO_INIT_CLK_DIV);//设置时钟频率(初始化的时候,不能超过400Khz)			 
- 	SDIO->POWER=0X03;			//上电状态,开启卡时钟    
-  	SDIO->CLKCR|=1<<8;			//SDIOCK使能   
-   	for(i=0;i<74;i++)
+	
+	 /*初始化时的时钟不能大于400KHz*/ 
+  SDIO_InitStructure.SDIO_ClockDiv = SDIO_INIT_CLK_DIV;	/* HCLK = 72MHz, SDIOCLK = 72MHz, SDIO_CK = HCLK/(178 + 2) = 400 KHz */
+  SDIO_InitStructure.SDIO_ClockEdge = SDIO_ClockEdge_Rising;
+  SDIO_InitStructure.SDIO_ClockBypass = SDIO_ClockBypass_Disable;  //不使用bypass模式，直接用HCLK进行分频得到SDIO_CK
+  SDIO_InitStructure.SDIO_ClockPowerSave = SDIO_ClockPowerSave_Disable;	// 空闲时不关闭时钟电源
+  SDIO_InitStructure.SDIO_BusWide = SDIO_BusWide_1b;	 				//1位数据线
+  SDIO_InitStructure.SDIO_HardwareFlowControl = SDIO_HardwareFlowControl_Disable;//硬件流
+  SDIO_Init(&SDIO_InitStructure);
+
+	SDIO_SetPowerState(SDIO_PowerState_ON);	//上电状态,开启卡时钟   
+  SDIO->CLKCR|=1<<8;			//SDIOCK使能  
+ 
+ 	for(i=0;i<74;i++)
 	{
-		SDIO_Send_Cmd(SD_CMD_GO_IDLE_STATE,0,0);//发送CMD0进入IDLE STAGE模式命令.												  
+ 
+		SDIO_CmdInitStructure.SDIO_Argument = 0x0;//发送CMD0进入IDLE STAGE模式命令.
+    SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_GO_IDLE_STATE; //cmd0
+    SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_No;  //无响应
+    SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+    SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;  //则CPSM在开始发送命令之前等待数据传输结束。 
+    SDIO_SendCommand(&SDIO_CmdInitStructure);	  		//写命令进命令寄存器
+		
 		errorstatus=CmdError();
+		
 		if(errorstatus==SD_OK)break;
  	}
  	if(errorstatus)return errorstatus;//返回错误状态
-	SDIO_Send_Cmd(SDIO_SEND_IF_COND,1,SD_CHECK_PATTERN);//发送CMD8,短响应,检查SD卡接口特性.
- 														//arg[11:8]:01,支持电压范围,2.7~3.6V
-														//arg[7:0]:默认0XAA
-														//返回响应7
-  	errorstatus=CmdResp7Error();						//等待R7响应
+	
+  SDIO_CmdInitStructure.SDIO_Argument = SD_CHECK_PATTERN;	//发送CMD8,短响应,检查SD卡接口特性
+  SDIO_CmdInitStructure.SDIO_CmdIndex = SDIO_SEND_IF_COND;	//cmd8
+  SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short;	 //r7
+  SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;			 //关闭等待中断
+  SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+  SDIO_SendCommand(&SDIO_CmdInitStructure);
+	
+  errorstatus=CmdResp7Error();						//等待R7响应
+	
  	if(errorstatus==SD_OK) 								//R7响应正常
 	{
 		CardType=SDIO_STD_CAPACITY_SD_CARD_V2_0;		//SD 2.0卡
 		SDType=SD_HIGH_CAPACITY;			   			//高容量卡
 	}
-	SDIO_Send_Cmd(SD_CMD_APP_CMD,1,0);					//发送CMD55,短响应	 
-	errorstatus=CmdResp1Error(SD_CMD_APP_CMD); 		 	//等待R1响应   
+	  
+	  SDIO_CmdInitStructure.SDIO_Argument = 0x00;//发送CMD55,短响应	
+    SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_APP_CMD;
+    SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short;
+    SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+    SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+    SDIO_SendCommand(&SDIO_CmdInitStructure);		//发送CMD55,短响应	 
+	
+	 errorstatus=CmdResp1Error(SD_CMD_APP_CMD); 		 	//等待R1响应   
+	
 	if(errorstatus==SD_OK)//SD2.0/SD 1.1,否则为MMC卡
 	{																  
 		//SD卡,发送ACMD41 SD_APP_OP_COND,参数为:0x80100000 
 		while((!validvoltage)&&(count<SD_MAX_VOLT_TRIAL))
 		{	   										   
-			SDIO_Send_Cmd(SD_CMD_APP_CMD,1,0);				//发送CMD55,短响应	 
-			errorstatus=CmdResp1Error(SD_CMD_APP_CMD); 	 	//等待R1响应   
+		  SDIO_CmdInitStructure.SDIO_Argument = 0x00;//发送CMD55,短响应
+      SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_APP_CMD;	  //CMD55
+      SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short;
+      SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+      SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+      SDIO_SendCommand(&SDIO_CmdInitStructure);			//发送CMD55,短响应	 
+			
+			errorstatus=CmdResp1Error(SD_CMD_APP_CMD); 	 	//等待R1响应  
+			
  			if(errorstatus!=SD_OK)return errorstatus;   	//响应错误
-			SDIO_Send_Cmd(SD_CMD_SD_APP_OP_COND,1,SD_VOLTAGE_WINDOW_SD|SDType);//发送ACMD41,短响应	 
+
+      //acmd41，命令参数由支持的电压范围及HCS位组成，HCS位置一来区分卡是SDSc还是sdhc
+      SDIO_CmdInitStructure.SDIO_Argument = SD_VOLTAGE_WINDOW_SD | SDType;	//发送ACMD41,短响应	
+      SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_SD_APP_OP_COND;
+      SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short;  //r3
+      SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+      SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+      SDIO_SendCommand(&SDIO_CmdInitStructure);
+			
 			errorstatus=CmdResp3Error(); 					//等待R3响应   
- 			if(errorstatus!=SD_OK)return errorstatus;   	//响应错误  
+			
+ 			if(errorstatus!=SD_OK)return errorstatus;   	//响应错误 
 			response=SDIO->RESP1;;			   				//得到响应
 			validvoltage=(((response>>31)==1)?1:0);			//判断SD卡上电是否完成
 			count++;
@@ -281,8 +350,15 @@ SD_Error SD_PowerON(void)
 		//MMC卡,发送CMD1 SDIO_SEND_OP_COND,参数为:0x80FF8000 
 		while((!validvoltage)&&(count<SD_MAX_VOLT_TRIAL))
 		{	   										   				   
-			SDIO_Send_Cmd(SD_CMD_SEND_OP_COND,1,SD_VOLTAGE_WINDOW_MMC);//发送CMD1,短响应	 
+			SDIO_CmdInitStructure.SDIO_Argument = SD_VOLTAGE_WINDOW_MMC;//发送CMD1,短响应	   
+      SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_SEND_OP_COND;
+      SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short;  //r3
+      SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+      SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+      SDIO_SendCommand(&SDIO_CmdInitStructure);
+			
 			errorstatus=CmdResp3Error(); 					//等待R3响应   
+			
  			if(errorstatus!=SD_OK)return errorstatus;   	//响应错误  
 			response=SDIO->RESP1;;			   				//得到响应
 			validvoltage=(((response>>31)==1)?1:0);
@@ -301,8 +377,10 @@ SD_Error SD_PowerON(void)
 //返回值:错误代码;(0,无错误)
 SD_Error SD_PowerOFF(void)
 {
-  	SDIO->POWER&=~(3<<0);//SDIO电源关闭,时钟停止	
-	return SD_OK;		  
+ 
+  SDIO_SetPowerState(SDIO_PowerState_OFF);//SDIO电源关闭,时钟停止	
+
+  return SD_OK;	  
 }   
 //初始化所有的卡,并让卡进入就绪状态
 //返回值:错误代码
@@ -310,12 +388,26 @@ SD_Error SD_InitializeCards(void)
 {
  	SD_Error errorstatus=SD_OK;
 	u16 rca = 0x01;
- 	if((SDIO->POWER&0X03)==0)return SD_REQUEST_NOT_APPLICABLE;//检查电源状态,确保为上电状态
+	
+  if (SDIO_GetPowerState() == SDIO_PowerState_OFF)	//检查电源状态,确保为上电状态
+  {
+    errorstatus = SD_REQUEST_NOT_APPLICABLE;
+    return(errorstatus);
+  }
+
  	if(SDIO_SECURE_DIGITAL_IO_CARD!=CardType)			//非SECURE_DIGITAL_IO_CARD
 	{
-		SDIO_Send_Cmd(SD_CMD_ALL_SEND_CID,3,0);			//发送CMD2,取得CID,长响应	 
-		errorstatus=CmdResp2Error(); 					//等待R2响应   
-		if(errorstatus!=SD_OK)return errorstatus;   	//响应错误		    
+		SDIO_CmdInitStructure.SDIO_Argument = 0x0;//发送CMD2,取得CID,长响应
+    SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_ALL_SEND_CID;
+    SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Long;
+    SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+    SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+    SDIO_SendCommand(&SDIO_CmdInitStructure);//发送CMD2,取得CID,长响应	
+		
+		errorstatus=CmdResp2Error(); 					//等待R2响应 
+		
+		if(errorstatus!=SD_OK)return errorstatus;   	//响应错误		 
+		
  		CID_Tab[0]=SDIO->RESP1;
 		CID_Tab[1]=SDIO->RESP2;
 		CID_Tab[2]=SDIO->RESP3;
@@ -323,24 +415,47 @@ SD_Error SD_InitializeCards(void)
 	}
 	if((SDIO_STD_CAPACITY_SD_CARD_V1_1==CardType)||(SDIO_STD_CAPACITY_SD_CARD_V2_0==CardType)||(SDIO_SECURE_DIGITAL_IO_COMBO_CARD==CardType)||(SDIO_HIGH_CAPACITY_SD_CARD==CardType))//判断卡类型
 	{
-		SDIO_Send_Cmd(SD_CMD_SET_REL_ADDR,1,0);			//发送CMD3,短响应 
+		SDIO_CmdInitStructure.SDIO_Argument = 0x00;//发送CMD3,短响应 
+    SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_SET_REL_ADDR;	//cmd3
+    SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short; //r6
+    SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+    SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+    SDIO_SendCommand(&SDIO_CmdInitStructure);	//发送CMD3,短响应 
+		
 		errorstatus=CmdResp6Error(SD_CMD_SET_REL_ADDR,&rca);//等待R6响应 
+		
 		if(errorstatus!=SD_OK)return errorstatus;   	//响应错误		    
 	}   
     if (SDIO_MULTIMEDIA_CARD==CardType)
     {
- 		SDIO_Send_Cmd(SD_CMD_SET_REL_ADDR,1,(u32)(rca<<16));//发送CMD3,短响应 	   
-		errorstatus=CmdResp2Error(); 					//等待R2响应   
-		if(errorstatus!=SD_OK)return errorstatus;   	//响应错误	 
+
+		  SDIO_CmdInitStructure.SDIO_Argument = (u32)(rca<<16);//发送CMD3,短响应 
+      SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_SET_REL_ADDR;	//cmd3
+      SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short; //r6
+      SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+      SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+      SDIO_SendCommand(&SDIO_CmdInitStructure);	//发送CMD3,短响应 	
+			
+      errorstatus=CmdResp2Error(); 					//等待R2响应   
+			
+		  if(errorstatus!=SD_OK)return errorstatus;   	//响应错误	 
     }
 	if (SDIO_SECURE_DIGITAL_IO_CARD!=CardType)			//非SECURE_DIGITAL_IO_CARD
 	{
 		RCA = rca;
-		SDIO_Send_Cmd(SD_CMD_SEND_CSD,3,(u32)(rca<<16));//发送CMD9+卡RCA,取得CSD,长响应 	   
+		
+    SDIO_CmdInitStructure.SDIO_Argument = (uint32_t)(rca << 16);//发送CMD9+卡RCA,取得CSD,长响应 
+    SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_SEND_CSD;
+    SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Long;
+    SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+    SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+    SDIO_SendCommand(&SDIO_CmdInitStructure);
+		
 		errorstatus=CmdResp2Error(); 					//等待R2响应   
 		if(errorstatus!=SD_OK)return errorstatus;   	//响应错误		    
-  		CSD_Tab[0]=SDIO->RESP1;
-		CSD_Tab[1]=SDIO->RESP2;
+  		
+		CSD_Tab[0]=SDIO->RESP1;
+	  CSD_Tab[1]=SDIO->RESP2;
 		CSD_Tab[2]=SDIO->RESP3;						
 		CSD_Tab[3]=SDIO->RESP4;					    
 	}
@@ -471,27 +586,41 @@ SD_Error SD_GetCardInfo(SD_CardInfo *cardinfo)
 //设置SDIO总线宽度(MMC卡不支持4bit模式)
 //wmode:位宽模式.0,1位数据宽度;1,4位数据宽度;2,8位数据宽度
 //返回值:SD卡错误状态
-SD_Error SD_EnableWideBusOperation(u32 wmode)
+
+//设置SDIO总线宽度(MMC卡不支持4bit模式)
+//   @arg SDIO_BusWide_8b: 8-bit data transfer (Only for MMC)
+//   @arg SDIO_BusWide_4b: 4-bit data transfer
+//   @arg SDIO_BusWide_1b: 1-bit data transfer (默认)
+//返回值:SD卡错误状态
+
+
+SD_Error SD_EnableWideBusOperation(u32 WideMode)
 {
   	SD_Error errorstatus=SD_OK;
-	u16 clkcr=0;
-  	if(SDIO_MULTIMEDIA_CARD==CardType)return SD_UNSUPPORTED_FEATURE;//MMC卡不支持
+  if (SDIO_MULTIMEDIA_CARD == CardType)
+  {
+    errorstatus = SD_UNSUPPORTED_FEATURE;
+    return(errorstatus);
+  }
+	
  	else if((SDIO_STD_CAPACITY_SD_CARD_V1_1==CardType)||(SDIO_STD_CAPACITY_SD_CARD_V2_0==CardType)||(SDIO_HIGH_CAPACITY_SD_CARD==CardType))
 	{
-		if(wmode>=2)return SD_UNSUPPORTED_FEATURE;//不支持8位模式
+		 if (SDIO_BusWide_8b == WideMode)   //2.0 sd不支持8bits
+    {
+      errorstatus = SD_UNSUPPORTED_FEATURE;
+      return(errorstatus);
+    }
  		else   
 		{
-			errorstatus=SDEnWideBus(wmode);
+			errorstatus=SDEnWideBus(WideMode);
  			if(SD_OK==errorstatus)
 			{
-				clkcr=SDIO->CLKCR;		//读取CLKCR的值
-				clkcr&=~(3<<11);		//清除之前的位宽设置    
-				clkcr|=(u16)wmode<<11;	//1位/4位总线宽度 
-				clkcr|=0<<14;			//不开启硬件流控制
-				SDIO->CLKCR=clkcr;		//重新设置CLKCR值 
+				SDIO->CLKCR&=~(3<<11);		//清除之前的位宽设置    
+				SDIO->CLKCR|=WideMode;//1位/4位总线宽度 
+				SDIO->CLKCR|=0<<14;			//不开启硬件流控制
 			}
 		}  
-	} 
+	}
 	return errorstatus; 
 }
 //设置SD卡工作模式
@@ -509,48 +638,87 @@ SD_Error SD_SetDeviceMode(u32 Mode)
 //addr:卡的RCA地址
 SD_Error SD_SelectDeselect(u32 addr)
 {
- 	SDIO_Send_Cmd(SD_CMD_SEL_DESEL_CARD,1,addr);	//发送CMD7,选择卡,短响应	 	   
-   	return CmdResp1Error(SD_CMD_SEL_DESEL_CARD);	  
-}  
-//SD卡读取单个/多个块 
-//buf:读数据缓存区
+
+  SDIO_CmdInitStructure.SDIO_Argument =  addr;//发送CMD7,选择卡,短响应	
+  SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_SEL_DESEL_CARD;
+  SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short;
+  SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+  SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+  SDIO_SendCommand(&SDIO_CmdInitStructure);//发送CMD7,选择卡,短响应
+	
+ 	return CmdResp1Error(SD_CMD_SEL_DESEL_CARD);	  
+}
+//SD卡读取一个块 
+//buf:读数据缓存区(必须4字节对齐!!)
 //addr:读取地址
 //blksize:块大小
-//nblks:要读取的块数,1,表示读取单个块
-//返回值:错误状态 
-SD_Error SD_ReadBlocks(u8 *buf,long long addr,u16 blksize,u32 nblks)
-{
-  	SD_Error errorstatus=SD_OK; 
-   	u32 count=0;
-	u32 timeout=SDIO_DATATIMEOUT;  
-	u32 *tempbuff=(u32*)buf;	//转换为u32指针 
-    SDIO->DCTRL=0x0;			//数据控制寄存器清零(关DMA)   
+SD_Error SD_ReadBlock(u8 *buf,long long addr,u16 blksize)
+{	  
+	SD_Error errorstatus=SD_OK;
+	u8 power;
+  u32 count=0,*tempbuff=(u32*)buf;//转换为u32指针 
+	u32 timeout=SDIO_DATATIMEOUT;   
+  if(NULL==buf)
+		return SD_INVALID_PARAMETER; 
+  SDIO->DCTRL=0x0;	//数据控制寄存器清零(关DMA) 
+  
 	if(CardType==SDIO_HIGH_CAPACITY_SD_CARD)//大容量卡
 	{
 		blksize=512;
 		addr>>=9;
-	}     
-	SDIO_Send_Cmd(SD_CMD_SET_BLOCKLEN,1,blksize);			//发送CMD16+设置数据长度为blksize,短响应 	   
-	errorstatus=CmdResp1Error(SD_CMD_SET_BLOCKLEN);			//等待R1响应   
-	if(errorstatus!=SD_OK)return errorstatus;   			//响应错误
-	SDIO_Send_Data_Cfg(SD_DATATIMEOUT,nblks*blksize,9,1);	//nblks*blksize,块大小恒为512,卡到控制器	 
-	if(nblks>1)												//多块读  
-	{									    
-		SDIO_Send_Cmd(SD_CMD_READ_MULT_BLOCK,1,addr);		//发送CMD18+从addr地址出读取数据,短响应 	   
-		errorstatus=CmdResp1Error(SD_CMD_READ_MULT_BLOCK);	//等待R1响应   
-		if(errorstatus!=SD_OK)return errorstatus;   		//响应错误	 
-	}else													//单块读
-	{ 
-		SDIO_Send_Cmd(SD_CMD_READ_SINGLE_BLOCK,1,addr);		//发送CMD17+从addr地址出读取数据,短响应 	   
-		errorstatus=CmdResp1Error(SD_CMD_READ_SINGLE_BLOCK);//等待R1响应   
-		if(errorstatus!=SD_OK)return errorstatus;   		//响应错误	 
-	}
-	if(DeviceMode==SD_POLLING_MODE)
-	{ 
-		INTX_DISABLE();//关闭总中断(POLLING模式,严禁中断打断SDIO读写操作!!!)
-		while(!(SDIO->STA&((1<<5)|(1<<1)|(1<<3)|(1<<8)|(1<<9))))//无上溢/CRC/超时/完成(标志)/起始位错误
+	}   
+  	SDIO_DataInitStructure.SDIO_DataBlockSize= SDIO_DataBlockSize_1b ;//清除DPSM状态机配置
+	  SDIO_DataInitStructure.SDIO_DataLength= 0 ;
+	  SDIO_DataInitStructure.SDIO_DataTimeOut=SD_DATATIMEOUT ;
+	  SDIO_DataInitStructure.SDIO_DPSM=SDIO_DPSM_Enable;
+	  SDIO_DataInitStructure.SDIO_TransferDir=SDIO_TransferDir_ToCard;
+	  SDIO_DataInitStructure.SDIO_TransferMode=SDIO_TransferMode_Block;
+    SDIO_DataConfig(&SDIO_DataInitStructure);
+	
+	
+	if(SDIO->RESP1&SD_CARD_LOCKED)return SD_LOCK_UNLOCK_FAILED;//卡锁了
+	if((blksize>0)&&(blksize<=2048)&&((blksize&(blksize-1))==0))
+	{
+		power=convert_from_bytes_to_power_of_two(blksize);	
+		
+   
+		SDIO_CmdInitStructure.SDIO_Argument =  blksize;
+    SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_SET_BLOCKLEN;
+    SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short;
+    SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+    SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+    SDIO_SendCommand(&SDIO_CmdInitStructure);//发送CMD16+设置数据长度为blksize,短响应
+		
+		
+		errorstatus=CmdResp1Error(SD_CMD_SET_BLOCKLEN);	//等待R1响应 
+		
+		if(errorstatus!=SD_OK)return errorstatus;   	//响应错误	
+		
+	}else return SD_INVALID_PARAMETER;	  	 
+	
+	  SDIO_DataInitStructure.SDIO_DataBlockSize= power<<4 ;//清除DPSM状态机配置
+	  SDIO_DataInitStructure.SDIO_DataLength= blksize ;
+	  SDIO_DataInitStructure.SDIO_DataTimeOut=SD_DATATIMEOUT ;
+	  SDIO_DataInitStructure.SDIO_DPSM=SDIO_DPSM_Enable;
+	  SDIO_DataInitStructure.SDIO_TransferDir=SDIO_TransferDir_ToSDIO;
+	  SDIO_DataInitStructure.SDIO_TransferMode=SDIO_TransferMode_Block;
+    SDIO_DataConfig(&SDIO_DataInitStructure);
+	
+	  SDIO_CmdInitStructure.SDIO_Argument =  addr;
+    SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_READ_SINGLE_BLOCK;
+    SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short;
+    SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+    SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+    SDIO_SendCommand(&SDIO_CmdInitStructure);//发送CMD17+从addr地址出读取数据,短响应 
+	
+	errorstatus=CmdResp1Error(SD_CMD_READ_SINGLE_BLOCK);//等待R1响应   
+	if(errorstatus!=SD_OK)return errorstatus;   		//响应错误	 
+ 	if(DeviceMode==SD_POLLING_MODE)						//查询模式,轮询数据	 
+	{
+ 		INTX_DISABLE();//关闭总中断(POLLING模式,严禁中断打断SDIO读写操作!!!)
+		while(!(SDIO->STA&((1<<5)|(1<<1)|(1<<3)|(1<<10)|(1<<9))))//无上溢/CRC/超时/完成(标志)/起始位错误
 		{
-			if(SDIO->STA&(1<<15))						//接收区半满,表示至少存了8个字
+			if(SDIO_GetFlagStatus(SDIO_FLAG_RXFIFOHF) != RESET)						//接收区半满,表示至少存了8个字
 			{
 				for(count=0;count<8;count++)			//循环读取数据
 				{
@@ -561,207 +729,387 @@ SD_Error SD_ReadBlocks(u8 *buf,long long addr,u16 blksize,u32 nblks)
 			}else 	//处理超时
 			{
 				if(timeout==0) {
-					INTX_ENABLE();
+					INTX_ENABLE();//开启总中断
 					return SD_DATA_TIMEOUT;
 				}
 				timeout--;
 			}
 		} 
-		if(SDIO->STA&(1<<3))		//数据超时错误
+		if(SDIO_GetFlagStatus(SDIO_FLAG_DTIMEOUT) != RESET)		//数据超时错误
 		{										   
-			SDIO->ICR|=1<<3; 		//清错误标志
-			INTX_ENABLE();
+	 		SDIO_ClearFlag(SDIO_FLAG_DTIMEOUT); 	//清错误标志
+	 		INTX_ENABLE();//开启总中断
 			return SD_DATA_TIMEOUT;
-		}else if(SDIO->STA&(1<<1))	//数据块CRC错误
+	 	}else if(SDIO_GetFlagStatus(SDIO_FLAG_DCRCFAIL) != RESET)	//数据块CRC错误
 		{
-			SDIO->ICR|=1<<1; 		//清错误标志
-			INTX_ENABLE();
+	 		SDIO_ClearFlag(SDIO_FLAG_DCRCFAIL);  		//清错误标志
+	 		INTX_ENABLE();//开启总中断
 			return SD_DATA_CRC_FAIL;		   
-		}else if(SDIO->STA&(1<<5)) 	//接收fifo上溢错误
+		}else if(SDIO_GetFlagStatus(SDIO_FLAG_RXOVERR) != RESET) 	//接收fifo上溢错误
 		{
-			SDIO->ICR|=1<<5; 		//清错误标志
-			INTX_ENABLE();
+	 		SDIO_ClearFlag(SDIO_FLAG_RXOVERR);		//清错误标志
+	 		INTX_ENABLE();//开启总中断
 			return SD_RX_OVERRUN;		 
-		}else if(SDIO->STA&(1<<9)) 	//接收起始位错误
+		}else if(SDIO_GetFlagStatus(SDIO_FLAG_STBITERR) != RESET) 	//接收起始位错误
 		{
-			SDIO->ICR|=1<<9; 		//清错误标志
-			INTX_ENABLE();
+	 		SDIO_ClearFlag(SDIO_FLAG_STBITERR);//清错误标志
+	 		INTX_ENABLE();//开启总中断
 			return SD_START_BIT_ERR;		 
 		}   
-		while(SDIO->STA&(1<<21))	//FIFO里面,还存在可用数据
+		while(SDIO_GetFlagStatus(SDIO_FLAG_RXDAVL) != RESET)	//FIFO里面,还存在可用数据
 		{
 			*tempbuff=SDIO->FIFO;	//循环读取数据
 			tempbuff++;
-		} 
-		if((SDIO->STA&(1<<8))&&(nblks>1))//多块接收结束,发送结束指令
-		{
-			if((SDIO_STD_CAPACITY_SD_CARD_V1_1==CardType)||(SDIO_STD_CAPACITY_SD_CARD_V2_0==CardType)||(SDIO_HIGH_CAPACITY_SD_CARD==CardType))
-			{
-				SDIO_Send_Cmd(SD_CMD_STOP_TRANSMISSION,1,0);		//发送CMD12+结束传输 	   
-				errorstatus=CmdResp1Error(SD_CMD_STOP_TRANSMISSION);//等待R1响应   
-				if(errorstatus!=SD_OK) {
-					INTX_ENABLE();
-					return errorstatus;
-				}
-			}
 		}
 		INTX_ENABLE();//开启总中断
-		SDIO->ICR=0X5FF;	 		//清除所有标记 
+		SDIO_ClearFlag(SDIO_STATIC_FLAGS);//清除所有标记
+	 
 	}else if(DeviceMode==SD_DMA_MODE)
 	{
-		TransferError=SD_OK;
-		if(nblks>1)StopCondition=1;	//多块读,需要发送停止传输指令 
-		else StopCondition=0;		//单块读,不需要发送停止传输指令 
+ 		TransferError=SD_OK;
+		StopCondition=0;			//单块读,不需要发送停止传输指令
 		TransferEnd=0;				//传输结束标置位，在中断服务置1
 		SDIO->MASK|=(1<<1)|(1<<3)|(1<<8)|(1<<5)|(1<<9);	//配置需要的中断 
-		SDIO->DCTRL|=1<<3;		 						//SDIO DMA使能 
-		SD_DMA_Config((u32*)buf,nblks*blksize,0); 
-		while(((DMA2->LISR&(1<<27))==RESET)&&timeout)timeout--;//等待传输完成 
-		if(timeout==0) return SD_DATA_TIMEOUT;//超时
-		while((TransferEnd==0)&&(TransferError==SD_OK)); 
-		if(TransferError!=SD_OK)errorstatus=TransferError;  	 
-	}	 
+	 	SDIO->DCTRL|=1<<3;		 	//SDIO DMA使能 
+ 	    SD_DMA_Config((u32*)buf,blksize,DMA_DIR_PeripheralToMemory); 
+ 		while(((DMA2->LISR&(1<<27))==RESET)&&(TransferEnd==0)&&(TransferError==SD_OK)&&timeout)timeout--;//等待传输完成 
+		if(timeout==0)return SD_DATA_TIMEOUT;//超时
+		if(TransferError!=SD_OK)errorstatus=TransferError;  
+    }   
+ 	return errorstatus; 
+}
+//SD卡读取多个块 
+//buf:读数据缓存区
+//addr:读取地址
+//blksize:块大小
+//nblks:要读取的块数
+//返回值:错误状态
+u32 *tempbuff __attribute__ ((aligned (4)));;
+SD_Error SD_ReadMultiBlocks(u8 *buf,long long addr,u16 blksize,u32 nblks)
+{
+  SD_Error errorstatus=SD_OK;
+	u8 power;
+  u32 count=0;
+	u32 timeout=SDIO_DATATIMEOUT;  
+	tempbuff=(u32*)buf;//转换为u32指针
+	
+  SDIO->DCTRL=0x0;		//数据控制寄存器清零(关DMA)   
+	if(CardType==SDIO_HIGH_CAPACITY_SD_CARD)//大容量卡
+	{
+		blksize=512;
+		addr>>=9;
+	}  
+	
+	  SDIO_DataInitStructure.SDIO_DataBlockSize= 0; ;//清除DPSM状态机配置
+	  SDIO_DataInitStructure.SDIO_DataLength= 0 ;
+	  SDIO_DataInitStructure.SDIO_DataTimeOut=SD_DATATIMEOUT ;
+	  SDIO_DataInitStructure.SDIO_DPSM=SDIO_DPSM_Enable;
+	  SDIO_DataInitStructure.SDIO_TransferDir=SDIO_TransferDir_ToCard;
+	  SDIO_DataInitStructure.SDIO_TransferMode=SDIO_TransferMode_Block;
+    SDIO_DataConfig(&SDIO_DataInitStructure);
+	
+	if(SDIO->RESP1&SD_CARD_LOCKED)return SD_LOCK_UNLOCK_FAILED;//卡锁了
+	if((blksize>0)&&(blksize<=2048)&&((blksize&(blksize-1))==0))
+	{
+		power=convert_from_bytes_to_power_of_two(blksize);	    
+		
+	  SDIO_CmdInitStructure.SDIO_Argument =  blksize;//发送CMD16+设置数据长度为blksize,短响应 
+		SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_SET_BLOCKLEN;
+		SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short;
+		SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+		SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+		SDIO_SendCommand(&SDIO_CmdInitStructure);
+		
+		errorstatus=CmdResp1Error(SD_CMD_SET_BLOCKLEN);	//等待R1响应  
+		
+		if(errorstatus!=SD_OK)return errorstatus;   	//响应错误	 
+		
+	}else return SD_INVALID_PARAMETER;	  
+	
+	if(nblks>1)											//多块读  
+	{									    
+ 	  	if(nblks*blksize>SD_MAX_DATA_LENGTH)return SD_INVALID_PARAMETER;//判断是否超过最大接收长度 
+		
+		   SDIO_DataInitStructure.SDIO_DataBlockSize= power<<4; ;//nblks*blksize,512块大小,卡到控制器
+			 SDIO_DataInitStructure.SDIO_DataLength= nblks*blksize ;
+			 SDIO_DataInitStructure.SDIO_DataTimeOut=SD_DATATIMEOUT ;
+			 SDIO_DataInitStructure.SDIO_DPSM=SDIO_DPSM_Enable;
+			 SDIO_DataInitStructure.SDIO_TransferDir=SDIO_TransferDir_ToSDIO;
+			 SDIO_DataInitStructure.SDIO_TransferMode=SDIO_TransferMode_Block;
+			 SDIO_DataConfig(&SDIO_DataInitStructure);
 
+       SDIO_CmdInitStructure.SDIO_Argument =  addr;//发送CMD18+从addr地址出读取数据,短响应 
+	     SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_READ_MULT_BLOCK;
+		   SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short;
+		   SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+		   SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+		   SDIO_SendCommand(&SDIO_CmdInitStructure);	
+		
+		errorstatus=CmdResp1Error(SD_CMD_READ_MULT_BLOCK);//等待R1响应 
+		
+		if(errorstatus!=SD_OK)return errorstatus;   	//响应错误	 
+		
+ 		if(DeviceMode==SD_POLLING_MODE)
+		{
+			INTX_DISABLE();//关闭总中断(POLLING模式,严禁中断打断SDIO读写操作!!!)
+			while(!(SDIO->STA&((1<<5)|(1<<1)|(1<<3)|(1<<8)|(1<<9))))//无上溢/CRC/超时/完成(标志)/起始位错误
+			{
+				if(SDIO_GetFlagStatus(SDIO_FLAG_RXFIFOHF) != RESET)						//接收区半满,表示至少存了8个字
+				{
+					for(count=0;count<8;count++)			//循环读取数据
+					{
+						*(tempbuff+count)=SDIO->FIFO;
+					}
+					tempbuff+=8;	 
+					timeout=0X7FFFFF; 	//读数据溢出时间
+				}else 	//处理超时
+				{
+					if(timeout==0) {
+						INTX_ENABLE();//开启总中断
+						return SD_DATA_TIMEOUT;
+					}
+					timeout--;
+				}
+			}  
+		if(SDIO_GetFlagStatus(SDIO_FLAG_DTIMEOUT) != RESET)		//数据超时错误
+		{										   
+	 		SDIO_ClearFlag(SDIO_FLAG_DTIMEOUT); 	//清错误标志
+	 		INTX_ENABLE();//开启总中断
+			return SD_DATA_TIMEOUT;
+	 	}else if(SDIO_GetFlagStatus(SDIO_FLAG_DCRCFAIL) != RESET)	//数据块CRC错误
+		{
+	 		SDIO_ClearFlag(SDIO_FLAG_DCRCFAIL);  		//清错误标志
+	 		INTX_ENABLE();//开启总中断
+	 		return SD_DATA_CRC_FAIL;
+		}else if(SDIO_GetFlagStatus(SDIO_FLAG_RXOVERR) != RESET) 	//接收fifo上溢错误
+		{
+	 		SDIO_ClearFlag(SDIO_FLAG_RXOVERR);		//清错误标志
+	 		INTX_ENABLE();//开启总中断
+	 		return SD_RX_OVERRUN;
+		}else if(SDIO_GetFlagStatus(SDIO_FLAG_STBITERR) != RESET) 	//接收起始位错误
+		{
+	 		SDIO_ClearFlag(SDIO_FLAG_STBITERR);//清错误标志
+	 		INTX_ENABLE();//开启总中断
+	 		return SD_START_BIT_ERR;
+		}   
+	    
+		while(SDIO_GetFlagStatus(SDIO_FLAG_RXDAVL) != RESET)	//FIFO里面,还存在可用数据
+		{
+			*tempbuff=SDIO->FIFO;	//循环读取数据
+			tempbuff++;
+		}
+	 		if(SDIO_GetFlagStatus(SDIO_FLAG_DATAEND) != RESET)		//接收结束
+			{
+				if((SDIO_STD_CAPACITY_SD_CARD_V1_1==CardType)||(SDIO_STD_CAPACITY_SD_CARD_V2_0==CardType)||(SDIO_HIGH_CAPACITY_SD_CARD==CardType))
+				{				
+					SDIO_CmdInitStructure.SDIO_Argument =  0;//发送CMD12+结束传输
+				  SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_STOP_TRANSMISSION;
+					SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short;
+					SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+					SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+					SDIO_SendCommand(&SDIO_CmdInitStructure);	
+					
+					errorstatus=CmdResp1Error(SD_CMD_STOP_TRANSMISSION);//等待R1响应   
+					
+					if(errorstatus!=SD_OK) {
+						INTX_ENABLE();//开启总中断
+						return errorstatus;
+					}
+				}
+ 			}
+			INTX_ENABLE();//开启总中断
+	 		SDIO_ClearFlag(SDIO_STATIC_FLAGS);//清除所有标记
+ 		}else if(DeviceMode==SD_DMA_MODE)
+		{
+	   		TransferError=SD_OK;
+			StopCondition=1;			//多块读,需要发送停止传输指令 
+			TransferEnd=0;				//传输结束标置位，在中断服务置1
+			SDIO->MASK|=(1<<1)|(1<<3)|(1<<8)|(1<<5)|(1<<9);	//配置需要的中断 
+		 	SDIO->DCTRL|=1<<3;		 						//SDIO DMA使能 
+	 	    SD_DMA_Config((u32*)buf,nblks*blksize,DMA_DIR_PeripheralToMemory); 
+	 		while(((DMA2->LISR&(1<<27))==RESET)&&timeout)timeout--;//等待传输完成 
+			if(timeout==0)return SD_DATA_TIMEOUT;//超时
+			while((TransferEnd==0)&&(TransferError==SD_OK)); 
+			if(TransferError!=SD_OK)errorstatus=TransferError;  	 
+		}		 
+  	}
 	return errorstatus;
-}	
- 		    																  
-//SD卡写单个/多个块 
+}			    																  
+//SD卡写1个块 
 //buf:数据缓存区
 //addr:写地址
-//blksize:块大小
-//nblks:要读取的块数,1,表示读取单个块
-//返回值:错误状态												   
-SD_Error SD_WriteBlocks(u8 *buf,long long addr,u16 blksize,u32 nblks)
+//blksize:块大小	  
+//返回值:错误状态
+SD_Error SD_WriteBlock(u8 *buf,long long addr,  u16 blksize)
 {
 	SD_Error errorstatus = SD_OK;
-	u8  cardstate=0;
+	
+	u8  power=0,cardstate=0;
+	
 	u32 timeout=0,bytestransferred=0;
+	
 	u32 cardstatus=0,count=0,restwords=0;
-	u32 tlen=nblks*blksize;						//总长度(字节)
-	u32*tempbuff=(u32*)buf;								 
- 	if(buf==NULL)return SD_INVALID_PARAMETER;	//参数错误   
-  	SDIO->DCTRL=0x0;							//数据控制寄存器清零(关DMA)    
+	
+	u32	tlen=blksize;						//总长度(字节)
+	
+	u32*tempbuff=(u32*)buf;					
+	
+ 	if(buf==NULL)return SD_INVALID_PARAMETER;//参数错误  
+	
+  SDIO->DCTRL=0x0;							//数据控制寄存器清零(关DMA)
+	
+	SDIO_DataInitStructure.SDIO_DataBlockSize= 0; ;//清除DPSM状态机配置
+	SDIO_DataInitStructure.SDIO_DataLength= 0 ;
+	SDIO_DataInitStructure.SDIO_DataTimeOut=SD_DATATIMEOUT ;
+	SDIO_DataInitStructure.SDIO_DPSM=SDIO_DPSM_Enable;
+	SDIO_DataInitStructure.SDIO_TransferDir=SDIO_TransferDir_ToCard;
+	SDIO_DataInitStructure.SDIO_TransferMode=SDIO_TransferMode_Block;
+  SDIO_DataConfig(&SDIO_DataInitStructure);
+	
+	
+	if(SDIO->RESP1&SD_CARD_LOCKED)return SD_LOCK_UNLOCK_FAILED;//卡锁了
  	if(CardType==SDIO_HIGH_CAPACITY_SD_CARD)	//大容量卡
 	{
 		blksize=512;
 		addr>>=9;
-	}     
-	SDIO_Send_Cmd(SD_CMD_SET_BLOCKLEN,1,blksize);			//发送CMD16+设置数据长度为blksize,短响应 	   
-	errorstatus=CmdResp1Error(SD_CMD_SET_BLOCKLEN);			//等待R1响应   
-	if(errorstatus!=SD_OK)return errorstatus;   			//响应错误  
-	if(nblks>1)												//多块写
-	{									     
-		if(nblks*blksize>SD_MAX_DATA_LENGTH)return SD_INVALID_PARAMETER;   
-     	if((SDIO_STD_CAPACITY_SD_CARD_V1_1==CardType)||(SDIO_STD_CAPACITY_SD_CARD_V2_0==CardType)||(SDIO_HIGH_CAPACITY_SD_CARD==CardType))
-    	{
-			//提高性能
-	 	   	SDIO_Send_Cmd(SD_CMD_APP_CMD,1,(u32)RCA<<16);	//发送ACMD55,短响应 	   
-			errorstatus=CmdResp1Error(SD_CMD_APP_CMD);		//等待R1响应   		   
-			if(errorstatus!=SD_OK)return errorstatus;				    
-	 	   	SDIO_Send_Cmd(SD_CMD_SET_BLOCK_COUNT,1,nblks);	//发送CMD23,设置块数量,短响应 	   
-			errorstatus=CmdResp1Error(SD_CMD_SET_BLOCK_COUNT);//等待R1响应   		   
-			if(errorstatus!=SD_OK)return errorstatus;				    
-		} 
-		SDIO_Send_Cmd(SD_CMD_WRITE_MULT_BLOCK,1,addr);		//发送CMD25,多块写指令,短响应 	   
-		errorstatus=CmdResp1Error(SD_CMD_WRITE_MULT_BLOCK);	//等待R1响应    
-	}else													//单块写		
-	{ 
-		SDIO_Send_Cmd(SD_CMD_SEND_STATUS,1,(u32)RCA<<16);	//发送CMD13,查询卡的状态,短响应 	   
-		errorstatus=CmdResp1Error(SD_CMD_SEND_STATUS);		//等待R1响应   		   
-		if(errorstatus!=SD_OK)return errorstatus;
+	}    
+	if((blksize>0)&&(blksize<=2048)&&((blksize&(blksize-1))==0))
+	{
+		power=convert_from_bytes_to_power_of_two(blksize);	
+		
+		SDIO_CmdInitStructure.SDIO_Argument = blksize;//发送CMD16+设置数据长度为blksize,短响应 	
+		SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_SET_BLOCKLEN;
+		SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short;
+		SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+		SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+		SDIO_SendCommand(&SDIO_CmdInitStructure);	
+		
+		errorstatus=CmdResp1Error(SD_CMD_SET_BLOCKLEN);	//等待R1响应  
+		
+		if(errorstatus!=SD_OK)return errorstatus;   	//响应错误	 
+		
+	}else return SD_INVALID_PARAMETER;	
+	
+			SDIO_CmdInitStructure.SDIO_Argument = (u32)RCA<<16;//发送CMD13,查询卡的状态,短响应 	
+		  SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_SEND_STATUS;
+			SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short;
+			SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+			SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+			SDIO_SendCommand(&SDIO_CmdInitStructure);	
+
+	  errorstatus=CmdResp1Error(SD_CMD_SEND_STATUS);		//等待R1响应  
+	
+	if(errorstatus!=SD_OK)return errorstatus;
+	cardstatus=SDIO->RESP1;													  
+	timeout=SD_DATATIMEOUT;
+   	while(((cardstatus&0x00000100)==0)&&(timeout>0)) 	//检查READY_FOR_DATA位是否置位
+	{
+		timeout--;  
+		
+		SDIO_CmdInitStructure.SDIO_Argument = (u32)RCA<<16;//发送CMD13,查询卡的状态,短响应
+		SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_SEND_STATUS;
+		SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short;
+		SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+		SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+		SDIO_SendCommand(&SDIO_CmdInitStructure);	
+		
+		errorstatus=CmdResp1Error(SD_CMD_SEND_STATUS);	//等待R1响应   
+		
+		if(errorstatus!=SD_OK)return errorstatus;		
+		
 		cardstatus=SDIO->RESP1;													  
-		timeout=SD_DATATIMEOUT;
-		while(((cardstatus&0x00000100)==0)&&(timeout>0)) 	//检查READY_FOR_DATA位是否置位
-		{
-			timeout--;
-			SDIO_Send_Cmd(SD_CMD_SEND_STATUS,1,(u32)RCA<<16);//发送CMD13,查询卡的状态,短响应 	   
-			errorstatus=CmdResp1Error(SD_CMD_SEND_STATUS);	//等待R1响应   		   
-			if(errorstatus!=SD_OK)return errorstatus;				    
-			cardstatus=SDIO->RESP1;													  
-		}
-		if(timeout==0)return SD_ERROR;  
-		SDIO_Send_Cmd(SD_CMD_WRITE_SINGLE_BLOCK,1,addr);	//发送CMD24,写单块指令,短响应 	   
-		errorstatus=CmdResp1Error(SD_CMD_WRITE_SINGLE_BLOCK);//等待R1响应   	
-	}	   
-	if(errorstatus!=SD_OK)return errorstatus;   	   
- 	SDIO_Send_Data_Cfg(SD_DATATIMEOUT,nblks*blksize,9,0);	//blksize,块大小恒为512字节,控制器到卡	  
-	timeout=SDIO_DATATIMEOUT; 
-	if(DeviceMode==SD_POLLING_MODE)
+	}
+	if(timeout==0)return SD_ERROR;
+
+			SDIO_CmdInitStructure.SDIO_Argument = addr;//发送CMD24,写单块指令,短响应 	
+			SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_WRITE_SINGLE_BLOCK;
+			SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short;
+			SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+			SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+			SDIO_SendCommand(&SDIO_CmdInitStructure);	
+	
+	errorstatus=CmdResp1Error(SD_CMD_WRITE_SINGLE_BLOCK);//等待R1响应  
+	
+	if(errorstatus!=SD_OK)return errorstatus;   	 
+	
+	StopCondition=0;									//单块写,不需要发送停止传输指令 
+
+	SDIO_DataInitStructure.SDIO_DataBlockSize= power<<4; ;	//blksize, 控制器到卡	
+	SDIO_DataInitStructure.SDIO_DataLength= blksize ;
+	SDIO_DataInitStructure.SDIO_DataTimeOut=SD_DATATIMEOUT ;
+	SDIO_DataInitStructure.SDIO_DPSM=SDIO_DPSM_Enable;
+	SDIO_DataInitStructure.SDIO_TransferDir=SDIO_TransferDir_ToCard;
+	SDIO_DataInitStructure.SDIO_TransferMode=SDIO_TransferMode_Block;
+  SDIO_DataConfig(&SDIO_DataInitStructure);
+	
+	
+	timeout=SDIO_DATATIMEOUT;
+	
+	if (DeviceMode == SD_POLLING_MODE)
 	{
 		INTX_DISABLE();//关闭总中断(POLLING模式,严禁中断打断SDIO读写操作!!!)
-		while(!(SDIO->STA&((1<<4)|(1<<1)|(1<<8)|(1<<3)|(1<<9))))//下溢/CRC/数据结束/超时/起始位错误
+		while(!(SDIO->STA&((1<<10)|(1<<4)|(1<<1)|(1<<3)|(1<<9))))//数据块发送成功/下溢/CRC/超时/起始位错误
 		{
-			if(SDIO->STA&(1<<14))							//发送区半空,表示至少存了8字(32字节)
-			{	  
+			if(SDIO_GetFlagStatus(SDIO_FLAG_TXFIFOHE) != RESET)							//发送区半空,表示至少存了8个字
+			{
 				if((tlen-bytestransferred)<SD_HALFFIFOBYTES)//不够32字节了
 				{
 					restwords=((tlen-bytestransferred)%4==0)?((tlen-bytestransferred)/4):((tlen-bytestransferred)/4+1);
+					
 					for(count=0;count<restwords;count++,tempbuff++,bytestransferred+=4)
 					{
 						SDIO->FIFO=*tempbuff;
 					}
-				}else 										//发送区半空,可以发送至少8字(32字节)数据
+				}else
 				{
-					for(count=0;count<SD_HALFFIFO;count++)
+					for(count=0;count<8;count++)
 					{
 						SDIO->FIFO=*(tempbuff+count);
 					}
-					tempbuff+=SD_HALFFIFO;
-					bytestransferred+=SD_HALFFIFOBYTES;
+					tempbuff+=8;
+					bytestransferred+=32;
 				}
 				timeout=0X3FFFFFFF;	//写数据溢出时间
 			}else
 			{
 				if(timeout==0) {
-					INTX_ENABLE();
+					INTX_ENABLE();//开启总中断
 					return SD_DATA_TIMEOUT;
 				}
 				timeout--;
 			}
 		} 
-		if(SDIO->STA&(1<<3))		//数据超时错误
+		if(SDIO_GetFlagStatus(SDIO_FLAG_DTIMEOUT) != RESET)		//数据超时错误
 		{										   
-	 		SDIO->ICR|=1<<3; 		//清错误标志
-	 		INTX_ENABLE();
+	 		SDIO_ClearFlag(SDIO_FLAG_DTIMEOUT); 	//清错误标志
+	 		INTX_ENABLE();//开启总中断
 			return SD_DATA_TIMEOUT;
-	 	}else if(SDIO->STA&(1<<1))	//数据块CRC错误
+	 	}else if(SDIO_GetFlagStatus(SDIO_FLAG_DCRCFAIL) != RESET)	//数据块CRC错误
 		{
-	 		SDIO->ICR|=1<<1; 		//清错误标志
-	 		INTX_ENABLE();
+	 		SDIO_ClearFlag(SDIO_FLAG_DCRCFAIL);  		//清错误标志
+	 		INTX_ENABLE();//开启总中断
 			return SD_DATA_CRC_FAIL;		   
-		}else if(SDIO->STA&(1<<4)) 	//接收fifo下溢错误
+		}else if(SDIO_GetFlagStatus(SDIO_FLAG_TXUNDERR) != RESET) 	//接收fifo下溢错误
 		{
-	 		SDIO->ICR|=1<<4; 		//清错误标志
-	 		INTX_ENABLE();
+	 		SDIO_ClearFlag(SDIO_FLAG_TXUNDERR);		//清错误标志
+	 		INTX_ENABLE();//开启总中断
 			return SD_TX_UNDERRUN;		 
-		}else if(SDIO->STA&(1<<9)) 	//接收起始位错误
+		}else if(SDIO_GetFlagStatus(SDIO_FLAG_STBITERR) != RESET) 	//接收起始位错误
 		{
-	 		SDIO->ICR|=1<<9; 		//清错误标志
-	 		INTX_ENABLE();
+	 		SDIO_ClearFlag(SDIO_FLAG_STBITERR);//清错误标志
+	 		INTX_ENABLE();//开启总中断
 			return SD_START_BIT_ERR;		 
 		}   
-		if((SDIO->STA&(1<<8))&&(nblks>1))//多块发送结束,发送结束指令
-		{
-			if((SDIO_STD_CAPACITY_SD_CARD_V1_1==CardType)||(SDIO_STD_CAPACITY_SD_CARD_V2_0==CardType)||(SDIO_HIGH_CAPACITY_SD_CARD==CardType))
-			{
-				SDIO_Send_Cmd(SD_CMD_STOP_TRANSMISSION,1,0);		//发送CMD12+结束传输 	   
-				errorstatus=CmdResp1Error(SD_CMD_STOP_TRANSMISSION);//等待R1响应   
-				if(errorstatus!=SD_OK) {
-					INTX_ENABLE();
-					return errorstatus;
-				}
-			}
-		}
-		INTX_ENABLE();				//开启总中断
-		SDIO->ICR=0X5FF;	 		//清除所有标记	  
+	      
+		INTX_ENABLE();//开启总中断
+		SDIO_ClearFlag(SDIO_STATIC_FLAGS);//清除所有标记  
 	}else if(DeviceMode==SD_DMA_MODE)
 	{
    		TransferError=SD_OK;
-		if(nblks>1)StopCondition=1;	//多块写,需要发送停止传输指令 
-		else StopCondition=0;		//单块写,不需要发送停止传输指令  
+		StopCondition=0;			//单块写,不需要发送停止传输指令 
 		TransferEnd=0;				//传输结束标置位，在中断服务置1
 		SDIO->MASK|=(1<<1)|(1<<3)|(1<<8)|(1<<4)|(1<<9);	//配置产生数据接收完成中断
-		SD_DMA_Config((u32*)buf,nblks*blksize,1);		//SDIO DMA配置
+		SD_DMA_Config((u32*)buf,blksize,DMA_DIR_MemoryToPeripheral);				//SDIO DMA配置
  	 	SDIO->DCTRL|=1<<3;								//SDIO DMA使能.  
  		while(((DMA2->LISR&(1<<27))==RESET)&&timeout)timeout--;//等待传输完成 
 		if(timeout==0)
@@ -774,14 +1122,215 @@ SD_Error SD_WriteBlocks(u8 *buf,long long addr,u16 blksize,u32 nblks)
  		if(timeout==0)return SD_DATA_TIMEOUT;			//超时	 
   		if(TransferError!=SD_OK)return TransferError;
  	}  
- 	SDIO->ICR=0X5FF;	 		//清除所有标记
+ 	SDIO_ClearFlag(SDIO_STATIC_FLAGS);//清除所有标记
  	errorstatus=IsCardProgramming(&cardstate);
  	while((errorstatus==SD_OK)&&((cardstate==SD_CARD_PROGRAMMING)||(cardstate==SD_CARD_RECEIVING)))
 	{
 		errorstatus=IsCardProgramming(&cardstate);
 	}   
 	return errorstatus;
-} 
+}
+//SD卡写多个块 
+//buf:数据缓存区
+//addr:写地址
+//blksize:块大小
+//nblks:要写入的块数
+//返回值:错误状态												   
+SD_Error SD_WriteMultiBlocks(u8 *buf,long long addr,u16 blksize,u32 nblks)
+{
+	SD_Error errorstatus = SD_OK;
+	u8  power = 0, cardstate = 0;
+	u32 timeout=0,bytestransferred=0;
+	u32 count = 0, restwords = 0;
+	u32 tlen=nblks*blksize;				//总长度(字节)
+	u32 *tempbuff = (u32*)buf;  
+  if(buf==NULL)return SD_INVALID_PARAMETER; //参数错误  
+  SDIO->DCTRL=0x0;							//数据控制寄存器清零(关DMA)   
+	
+	SDIO_DataInitStructure.SDIO_DataBlockSize= 0; ;	//清除DPSM状态机配置	
+	SDIO_DataInitStructure.SDIO_DataLength= 0 ;
+	SDIO_DataInitStructure.SDIO_DataTimeOut=SD_DATATIMEOUT ;
+	SDIO_DataInitStructure.SDIO_DPSM=SDIO_DPSM_Enable;
+	SDIO_DataInitStructure.SDIO_TransferDir=SDIO_TransferDir_ToCard;
+	SDIO_DataInitStructure.SDIO_TransferMode=SDIO_TransferMode_Block;
+  SDIO_DataConfig(&SDIO_DataInitStructure);
+	
+	if(SDIO->RESP1&SD_CARD_LOCKED)return SD_LOCK_UNLOCK_FAILED;//卡锁了
+ 	if(CardType==SDIO_HIGH_CAPACITY_SD_CARD)//大容量卡
+	{
+		blksize=512;
+		addr>>=9;
+	}    
+	if((blksize>0)&&(blksize<=2048)&&((blksize&(blksize-1))==0))
+	{
+		power=convert_from_bytes_to_power_of_two(blksize);
+		
+		SDIO_CmdInitStructure.SDIO_Argument = blksize;	//发送CMD16+设置数据长度为blksize,短响应
+		SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_SET_BLOCKLEN;
+		SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short;
+		SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+		SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+		SDIO_SendCommand(&SDIO_CmdInitStructure);	
+		
+		errorstatus=CmdResp1Error(SD_CMD_SET_BLOCKLEN);	//等待R1响应  
+		
+		if(errorstatus!=SD_OK)return errorstatus;   	//响应错误	 
+		
+	}else return SD_INVALID_PARAMETER;	 
+	if(nblks>1)
+	{					  
+		if(nblks*blksize>SD_MAX_DATA_LENGTH)return SD_INVALID_PARAMETER;   
+     	if((SDIO_STD_CAPACITY_SD_CARD_V1_1==CardType)||(SDIO_STD_CAPACITY_SD_CARD_V2_0==CardType)||(SDIO_HIGH_CAPACITY_SD_CARD==CardType))
+    	{
+			//提高性能
+				SDIO_CmdInitStructure.SDIO_Argument = (u32)RCA<<16;		//发送ACMD55,短响应 	
+				SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_APP_CMD;
+				SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short;
+				SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+				SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+				SDIO_SendCommand(&SDIO_CmdInitStructure);	
+				
+			errorstatus=CmdResp1Error(SD_CMD_APP_CMD);		//等待R1响应 
+				
+			if(errorstatus!=SD_OK)return errorstatus;				 
+				
+				SDIO_CmdInitStructure.SDIO_Argument =nblks;		//发送CMD23,设置块数量,短响应 	 
+				SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_SET_BLOCK_COUNT;
+				SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short;
+				SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+				SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+				SDIO_SendCommand(&SDIO_CmdInitStructure);
+			  
+				errorstatus=CmdResp1Error(SD_CMD_SET_BLOCK_COUNT);//等待R1响应 
+				
+			if(errorstatus!=SD_OK)return errorstatus;		
+		    
+		} 
+
+				SDIO_CmdInitStructure.SDIO_Argument =addr;	//发送CMD25,多块写指令,短响应 	  
+				SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_WRITE_MULT_BLOCK;
+				SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short;
+				SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+				SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+				SDIO_SendCommand(&SDIO_CmdInitStructure);	
+
+ 		errorstatus=CmdResp1Error(SD_CMD_WRITE_MULT_BLOCK);	//等待R1响应   		   
+	
+		if(errorstatus!=SD_OK) return errorstatus;
+
+        SDIO_DataInitStructure.SDIO_DataBlockSize= power<<4; ;	//blksize, 控制器到卡	
+				SDIO_DataInitStructure.SDIO_DataLength= nblks*blksize ;
+				SDIO_DataInitStructure.SDIO_DataTimeOut=SD_DATATIMEOUT ;
+				SDIO_DataInitStructure.SDIO_DPSM=SDIO_DPSM_Enable;
+				SDIO_DataInitStructure.SDIO_TransferDir=SDIO_TransferDir_ToCard;
+				SDIO_DataInitStructure.SDIO_TransferMode=SDIO_TransferMode_Block;
+				SDIO_DataConfig(&SDIO_DataInitStructure);
+				
+		if(DeviceMode==SD_POLLING_MODE)
+	    {
+			timeout=SDIO_DATATIMEOUT;
+			INTX_DISABLE();//关闭总中断(POLLING模式,严禁中断打断SDIO读写操作!!!)
+			while(!(SDIO->STA&((1<<4)|(1<<1)|(1<<8)|(1<<3)|(1<<9))))//下溢/CRC/数据结束/超时/起始位错误
+			{
+				if(SDIO_GetFlagStatus(SDIO_FLAG_TXFIFOHE) != RESET)							//发送区半空,表示至少存了8字(32字节)
+				{	  
+					if((tlen-bytestransferred)<SD_HALFFIFOBYTES)//不够32字节了
+					{
+						restwords=((tlen-bytestransferred)%4==0)?((tlen-bytestransferred)/4):((tlen-bytestransferred)/4+1);
+						for(count=0;count<restwords;count++,tempbuff++,bytestransferred+=4)
+						{
+							SDIO->FIFO=*tempbuff;
+						}
+					}else 										//发送区半空,可以发送至少8字(32字节)数据
+					{
+						for(count=0;count<SD_HALFFIFO;count++)
+						{
+							SDIO->FIFO=*(tempbuff+count);
+						}
+						tempbuff+=SD_HALFFIFO;
+						bytestransferred+=SD_HALFFIFOBYTES;
+					}
+					timeout=0X3FFFFFFF;	//写数据溢出时间
+				}else
+				{
+					if(timeout==0) {
+						INTX_ENABLE();//开启总中断
+						return SD_DATA_TIMEOUT;
+					}
+					timeout--;
+				}
+			} 
+		if(SDIO_GetFlagStatus(SDIO_FLAG_DTIMEOUT) != RESET)		//数据超时错误
+		{										   
+	 		SDIO_ClearFlag(SDIO_FLAG_DTIMEOUT); 	//清错误标志
+	 		INTX_ENABLE();//开启总中断
+			return SD_DATA_TIMEOUT;
+	 	}else if(SDIO_GetFlagStatus(SDIO_FLAG_DCRCFAIL) != RESET)	//数据块CRC错误
+		{
+	 		SDIO_ClearFlag(SDIO_FLAG_DCRCFAIL);  		//清错误标志
+	 		INTX_ENABLE();//开启总中断
+			return SD_DATA_CRC_FAIL;		   
+		}else if(SDIO_GetFlagStatus(SDIO_FLAG_TXUNDERR) != RESET) 	//接收fifo下溢错误
+		{
+	 		SDIO_ClearFlag(SDIO_FLAG_TXUNDERR);		//清错误标志
+	 		INTX_ENABLE();//开启总中断
+			return SD_TX_UNDERRUN;		 
+		}else if(SDIO_GetFlagStatus(SDIO_FLAG_STBITERR) != RESET) 	//接收起始位错误
+		{
+	 		SDIO_ClearFlag(SDIO_FLAG_STBITERR);//清错误标志
+	 		INTX_ENABLE();//开启总中断
+			return SD_START_BIT_ERR;		 
+		}   
+	      										   
+			if(SDIO_GetFlagStatus(SDIO_FLAG_DATAEND) != RESET)		//发送结束
+			{															 
+				if((SDIO_STD_CAPACITY_SD_CARD_V1_1==CardType)||(SDIO_STD_CAPACITY_SD_CARD_V2_0==CardType)||(SDIO_HIGH_CAPACITY_SD_CARD==CardType))
+				{   
+					SDIO_CmdInitStructure.SDIO_Argument =0;//发送CMD12+结束传输 	  
+					SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_STOP_TRANSMISSION;
+					SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short;
+					SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+					SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+					SDIO_SendCommand(&SDIO_CmdInitStructure);	
+					
+					errorstatus=CmdResp1Error(SD_CMD_STOP_TRANSMISSION);//等待R1响应   
+					if(errorstatus!=SD_OK) {
+						INTX_ENABLE();//开启总中断
+						return errorstatus;
+					}
+				}
+			}
+			INTX_ENABLE();//开启总中断
+	 		SDIO_ClearFlag(SDIO_STATIC_FLAGS);//清除所有标记
+	    }else if(DeviceMode==SD_DMA_MODE)
+		{
+	   	TransferError=SD_OK;
+			StopCondition=1;			//多块写,需要发送停止传输指令 
+			TransferEnd=0;				//传输结束标置位，在中断服务置1
+			SDIO->MASK|=(1<<1)|(1<<3)|(1<<8)|(1<<4)|(1<<9);	//配置产生数据接收完成中断
+			SD_DMA_Config((u32*)buf,nblks*blksize,DMA_DIR_MemoryToPeripheral);		//SDIO DMA配置
+	 	 	SDIO->DCTRL|=1<<3;								//SDIO DMA使能. 
+			timeout=SDIO_DATATIMEOUT;
+	 		while(((DMA2->LISR&(1<<27))==RESET)&&timeout)timeout--;//等待传输完成 
+			if(timeout==0)	 								//超时
+			{									  
+  				SD_Init();	 					//重新初始化SD卡,可以解决写入死机的问题
+	 			return SD_DATA_TIMEOUT;			//超时	 
+	 		}
+			timeout=SDIO_DATATIMEOUT;
+			while((TransferEnd==0)&&(TransferError==SD_OK)&&timeout)timeout--;
+	 		if(timeout==0)return SD_DATA_TIMEOUT;			//超时	 
+	 		if(TransferError!=SD_OK)return TransferError;	 
+		}
+  	}
+ 	SDIO_ClearFlag(SDIO_STATIC_FLAGS);//清除所有标记
+ 	errorstatus=IsCardProgramming(&cardstate);
+ 	while((errorstatus==SD_OK)&&((cardstate==SD_CARD_PROGRAMMING)||(cardstate==SD_CARD_RECEIVING)))
+	{
+		errorstatus=IsCardProgramming(&cardstate);
+	}   
+	return errorstatus;	   
+}
 //SDIO中断服务函数		  
 void SDIO_IRQHandler(void) 
 {											
@@ -792,11 +1341,17 @@ void SDIO_IRQHandler(void)
 //返回值:错误代码
 SD_Error SD_ProcessIRQSrc(void)
 {
-	if(SDIO->STA&(1<<8))//接收完成中断
+	if(SDIO_GetFlagStatus(SDIO_FLAG_DATAEND) != RESET)//接收完成中断
 	{	 
 		if (StopCondition==1)
-		{
-			SDIO_Send_Cmd(SD_CMD_STOP_TRANSMISSION,1,0);		//发送CMD12,结束传输 	   
+		{  
+				SDIO_CmdInitStructure.SDIO_Argument =0;//发送CMD12+结束传输 	  
+				SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_STOP_TRANSMISSION;
+				SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short;
+				SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+				SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+				SDIO_SendCommand(&SDIO_CmdInitStructure);	
+					
 			TransferError=CmdResp1Error(SD_CMD_STOP_TRANSMISSION);
 		}else TransferError = SD_OK;	
  		SDIO->ICR|=1<<8;//清除完成中断标记
@@ -804,37 +1359,37 @@ SD_Error SD_ProcessIRQSrc(void)
  		TransferEnd = 1;
 		return(TransferError);
 	}
- 	if(SDIO->STA&(1<<1))//数据CRC错误
+ 	if(SDIO_GetFlagStatus(SDIO_FLAG_DCRCFAIL) != RESET)//数据CRC错误
 	{
-		SDIO->ICR|=1<<1;//清除中断标记
+		SDIO_ClearFlag(SDIO_FLAG_DCRCFAIL);  		//清错误标志
 		SDIO->MASK&=~((1<<1)|(1<<3)|(1<<8)|(1<<14)|(1<<15)|(1<<4)|(1<<5)|(1<<9));//关闭相关中断
 	    TransferError = SD_DATA_CRC_FAIL;
 	    return(SD_DATA_CRC_FAIL);
 	}
- 	if(SDIO->STA&(1<<3))//数据超时错误
+ 	if(SDIO_GetFlagStatus(SDIO_FLAG_DTIMEOUT) != RESET)//数据超时错误
 	{
-		SDIO->ICR|=1<<3;//清除中断标记
+		SDIO_ClearFlag(SDIO_FLAG_DTIMEOUT);  			//清中断标志
 		SDIO->MASK&=~((1<<1)|(1<<3)|(1<<8)|(1<<14)|(1<<15)|(1<<4)|(1<<5)|(1<<9));//关闭相关中断
 	    TransferError = SD_DATA_TIMEOUT;
 	    return(SD_DATA_TIMEOUT);
 	}
-  	if(SDIO->STA&(1<<5))//FIFO上溢错误
+  	if(SDIO_GetFlagStatus(SDIO_FLAG_RXOVERR) != RESET)//FIFO上溢错误
 	{
-		SDIO->ICR|=1<<5;//清除中断标记
+		SDIO_ClearFlag(SDIO_FLAG_RXOVERR);  			//清中断标志
 		SDIO->MASK&=~((1<<1)|(1<<3)|(1<<8)|(1<<14)|(1<<15)|(1<<4)|(1<<5)|(1<<9));//关闭相关中断
 	    TransferError = SD_RX_OVERRUN;
 	    return(SD_RX_OVERRUN);
 	}
-   	if(SDIO->STA&(1<<4))//FIFO下溢错误
+   	if(SDIO_GetFlagStatus(SDIO_FLAG_TXUNDERR) != RESET)//FIFO下溢错误
 	{
-		SDIO->ICR|=1<<4;//清除中断标记
+		SDIO_ClearFlag(SDIO_FLAG_TXUNDERR);  			//清中断标志
 		SDIO->MASK&=~((1<<1)|(1<<3)|(1<<8)|(1<<14)|(1<<15)|(1<<4)|(1<<5)|(1<<9));//关闭相关中断
 	    TransferError = SD_TX_UNDERRUN;
 	    return(SD_TX_UNDERRUN);
 	}
-	if(SDIO->STA&(1<<9))//起始位错误
+	if(SDIO_GetFlagStatus(SDIO_FLAG_STBITERR) != RESET)//起始位错误
 	{
-		SDIO->ICR|=1<<9;//清除中断标记
+		SDIO_ClearFlag(SDIO_FLAG_STBITERR);  		//清中断标志
 		SDIO->MASK&=~((1<<1)|(1<<3)|(1<<8)|(1<<14)|(1<<15)|(1<<4)|(1<<5)|(1<<9));//关闭相关中断
 	    TransferError = SD_START_BIT_ERR;
 	    return(SD_START_BIT_ERR);
@@ -850,10 +1405,10 @@ SD_Error CmdError(void)
 	u32 timeout=SDIO_CMD0TIMEOUT;	   
 	while(timeout--)
 	{
-		if(SDIO->STA&(1<<7))break;	//命令已发送(无需响应)	 
+		if(SDIO_GetFlagStatus(SDIO_FLAG_CMDSENT) != RESET)break;	//命令已发送(无需响应)	 
 	}	    
 	if(timeout==0)return SD_CMD_RSP_TIMEOUT;  
-	SDIO->ICR=0X5FF;				//清除标记
+	SDIO_ClearFlag(SDIO_STATIC_FLAGS);//清除所有标记
 	return errorstatus;
 }	 
 //检查R7响应的错误状态
@@ -871,13 +1426,13 @@ SD_Error CmdResp7Error(void)
  	if((timeout==0)||(status&(1<<2)))	//响应超时
 	{																				    
 		errorstatus=SD_CMD_RSP_TIMEOUT;	//当前卡不是2.0兼容卡,或者不支持设定的电压范围
-		SDIO->ICR|=1<<2;				//清除命令响应超时标志
+		SDIO_ClearFlag(SDIO_FLAG_CTIMEOUT); 			//清除命令响应超时标志
 		return errorstatus;
 	}	 
 	if(status&1<<6)						//成功接收到响应
 	{								   
 		errorstatus=SD_OK;
-		SDIO->ICR|=1<<6;				//清除响应标志
+		SDIO_ClearFlag(SDIO_FLAG_CMDREND); 				//清除响应标志
  	}
 	return errorstatus;
 }	   
@@ -892,18 +1447,18 @@ SD_Error CmdResp1Error(u8 cmd)
 		status=SDIO->STA;
 		if(status&((1<<0)|(1<<2)|(1<<6)))break;//CRC错误/命令响应超时/已经收到响应(CRC校验成功)
 	} 
-	if(status&(1<<2))					//响应超时
+	if(SDIO_GetFlagStatus(SDIO_FLAG_CTIMEOUT) != RESET)					//响应超时
 	{																				    
- 		SDIO->ICR=1<<2;					//清除命令响应超时标志
+ 		SDIO_ClearFlag(SDIO_FLAG_CTIMEOUT); 				//清除命令响应超时标志
 		return SD_CMD_RSP_TIMEOUT;
 	}	
- 	if(status&(1<<0))					//CRC错误
+ 	if(SDIO_GetFlagStatus(SDIO_FLAG_CCRCFAIL) != RESET)					//CRC错误
 	{																				    
- 		SDIO->ICR=1<<0;					//清除标志
+ 		SDIO_ClearFlag(SDIO_FLAG_CCRCFAIL); 				//清除标志
 		return SD_CMD_CRC_FAIL;
 	}		
 	if(SDIO->RESPCMD!=cmd)return SD_ILLEGAL_CMD;//命令不匹配 
-  	SDIO->ICR=0X5FF;	 				//清除标记
+  SDIO_ClearFlag(SDIO_STATIC_FLAGS);//清除所有标记
 	return (SD_Error)(SDIO->RESP1&SD_OCR_ERRORBITS);//返回卡响应
 }
 //检查R3响应的错误状态
@@ -916,12 +1471,12 @@ SD_Error CmdResp3Error(void)
 		status=SDIO->STA;
 		if(status&((1<<0)|(1<<2)|(1<<6)))break;//CRC错误/命令响应超时/已经收到响应(CRC校验成功)	
 	}
- 	if(status&(1<<2))					//响应超时
+ 	if(SDIO_GetFlagStatus(SDIO_FLAG_CTIMEOUT) != RESET)					//响应超时
 	{											 
-		SDIO->ICR|=1<<2;				//清除命令响应超时标志
+		SDIO_ClearFlag(SDIO_FLAG_CTIMEOUT);			//清除命令响应超时标志
 		return SD_CMD_RSP_TIMEOUT;
 	}	 
-   	SDIO->ICR=0X5FF;	 				//清除标记
+   SDIO_ClearFlag(SDIO_STATIC_FLAGS);//清除所有标记
  	return SD_OK;								  
 }
 //检查R2响应的错误状态
@@ -939,15 +1494,15 @@ SD_Error CmdResp2Error(void)
   	if((timeout==0)||(status&(1<<2)))	//响应超时
 	{																				    
 		errorstatus=SD_CMD_RSP_TIMEOUT; 
-		SDIO->ICR|=1<<2;				//清除命令响应超时标志
+		SDIO_ClearFlag(SDIO_FLAG_CTIMEOUT); 		//清除命令响应超时标志
 		return errorstatus;
 	}	 
-	if(status&1<<0)						//CRC错误
+	if(SDIO_GetFlagStatus(SDIO_FLAG_CCRCFAIL) != RESET)						//CRC错误
 	{								   
 		errorstatus=SD_CMD_CRC_FAIL;
-		SDIO->ICR|=1<<0;				//清除响应标志
+		SDIO_ClearFlag(SDIO_FLAG_CCRCFAIL);		//清除响应标志
  	}
-	SDIO->ICR=0X5FF;	 				//清除标记
+	SDIO_ClearFlag(SDIO_STATIC_FLAGS);//清除所有标记
  	return errorstatus;								    		 
 } 
 //检查R6响应的错误状态
@@ -964,21 +1519,21 @@ SD_Error CmdResp6Error(u8 cmd,u16*prca)
 		status=SDIO->STA;
 		if(status&((1<<0)|(1<<2)|(1<<6)))break;//CRC错误/命令响应超时/已经收到响应(CRC校验成功)	
 	}
-	if(status&(1<<2))					//响应超时
+	if(SDIO_GetFlagStatus(SDIO_FLAG_CTIMEOUT) != RESET)					//响应超时
 	{																				    
- 		SDIO->ICR|=1<<2;				//清除命令响应超时标志
+ 		SDIO_ClearFlag(SDIO_FLAG_CTIMEOUT);			//清除命令响应超时标志
 		return SD_CMD_RSP_TIMEOUT;
 	}	 	 
-	if(status&1<<0)						//CRC错误
+	if(SDIO_GetFlagStatus(SDIO_FLAG_CCRCFAIL) != RESET)						//CRC错误
 	{								   
-		SDIO->ICR|=1<<0;				//清除响应标志
+		SDIO_ClearFlag(SDIO_FLAG_CCRCFAIL);					//清除响应标志
  		return SD_CMD_CRC_FAIL;
 	}
 	if(SDIO->RESPCMD!=cmd)				//判断是否响应cmd命令
 	{
  		return SD_ILLEGAL_CMD; 		
 	}	    
-	SDIO->ICR=0X5FF;	 				//清除所有标记
+	SDIO_ClearFlag(SDIO_STATIC_FLAGS);//清除所有标记
 	rspr1=SDIO->RESP1;					//得到响应 	 
 	if(SD_ALLZERO==(rspr1&(SD_R6_GENERAL_UNKNOWN_ERROR|SD_R6_ILLEGAL_CMD|SD_R6_COM_CRC_FAILED)))
 	{
@@ -1006,11 +1561,26 @@ SD_Error SDEnWideBus(u8 enx)
  	if(errorstatus!=SD_OK)return errorstatus;
 	if((scr[1]&SD_WIDE_BUS_SUPPORT)!=SD_ALLZERO)		//支持宽总线
 	{
-	 	SDIO_Send_Cmd(SD_CMD_APP_CMD,1,(u32)RCA<<16);	//发送CMD55+RCA,短响应											  
+		  SDIO_CmdInitStructure.SDIO_Argument = (uint32_t) RCA << 16;//发送CMD55+RCA,短响应	
+      SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_APP_CMD;
+      SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short;
+      SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+      SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+      SDIO_SendCommand(&SDIO_CmdInitStructure);
+		
 	 	errorstatus=CmdResp1Error(SD_CMD_APP_CMD);
+		
 	 	if(errorstatus!=SD_OK)return errorstatus; 
-	 	SDIO_Send_Cmd(SD_CMD_APP_SD_SET_BUSWIDTH,1,arg);//发送ACMD6,短响应,参数:10,4位;00,1位.											  
-		errorstatus=CmdResp1Error(SD_CMD_APP_SD_SET_BUSWIDTH);
+		
+		  SDIO_CmdInitStructure.SDIO_Argument = arg;//发送ACMD6,短响应,参数:10,4位;00,1位.	
+      SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_APP_SD_SET_BUSWIDTH;
+      SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short;
+      SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+      SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+      SDIO_SendCommand(&SDIO_CmdInitStructure);
+			
+     errorstatus=CmdResp1Error(SD_CMD_APP_SD_SET_BUSWIDTH);
+		
 		return errorstatus;
 	}else return SD_REQUEST_NOT_APPLICABLE;				//不支持宽总线设置 	 
 }												   
@@ -1019,22 +1589,30 @@ SD_Error SDEnWideBus(u8 enx)
 //返回值:错误代码
 SD_Error IsCardProgramming(u8 *pstatus)
 {
- 	vu32 respR1 = 0, status = 0; 
-  	SDIO_Send_Cmd(SD_CMD_SEND_STATUS,1,(u32)RCA<<16);		//发送CMD13 	   
-  	status=SDIO->STA;
+ 	vu32 respR1 = 0, status = 0;  
+  
+  SDIO_CmdInitStructure.SDIO_Argument = (uint32_t) RCA << 16; //卡相对地址参数
+  SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_SEND_STATUS;//发送CMD13 	
+  SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short;
+  SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+  SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+  SDIO_SendCommand(&SDIO_CmdInitStructure);	
+ 	
+	status=SDIO->STA;
+	
 	while(!(status&((1<<0)|(1<<6)|(1<<2))))status=SDIO->STA;//等待操作完成
-   	if(status&(1<<0))			//CRC检测失败
-	{
-		SDIO->ICR|=1<<0;		//清除错误标记
+   	if(SDIO_GetFlagStatus(SDIO_FLAG_CCRCFAIL) != RESET)			//CRC检测失败
+	{  
+	  SDIO_ClearFlag(SDIO_FLAG_CCRCFAIL);	//清除错误标记
 		return SD_CMD_CRC_FAIL;
 	}
-   	if(status&(1<<2))			//命令超时 
+   	if(SDIO_GetFlagStatus(SDIO_FLAG_CTIMEOUT) != RESET)			//命令超时 
 	{
-		SDIO->ICR|=1<<2;		//清除错误标记
+		SDIO_ClearFlag(SDIO_FLAG_CTIMEOUT);			//清除错误标记
 		return SD_CMD_RSP_TIMEOUT;
 	}
  	if(SDIO->RESPCMD!=SD_CMD_SEND_STATUS)return SD_ILLEGAL_CMD;
-	SDIO->ICR=0X5FF;	 		//清除所有标记
+	SDIO_ClearFlag(SDIO_STATIC_FLAGS);//清除所有标记
 	respR1=SDIO->RESP1;
 	*pstatus=(u8)((respR1>>9)&0x0000000F);
 	return SD_OK;
@@ -1050,7 +1628,14 @@ SD_Error SD_SendStatus(uint32_t *pcardstatus)
 		errorstatus=SD_INVALID_PARAMETER;
 		return errorstatus;
 	}
- 	SDIO_Send_Cmd(SD_CMD_SEND_STATUS,1,RCA<<16);	//发送CMD13,短响应		 
+	
+	SDIO_CmdInitStructure.SDIO_Argument = (uint32_t) RCA << 16;//发送CMD13,短响应		 
+  SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_SEND_STATUS;
+  SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short;
+  SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+  SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+  SDIO_SendCommand(&SDIO_CmdInitStructure);	
+	
 	errorstatus=CmdResp1Error(SD_CMD_SEND_STATUS);	//查询响应状态 
 	if(errorstatus!=SD_OK)return errorstatus;
 	*pcardstatus=SDIO->RESP1;//读取响应值
@@ -1073,105 +1658,153 @@ SD_Error FindSCR(u16 rca,u32 *pscr)
 	u32 index = 0; 
 	SD_Error errorstatus = SD_OK;
 	u32 tempscr[2]={0,0};  
- 	SDIO_Send_Cmd(SD_CMD_SET_BLOCKLEN,1,8);			//发送CMD16,短响应,设置Block Size为8字节											  
+	
+	SDIO_CmdInitStructure.SDIO_Argument = (uint32_t)8;	 //发送CMD16,短响应,设置Block Size为8字节	
+  SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_SET_BLOCKLEN; //	 cmd16
+  SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short;  //r1
+  SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+  SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+  SDIO_SendCommand(&SDIO_CmdInitStructure);
+	
  	errorstatus=CmdResp1Error(SD_CMD_SET_BLOCKLEN);
- 	if(errorstatus!=SD_OK)return errorstatus;	    
-  	SDIO_Send_Cmd(SD_CMD_APP_CMD,1,(u32)rca<<16);	//发送CMD55,短响应 									  
+	
+ 	if(errorstatus!=SD_OK)return errorstatus;	 
+	
+  SDIO_CmdInitStructure.SDIO_Argument = (uint32_t) RCA << 16; 
+  SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_APP_CMD;//发送CMD55,短响应 	
+  SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short;
+  SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+  SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+  SDIO_SendCommand(&SDIO_CmdInitStructure);
+	
  	errorstatus=CmdResp1Error(SD_CMD_APP_CMD);
  	if(errorstatus!=SD_OK)return errorstatus;
-	SDIO_Send_Data_Cfg(SD_DATATIMEOUT,8,3,1);		//8个字节长度,block为8字节,SD卡到SDIO.
-   	SDIO_Send_Cmd(SD_CMD_SD_APP_SEND_SCR,1,0);		//发送ACMD51,短响应,参数为0											  
+	
+  SDIO_DataInitStructure.SDIO_DataTimeOut = SD_DATATIMEOUT;
+  SDIO_DataInitStructure.SDIO_DataLength = 8;  //8个字节长度,block为8字节,SD卡到SDIO.
+  SDIO_DataInitStructure.SDIO_DataBlockSize = SDIO_DataBlockSize_8b  ;  //块大小8byte 
+  SDIO_DataInitStructure.SDIO_TransferDir = SDIO_TransferDir_ToSDIO;
+  SDIO_DataInitStructure.SDIO_TransferMode = SDIO_TransferMode_Block;
+  SDIO_DataInitStructure.SDIO_DPSM = SDIO_DPSM_Enable;
+  SDIO_DataConfig(&SDIO_DataInitStructure);		
+
+  SDIO_CmdInitStructure.SDIO_Argument = 0x0;
+  SDIO_CmdInitStructure.SDIO_CmdIndex = SD_CMD_SD_APP_SEND_SCR;	//发送ACMD51,短响应,参数为0	
+  SDIO_CmdInitStructure.SDIO_Response = SDIO_Response_Short;  //r1
+  SDIO_CmdInitStructure.SDIO_Wait = SDIO_Wait_No;
+  SDIO_CmdInitStructure.SDIO_CPSM = SDIO_CPSM_Enable;
+  SDIO_SendCommand(&SDIO_CmdInitStructure);
+	
  	errorstatus=CmdResp1Error(SD_CMD_SD_APP_SEND_SCR);
  	if(errorstatus!=SD_OK)return errorstatus;							   
  	while(!(SDIO->STA&(SDIO_FLAG_RXOVERR|SDIO_FLAG_DCRCFAIL|SDIO_FLAG_DTIMEOUT|SDIO_FLAG_DBCKEND|SDIO_FLAG_STBITERR)))
 	{ 
-		if(SDIO->STA&(1<<21))//接收FIFO数据可用
+		if(SDIO_GetFlagStatus(SDIO_FLAG_RXDAVL) != RESET)//接收FIFO数据可用
 		{
 			*(tempscr+index)=SDIO->FIFO;	//读取FIFO内容
 			index++;
 			if(index>=2)break;
 		}
 	}
- 	if(SDIO->STA&(1<<3))		//接收数据超时
-	{										 
- 		SDIO->ICR|=1<<3;		//清除标记
-		return SD_DATA_TIMEOUT;
-	}
-	else if(SDIO->STA&(1<<1))	//已发送/接收的数据块CRC校验错误
-	{
- 		SDIO->ICR|=1<<1;		//清除标记
-		return SD_DATA_CRC_FAIL;   
-	}
-	else if(SDIO->STA&(1<<5))	//接收FIFO溢出
-	{
- 		SDIO->ICR|=1<<5;		//清除标记
-		return SD_RX_OVERRUN;   	   
-	}
-	else if(SDIO->STA&(1<<9))	//起始位检测错误
-	{
- 		SDIO->ICR|=1<<9;		//清除标记
-		return SD_START_BIT_ERR;    
-	}
-   	SDIO->ICR=0X5FF;	 		//清除标记	 
+		if(SDIO_GetFlagStatus(SDIO_FLAG_DTIMEOUT) != RESET)		//数据超时错误
+		{										   
+	 		SDIO_ClearFlag(SDIO_FLAG_DTIMEOUT); 	//清错误标志
+			return SD_DATA_TIMEOUT;
+	 	}else if(SDIO_GetFlagStatus(SDIO_FLAG_DCRCFAIL) != RESET)	//数据块CRC错误
+		{
+	 		SDIO_ClearFlag(SDIO_FLAG_DCRCFAIL);  		//清错误标志
+			return SD_DATA_CRC_FAIL;		   
+		}else if(SDIO_GetFlagStatus(SDIO_FLAG_RXOVERR) != RESET) 	//接收fifo上溢错误
+		{
+	 		SDIO_ClearFlag(SDIO_FLAG_RXOVERR);		//清错误标志
+			return SD_RX_OVERRUN;		 
+		}else if(SDIO_GetFlagStatus(SDIO_FLAG_STBITERR) != RESET) 	//接收起始位错误
+		{
+	 		SDIO_ClearFlag(SDIO_FLAG_STBITERR);//清错误标志
+			return SD_START_BIT_ERR;		 
+		}  
+   SDIO_ClearFlag(SDIO_STATIC_FLAGS);//清除所有标记
 	//把数据顺序按8位为单位倒过来.   	
 	*(pscr+1)=((tempscr[0]&SD_0TO7BITS)<<24)|((tempscr[0]&SD_8TO15BITS)<<8)|((tempscr[0]&SD_16TO23BITS)>>8)|((tempscr[0]&SD_24TO31BITS)>>24);
 	*(pscr)=((tempscr[1]&SD_0TO7BITS)<<24)|((tempscr[1]&SD_8TO15BITS)<<8)|((tempscr[1]&SD_16TO23BITS)>>8)|((tempscr[1]&SD_24TO31BITS)>>24);
  	return errorstatus;
-} 
+}
+//得到NumberOfBytes以2为底的指数.
+//NumberOfBytes:字节数.
+//返回值:以2为底的指数值
+u8 convert_from_bytes_to_power_of_two(u16 NumberOfBytes)
+{
+	u8 count=0;
+	while(NumberOfBytes!=1)
+	{
+		NumberOfBytes>>=1;
+		count++;
+	}
+	return count;
+} 	 
+
 //配置SDIO DMA  
 //mbuf:存储器地址
 //bufsize:传输数据量
-//dir:方向;1,存储器-->SDIO(写数据);0,SDIO-->存储器(读数据);
-void SD_DMA_Config(u32*mbuf,u32 bufsize,u8 dir)
+//dir:方向;DMA_DIR_MemoryToPeripheral  存储器-->SDIO(写数据);DMA_DIR_PeripheralToMemory SDIO-->存储器(读数据);
+void SD_DMA_Config(u32*mbuf,u32 bufsize,u32 dir)
 {		 
- 	u32 tmpreg=0;//重新设置
-	while(DMA2_Stream3->CR&0X01);	//等待DMA可配置 
-	DMA2->LIFCR|=0X3D<<22;			//清空之前该stream3上的所有中断标志
+
+  DMA_InitTypeDef  DMA_InitStructure;
 	
+	while (DMA_GetCmdStatus(DMA2_Stream3) != DISABLE){}//等待DMA可配置 
+		
+  DMA_DeInit(DMA2_Stream3);//清空之前该stream3上的所有中断标志
 	
-	DMA2_Stream3->PAR=(u32)&SDIO->FIFO;	//DMA2 外设地址
-	DMA2_Stream3->M0AR=(u32)mbuf; 	//DMA2,存储器0地址;	 
-	DMA2_Stream3->NDTR=0; 			//DMA2,传输数据量0,外设流控制 
-	tmpreg|=dir<<6;		//数据传输方向控制
-	tmpreg|=0<<8;		//非循环模式(即使用普通模式)
-	tmpreg|=0<<9;		//外设非增量模式
-	tmpreg|=1<<10;		//存储器增量模式
-	tmpreg|=2<<11;		//外设数据长度:32位
-	tmpreg|=2<<13;		//存储器数据长度:32位
-	tmpreg|=3<<16;		//最高优先级
-	tmpreg|=1<<21;		//外设突发4次传输
-	tmpreg|=1<<23;		//存储器突发4次传输
-	tmpreg|=(u32)4<<25;	//通道选择
-	DMA2_Stream3->CR=tmpreg; 
-	
-	tmpreg=DMA2_Stream3->FCR;
-	tmpreg&=0XFFFFFFF8;	//清除DMDIS和FTH
-	tmpreg|=1<<2;		//FIFO使能
-	tmpreg|=3<<0;		//全FIFO
-	DMA2_Stream3->FCR=tmpreg;
-	DMA2_Stream3->CR|=1<<5;	//外设流控制 
-	DMA2_Stream3->CR|=1<<0;	//开启DMA传输 
+ 
+  DMA_InitStructure.DMA_Channel = DMA_Channel_4;  //通道选择
+  DMA_InitStructure.DMA_PeripheralBaseAddr = (u32)&SDIO->FIFO;//DMA外设地址
+  DMA_InitStructure.DMA_Memory0BaseAddr = (u32)mbuf;//DMA 存储器0地址
+  DMA_InitStructure.DMA_DIR = dir;//存储器到外设模式
+  DMA_InitStructure.DMA_BufferSize = 0;//数据传输量 
+  DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;//外设非增量模式
+  DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;//存储器增量模式
+  DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Word;//外设数据长度:32位
+  DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Word;//存储器数据长度:32位
+  DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;// 使用普通模式 
+  DMA_InitStructure.DMA_Priority = DMA_Priority_VeryHigh;//最高优先级
+  DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Enable;   //FIFO使能      
+  DMA_InitStructure.DMA_FIFOThreshold = DMA_FIFOThreshold_Full;//全FIFO
+  DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_INC4;//外设突发4次传输
+  DMA_InitStructure.DMA_PeripheralBurst = DMA_PeripheralBurst_INC4;//存储器突发4次传输
+  DMA_Init(DMA2_Stream3, &DMA_InitStructure);//初始化DMA Stream
+
+	DMA_FlowControllerConfig(DMA2_Stream3,DMA_FlowCtrl_Peripheral);//外设流控制 
+	 
+  DMA_Cmd(DMA2_Stream3 ,ENABLE);//开启DMA传输	 
+
 }   
+
+
 //读SD卡
 //buf:读数据缓存区
 //sector:扇区地址
 //cnt:扇区个数	
 //返回值:错误状态;0,正常;其他,错误代码;				  				 
-u8 SD_ReadDisk(u8*buf,u32 sector,u32 cnt)
+u8 SD_ReadDisk(u8*buf,u32 sector,u8 cnt)
 {
 	u8 sta=SD_OK;
 	long long lsector=sector;
-	u32 n;
-	if(CardType!=SDIO_STD_CAPACITY_SD_CARD_V1_1)lsector<<=9;
+	u8 n;
+	lsector<<=9;
 	if((u32)buf%4!=0)
 	{
 	 	for(n=0;n<cnt;n++)
 		{
-		 	sta=SD_ReadBlocks(SDIO_DATA_BUFFER,lsector+512*n,512,1);//单个sector的读操作
+		 	sta=SD_ReadBlock(SDIO_DATA_BUFFER,lsector+512*n,512);//单个sector的读操作
 			memcpy(buf,SDIO_DATA_BUFFER,512);
 			buf+=512;
 		} 
-	}else sta=SD_ReadBlocks(buf,lsector,512,cnt);	//单个/多个sector   
+	}else
+	{
+		if(cnt==1)sta=SD_ReadBlock(buf,lsector,512);    	//单个sector的读操作
+		else sta=SD_ReadMultiBlocks(buf,lsector,512,cnt);//多个sector  
+	}
 	return sta;
 }
 //写SD卡
@@ -1179,21 +1812,25 @@ u8 SD_ReadDisk(u8*buf,u32 sector,u32 cnt)
 //sector:扇区地址
 //cnt:扇区个数	
 //返回值:错误状态;0,正常;其他,错误代码;	
-u8 SD_WriteDisk(u8*buf,u32 sector,u32 cnt)
+u8 SD_WriteDisk(u8*buf,u32 sector,u8 cnt)
 {
 	u8 sta=SD_OK;
-	u32 n;
+	u8 n;
 	long long lsector=sector;
-	if(CardType!=SDIO_STD_CAPACITY_SD_CARD_V1_1)lsector<<=9;
+	lsector<<=9;
 	if((u32)buf%4!=0)
 	{
 	 	for(n=0;n<cnt;n++)
 		{
 			memcpy(SDIO_DATA_BUFFER,buf,512);
-		 	sta=SD_WriteBlocks(SDIO_DATA_BUFFER,lsector+512*n,512,1);//单个sector的写操作
+		 	sta=SD_WriteBlock(SDIO_DATA_BUFFER,lsector+512*n,512);//单个sector的写操作
 			buf+=512;
 		} 
-	}else sta=SD_WriteBlocks(buf,lsector,512,cnt);	//单个/多个sector   
+	}else
+	{
+		if(cnt==1)sta=SD_WriteBlock(buf,lsector,512);    	//单个sector的写操作
+		else sta=SD_WriteMultiBlocks(buf,lsector,512,cnt);	//多个sector  
+	}
 	return sta;
 }
 

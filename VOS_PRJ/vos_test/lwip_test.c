@@ -68,7 +68,7 @@ void  sock_tcp_test()
     memset(&servaddr, 0, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(6666);
-    if( inet_aton("192.168.2.104", &servaddr.sin_addr) <= 0){
+    if( inet_aton("192.168.2.100", &servaddr.sin_addr) <= 0){
     	kprintf("ERROR!\r\n");
     }
     if( connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0){
@@ -171,7 +171,7 @@ void sockets_stresstest_init_server(int addr_family, u16_t server_port);
 void sockets_stresstest_init_client(const char *remote_ip, u16_t remote_port);
 void lwip_inner_test()
 {
-	sockets_stresstest_init_client("192.168.2.104", 6666);
+	sockets_stresstest_init_client("192.168.2.100", 6666);
 }
 
 
