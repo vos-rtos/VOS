@@ -62,7 +62,7 @@ typedef void (*task_fun_t)(void *param);
 #define VOSTaskRaisePrioBeforeBlock
 #endif
 
-extern struct StVosTask;
+struct StVosTask;
 
 #define VOS_WAKEUP_FROM_SEM			(u32)(0)
 #define VOS_WAKEUP_FROM_SEM_DEL		(u32)(1) //删除信号量，必须通知的各等待信号量的任务添加到就绪队列
@@ -285,6 +285,8 @@ void VOSTaskRestorePrioBeforeRelease();
 void VOSTaskDelayListInsert(StVosTask *pInsertTask);
 
 void VOSTaskDelayListWakeUp();
+
+s32 VOSGetCurTaskId();
 
 //检查目前运行在中断上下文还是任务上下文。
 s32 VOSCortexCheck();

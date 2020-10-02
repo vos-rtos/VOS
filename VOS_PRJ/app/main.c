@@ -78,6 +78,8 @@ void main(void *param)
 
 	//fatfs_test();
 
+ 	GUI_Init();
+
 	NetDhcpClient(30*1000);
 	//SetNetWorkInfo ("192.168.2.150", "255.255.255.0", "192.168.2.101");
 	//lwip_inner_test();

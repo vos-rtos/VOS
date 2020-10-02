@@ -53,7 +53,6 @@ Purpose     : Display controller configuration (single layer)
 
 #include "GUI.h"
 #include "GUIDRV_Lin.h"
-
 /*********************************************************************
 *
 *       Layer configuration (to be modified)

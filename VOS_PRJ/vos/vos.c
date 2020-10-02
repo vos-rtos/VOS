@@ -201,6 +201,21 @@ StVosTask *VOSGetTaskFromId(s32 task_id)
 	return &gArrVosTask[task_id];
 }
 
+/********************************************************************************************************
+* 函数：s32 VOSGetCurTaskId();
+* 描述:  获取当前任务的ID
+* 参数:  无
+* 返回：返回当前运行任务ID, 如果系统没开始调度，或者中断上下文，则返回-1
+* 注意：无
+*********************************************************************************************************/
+s32 VOSGetCurTaskId()
+{
+	if (VOSRunning == 1 && VOSIntNesting == 0) return 0;
+		return pRunningTask - &gArrVosTask[0];
+	return -1;
+}
+
+
 
 /********************************************************************************************************
 * 函数：StVosTask *VOSTaskReadyListCutTask(StVosTask *pCutTask);

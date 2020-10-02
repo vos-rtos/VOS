@@ -1,7 +1,7 @@
 #ifndef __V_LIST_H__
 #define __V_LIST_H__
 
-extern struct StVosTask;
+struct StVosTask;
 struct list_head
 {
 	struct list_head *next, *prev;

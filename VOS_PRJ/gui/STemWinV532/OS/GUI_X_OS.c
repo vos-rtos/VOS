@@ -55,15 +55,21 @@ Purpose     : This file provides emWin Interface with FreeRTOS
 
 #include "GUI.h"
     
-    /* FreeRTOS include files */
-#include "cmsis_os.h"
+/* VOS include files */
+#include "vos.h"
+ 
+#define osWaitForever  VOS_WAIT_FOREVER_U32
     
 /*********************************************************************
 *
 * Global data
 */
-static osMutexId osMutex;
-static osSemaphoreId osSemaphore;
+
+static struct StVOSSemaphore* 	osSemaphore = 0;
+static struct StVOSMutex* 	osMutex = 0;
+
+//static osMutexId osMutex;
+//static osSemaphoreId osSemaphore;
 /*********************************************************************
 *
 * Timing:
@@ -77,12 +83,14 @@ and delay function. Default time unit (tick), normally is
 
 int GUI_X_GetTime(void)
 {
-  return ((int) xTaskGetTickCount());
+	return VOSGetTimeMs();
+  //return ((int) xTaskGetTickCount());
 }
 
 void GUI_X_Delay(int ms)
 {
-  vTaskDelay( ms );
+  //vTaskDelay( ms );
+	VOSTaskDelay(ms);
 }
 
 /*********************************************************************
@@ -131,44 +139,60 @@ void GUI_X_ExecIdle(void) {}
 void GUI_X_InitOS(void)
 { 
   /* Create Mutex lock */
-  osMutexDef(MUTEX);
+  //osMutexDef(MUTEX);
+  
+  osMutex = VOSMutexCreate("emWin_mutex");
   
   /* Create the Mutex used by the two threads */
-  osMutex = osMutexCreate(osMutex(MUTEX));
+  //osMutex = osMutexCreate(osMutex(MUTEX));
   
   /* Create Semaphore lock */
-  osSemaphoreDef(SEM);
+  //osSemaphoreDef(SEM);
   
   /* Create the Semaphore used by the two threads */
-  osSemaphore= osSemaphoreCreate(osSemaphore(SEM), 1);  
+  //osSemaphore= osSemaphoreCreate(osSemaphore(SEM), 1);  
+	osSemaphore = VOSSemCreate(0xFFFF, 1, "emWin_sem");
 }
 
 void GUI_X_Unlock(void)
 { 
-  osMutexRelease(osMutex);
+	if (osMutex) {
+		VOSMutexRelease(osMutex);
+	}
+  	//osMutexRelease(osMutex);
 }
 
 void GUI_X_Lock(void)
 {
-  osMutexWait(osMutex , osWaitForever) ;
+  	//osMutexWait(osMutex , osWaitForever) ;
+	if (osMutex) {
+		VOSMutexWait(osMutex, osWaitForever);
+	}
 }
 
 /* Get Task handle */
 U32 GUI_X_GetTaskId(void) 
 { 
-  return ((U32) osThreadGetId());
+  //return ((U32) osThreadGetId());
+  VOSGetCurTaskId();
 }
 
 
 void GUI_X_WaitEvent (void) 
 {
-  osSemaphoreWait(osSemaphore , osWaitForever) ;
+  //osSemaphoreWait(osSemaphore , osWaitForever) ;
+  if (osSemaphore) {
+	VOSSemWait(osSemaphore, osWaitForever);
+  }
 }
 
 
 void GUI_X_SignalEvent (void) 
 {
-  osMutexRelease(osSemaphore);
+  //osMutexRelease(osSemaphore);
+    if (osSemaphore) {
+		VOSSemRelease(osSemaphore);
+  	}
 }
 
 /*********************************************************************

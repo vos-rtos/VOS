@@ -62,7 +62,10 @@ Purpose     : Display controller initialization
 //
 // Define the available number of bytes available for the GUI
 //
-#define GUI_NUMBYTES  0x200000
+#include "vos.h"
+#include "vheap.h"
+
+#define GUI_NUMBYTES  (100*1024) //0x200000
 
 /*********************************************************************
 *
@@ -82,7 +85,8 @@ void GUI_X_Config(void) {
   //
   // 32 bit aligned memory area
   //
-  static U32 aMemory[GUI_NUMBYTES / 4];
+  //static U32 aMemory[GUI_NUMBYTES / 4];
+  u8 *aMemory = (u8*)vmalloc(GUI_NUMBYTES);
   //
   // Assign memory to emWin
   //
