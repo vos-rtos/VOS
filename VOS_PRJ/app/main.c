@@ -68,9 +68,10 @@ void main(void *param)
 {
 	s32 res;
 //	return ;
-// 	LCD_Init();
-//	tp_dev.init();
-//	rtp_test();
+ 	LCD_Init();
+ 	LCD_ShowString(30,150,200,16,16,"SD Card OK    ");
+	//tp_dev.init();
+	//rtp_test();
 	//lwip_test();
 
 	//sd_test_test();
