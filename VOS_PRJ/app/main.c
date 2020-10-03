@@ -77,8 +77,9 @@ void main(void *param)
 	//sd_test_test();
 
 	//fatfs_test();
-
+ 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_CRC,ENABLE);
  	GUI_Init();
+ 	GUI_DispStringAt("Hello worldxxxxxxxxx", 0, 0);
 
 	NetDhcpClient(30*1000);
 	//SetNetWorkInfo ("192.168.2.150", "255.255.255.0", "192.168.2.101");
