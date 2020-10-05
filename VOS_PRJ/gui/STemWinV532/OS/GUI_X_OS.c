@@ -174,7 +174,7 @@ void GUI_X_Lock(void)
 U32 GUI_X_GetTaskId(void) 
 { 
   //return ((U32) osThreadGetId());
-  VOSGetCurTaskId();
+  return (u32)VOSGetCurTaskId();
 }
 
 

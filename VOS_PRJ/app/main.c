@@ -62,24 +62,21 @@ void rtp_test(void)
 	}
 }
 
-
 s32 NetDhcpClient(u32 timeout);
+void emWinTest();
 void main(void *param)
 {
 	s32 res;
-//	return ;
- 	LCD_Init();
- 	LCD_ShowString(30,150,200,16,16,"SD Card OK    ");
+//	LCD_Init();
+// 	LCD_ShowString(30,150,200,16,16,"SD Card OK    ");
 	//tp_dev.init();
 	//rtp_test();
 	//lwip_test();
 
 	//sd_test_test();
-
 	//fatfs_test();
- 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_CRC,ENABLE);
- 	GUI_Init();
- 	GUI_DispStringAt("Hello worldxxxxxxxxx", 0, 0);
+	//return;
+	emWinTest();
 
 	NetDhcpClient(30*1000);
 	//SetNetWorkInfo ("192.168.2.150", "255.255.255.0", "192.168.2.101");

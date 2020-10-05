@@ -6,6 +6,22 @@
 #include "w25qxx.h"
 
 #define SD_CARD_FS_TEST 1
+FATFS fs;
+void fatfs_sd_card()
+{
+
+    FIL fil;
+    UINT num = 0;
+
+	s32 res;
+
+	while(SD_Init()) {
+		kprintf("SD_Init failed!\r\n");
+	}
+    /* Open or create a log file and ready to append */
+    f_mount(&fs, "0:", 0);
+}
+
 
 void fatfs_test()
 {

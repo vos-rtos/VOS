@@ -10,6 +10,8 @@
 #include "stm32f4xx.h"
 #include "ex_sram.h"
 
+#define FONT_SIZE 859464 //矢量字库很大，直接划分到exsram里
+
 #define Bank1_SRAM3_ADDR    ((u32)(0x68000000))	
 
 /********************************************************************************************************
@@ -145,7 +147,11 @@ void ExSRamInit()
 *********************************************************************************************************/
 u32 ExSRamGetBaseAddr()
 {
+#if FONT_SIZE
+	return Bank1_SRAM3_ADDR+FONT_SIZE;
+#else
 	return Bank1_SRAM3_ADDR;
+#endif
 }
 
 /********************************************************************************************************
@@ -157,7 +163,29 @@ u32 ExSRamGetBaseAddr()
 *********************************************************************************************************/
 u32 ExSRamGetTotalSize()
 {
+#if FONT_SIZE
+	return 1024*1024-FONT_SIZE;
+#else
 	return 1024*1024;
+#endif
+}
+
+u32 TtfFontAddr()
+{
+#if FONT_SIZE
+	return Bank1_SRAM3_ADDR;
+#else
+	return 0;
+#endif
+}
+
+u32 TtfFontSize()
+{
+#if FONT_SIZE
+	return FONT_SIZE;
+#else
+	return 0;
+#endif
 }
 
 
