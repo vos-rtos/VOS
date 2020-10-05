@@ -67,8 +67,7 @@ void emWinTest();
 void main(void *param)
 {
 	s32 res;
-//	LCD_Init();
-// 	LCD_ShowString(30,150,200,16,16,"SD Card OK    ");
+	kprintf("hello!\r\n");
 	//tp_dev.init();
 	//rtp_test();
 	//lwip_test();
@@ -87,7 +86,6 @@ void main(void *param)
 	dma_printf("hello world!\r\n");
 	kprintf("main function!\r\n");
 	while (1) {
-//		kprintf(".");
 		VOSTaskDelay(1*1000);
 	}
 }

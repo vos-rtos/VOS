@@ -36,7 +36,7 @@
 //卡,可能也会出错,出错就请降低时钟
 #define SDIO_INIT_CLK_DIV        0x76 		//SDIO初始化频率，最大400Kh  
 //#define SDIO_TRANSFER_CLK_DIV    0x00		//SDIO传输频率,该值太小可能会导致读写文件出错
-#define SDIO_TRANSFER_CLK_DIV    6		//0-4:失败， 5-9：成功， 更大也会成功
+#define SDIO_TRANSFER_CLK_DIV    9		//0-4:失败， 5-9：成功， 更大也会成功, 奇怪，这个数值越大，返回越快
 
 //////////////////////////////////////////////////////////////////////////////////////////////////// 
 //SDIO工作模式定义,通过SD_SetDeviceMode函数设置.
