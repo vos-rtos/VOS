@@ -39,8 +39,8 @@ struct StVMemHeap;
 struct StVMemCtrlBlock;
 
 typedef struct StVMemHeapInfo {
-	s32 free_page_num; //剩下空闲页的块数
-	s32 used_page_num; //已经分配的页的块数
+	s32 free_page_bytes; //剩下空闲页的总字节数
+	s32 used_page_bytes; //已经分配的页的总字节数
 	s32 cur_max_size; //当前最大可分配的尺寸，单位字节
 	s32 max_page_class; //堆最大分区尺寸，单位字节
 	s32 align_bytes; //几字节对齐

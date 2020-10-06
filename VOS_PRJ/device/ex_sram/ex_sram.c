@@ -10,7 +10,7 @@
 #include "stm32f4xx.h"
 #include "ex_sram.h"
 
-#define FONT_SIZE 859464 //矢量字库很大，直接划分到exsram里
+#define FONT_SIZE  859464 //矢量字库很大，直接划分到exsram里
 
 #define Bank1_SRAM3_ADDR    ((u32)(0x68000000))	
 

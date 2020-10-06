@@ -2,7 +2,7 @@
 #include "vos.h"
 #include "2D_DISPLAY/2ddisplay.h"
 #include "EMWINFONT/ttffontcreate.h"
-
+#include "vmisc.h"
 #include "ffconf.h"
 #include "ff.h"
 void emwindemo_task(void *p_arg)
@@ -19,29 +19,47 @@ void emwindemo_task(void *p_arg)
 		draw_polygon();
 		GUI_Delay(2000);
 	}
-#else
-
+#elif 0
 	int result;
 	result=Create_TTFFont("0:/msyh3500a.ttf");
 	if(result) {
-		printf("TTF font build failed!\r\n");
+		kprintf("TTF font build failed!\r\n");
 		return;
 	}
 
-	GUI_CURSOR_Show();
-	GUI_SetBkColor(GUI_LIGHTGREEN);
+	//GUI_CURSOR_Show();
+	GUI_SetBkColor(GUI_ORANGE);
 	GUI_SetColor(GUI_BLUE);
 	GUI_Clear();
 
 	GUI_UC_SetEncodeUTF8();
 	GUI_SetFont(&TTF24_Font);
 
-	GUI_DispStringAt("ä½ å¥½?123,very good!", 5, 10);
+	GUI_DispStringAt(GB2312_TO_UTF8_LOCAL("ÄãºÃ?123,very good!"), 5, 10);
 
 	while(1)
 	{
 		 GUI_Delay(100);
 	}
+#else
+
+	void jpegdisplay_demo(void);
+	void bmpdisplay_demo(void);
+	int result;
+	result=Create_TTFFont("0:/msyh3500a.ttf");
+	if(result) {
+		kprintf("TTF font build failed!\r\n");
+		return;
+	}
+
+	GUI_SetBkColor(GUI_WHITE);
+	GUI_SetColor(GUI_DARKBLUE);
+
+	GUI_Clear();
+	GUI_UC_SetEncodeUTF8();
+	GUI_SetFont(&TTF18_Font);
+	//jpegdisplay_demo();
+	bmpdisplay_demo();
 
 #endif
 }

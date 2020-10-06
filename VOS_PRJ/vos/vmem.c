@@ -582,8 +582,8 @@ s32 VMemGetHeapInfo(struct StVMemHeap *pheap, struct StVMemHeapInfo *pheadinfo)
 	pheadinfo->page_size = pheap->page_size;
 	pheadinfo->max_page_class = MAX_PAGE_CLASS_MAX - 1;
 	pheadinfo->cur_max_size = cur_max_size;
-	pheadinfo->used_page_num = used_total;
-	pheadinfo->free_page_num = free_total;
+	pheadinfo->used_page_bytes = used_total;
+	pheadinfo->free_page_bytes = free_total;
 
 	return 1;
 }

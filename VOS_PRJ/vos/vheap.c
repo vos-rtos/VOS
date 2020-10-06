@@ -118,13 +118,13 @@ void VHeapShellShow()
 		kprintf(" 编号[%d]: \"%s\", 分配地址范围: 0x%08x ~ 0x%08x\r\n",
 				i, pheap->name ? pheap->name : "", (u32)pheap->page_base, (u32)pheap->mem_end);
 		kprintf(" 对齐字节: 0x%08x, 页属性: %s, 页大小: 0x%08x\r\n"
-				" 空闲页数: 0x%08x, 已分配页数：0x%08x, 页总数: 0x%08x\r\n"
+				" 空闲总数: 0x%08x, 已分配总数：0x%08x, 页总数: 0x%08x\r\n"
 				" 当前可最大分配大小： 0x%08x\r\n",
 				pheap->align_bytes,
 				pheap->heap_attr==VHEAP_ATTR_SYS ? "通用堆":"专用堆",
 				pheap->page_size,
-				heap_info.free_page_num,
-				heap_info.used_page_num,
+				heap_info.free_page_bytes,
+				heap_info.used_page_bytes,
 				heap_info.page_counts,
 				heap_info.cur_max_size);
 
@@ -164,6 +164,9 @@ void *vmalloc(u32 size)
 		}
 	}
 	VHEAP_UNLOCK();
+	if (ptr==0) {
+		kprintf("vmalloc=NULL!\r\n");
+	}
 	return ptr;
 }
 
