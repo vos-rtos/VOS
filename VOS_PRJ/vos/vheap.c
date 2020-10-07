@@ -165,7 +165,7 @@ void *vmalloc(u32 size)
 	}
 	VHEAP_UNLOCK();
 	if (ptr==0) {
-		kprintf("vmalloc=NULL!\r\n");
+		kprintf("vmalloc=NULL(%d)!\r\n", size);
 	}
 	return ptr;
 }
@@ -185,8 +185,8 @@ void vfree(void *ptr)
 	VHEAP_LOCK();
 	list_for_each(list, &gVheapMgr.heap) {
 		pheap = list_entry(list, struct StVMemHeap, list_heap);
-		if (pheap->heap_attr == VHEAP_ATTR_SYS) {//通用堆里分配
-			VMemFree(pheap, ptr);
+		//VMemFree返回0，则成功从本堆释放掉内存，小于0，返回释放失败，则从下个堆释放指定地址内存。
+		if (pheap->heap_attr == VHEAP_ATTR_SYS && VMemFree(pheap, ptr)==0) {//通用堆里分配
 			break;
 		}
 	}

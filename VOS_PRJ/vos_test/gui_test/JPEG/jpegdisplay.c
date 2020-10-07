@@ -212,7 +212,7 @@ static int dumphex(const unsigned char *buf, int size)
 	return 0;
 }
 
-
+#define JPEG_DELAY_MS 100
 void jpegdisplay_demo(void)
 {
 
@@ -229,17 +229,17 @@ void jpegdisplay_demo(void)
 		//displayjpegex("0:/PICTURE/JPEG/实例图片.jpg",0,0,0,1,1);
 		displayjpegex("0:/320x480_1.jpg",0,0,0,1,1);
 		GUI_DispStringHCenterAt(GB2312_TO_UTF8_LOCAL("第一张图片"), 320/2, 0);
-		GUI_Delay(2000);
+		GUI_Delay(JPEG_DELAY_MS);
 		GUI_Clear();
 
 		displayjpegex("0:/320x480_2.jpg",0,0,0,1,1);
 		GUI_DispStringHCenterAt(GB2312_TO_UTF8_LOCAL("第二张图片"), 320/2, 0);
-		GUI_Delay(2000);
+		GUI_Delay(JPEG_DELAY_MS);
 		GUI_Clear();
 
 		displayjpegex("0:/320x480_3.jpg",0,0,0,1,1);
 		GUI_DispStringHCenterAt(GB2312_TO_UTF8_LOCAL("第三张图片"), 320/2, 0);
-		GUI_Delay(2000);
+		GUI_Delay(JPEG_DELAY_MS);
 		GUI_Clear();
 
 #if 0

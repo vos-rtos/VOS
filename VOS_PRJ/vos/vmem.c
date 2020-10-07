@@ -328,16 +328,18 @@ END_VMEMMALLOC:
 }
 
 /********************************************************************************************************
-* 函数：VMemFree (StVMemHeap *pheap, void *p);
+* 函数：s32 VMemFree (StVMemHeap *pheap, void *p);
 * 描述:  释放指定堆里申请内存
 * 参数:
 * [1] pheap: 指定的堆
 * [2] p: 释放的地址，这个地址必须是申请时的起始地址
-* 返回：无
+* 返回：0：成功;  -1：失败；（多堆情况，成功立即退出，不成功交给下个堆释放）
 * 注意：buddy算法，如果内存释放后邻居也空闲，则合并到上一级的page_class[n]的链表中，直到最顶链表。
+*           多堆情况，根据返回值来判断是否继续交给下个堆开始释放。
 *********************************************************************************************************/
-void VMemFree(struct StVMemHeap *pheap, void *p)
+s32 VMemFree(struct StVMemHeap *pheap, void *p)
 {
+	s32 ret = -1;
 	s32 size = 0;
 	s32 offset = 0;
 	s32 page_max = 0;
@@ -349,22 +351,23 @@ void VMemFree(struct StVMemHeap *pheap, void *p)
 	/******** 先释放SLAB分配器 ***********/
 	if (pheap && pheap->slab_ptr && VSlabBlockFree(pheap->slab_ptr, p)) {
 		//指针在slab范围内，直接返回
-		return ;
+		ret = 0;
+		return ret;
 	}
 	/******** *********** ***********/
 #endif
 	//指针在slab范围外，交给slab释放
-	if ((u8*)p < pheap->page_base || (u8*)p >= pheap->mem_end) return; //地址范围溢出
+	if ((u8*)p < pheap->page_base || (u8*)p >= pheap->mem_end) return ret; //地址范围溢出
 																	   //判断p地址必须是页面对齐，否者不释放
 	size = (u8*)p - pheap->page_base;
-	if (size % pheap->page_size) return; //地址距离必须是page_size倍数
+	if (size % pheap->page_size) return ret; //地址距离必须是page_size倍数
 
 	offset = size / pheap->page_size;
 	pMCB = &pheap->pMCB_base[offset];
 	page_max = pMCB->page_max;
 
 	if (pMCB->status != VMEM_STATUS_USED) {
-		return;
+		return ret;
 	}
 
 	VMEM_LOCK();
@@ -453,8 +456,9 @@ void VMemFree(struct StVMemHeap *pheap, void *p)
 
 		list_add_tail(&pMCB->list, &pheap->page_class[index]);//添加到空闲链表末尾
 	}
+	ret = 0; //成功在本堆释放
 	VMEM_UNLOCK();
-	return;
+	return ret;
 }
 /********************************************************************************************************
 * 函数：void *VMemRealloc(StVMemHeap *pheap, void *p, u32 size);

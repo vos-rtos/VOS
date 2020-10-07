@@ -45,18 +45,20 @@ void emwindemo_task(void *p_arg)
 
 	void jpegdisplay_demo(void);
 	void bmpdisplay_demo(void);
-#if 1
+
 	int result;
+#if 1
+	GUI_TTF_SetCacheSize(1, 1, 16*1024);
 	result=Create_TTFFont("0:/msyh3500a.ttf");
 	if(result) {
 		kprintf("TTF font build failed!\r\n");
 		return;
 	}
 	GUI_UC_SetEncodeUTF8();
-	GUI_SetFont(&TTF24_Font);
+	GUI_SetFont(&TTF36_Font);
 #endif
 	GUI_SetBkColor(GUI_WHITE);
-	GUI_SetColor(GUI_YELLOW);
+	GUI_SetColor(GUI_DARKBLUE);
 
 	GUI_SetTextMode(GUI_TM_TRANS);
 
