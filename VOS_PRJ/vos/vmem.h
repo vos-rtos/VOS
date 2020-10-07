@@ -11,6 +11,8 @@
 
 #include "vtype.h"
 
+#define VOS_RUNTIME_BOUDARY_CHECK (1) //运行时边界检查
+
 #define VOS_SLAB_ENABLE		(1) //打开slab分配器开关
 #define VOS_SLAB_STEP_SIZE 	(8) //slab分配器步长
 

@@ -175,6 +175,12 @@ int displayjpegex(u8 *JPEGFileName,u8 mode,u32 x,u32 y,int member,int denom)
 	GUI_JPEG_GetInfoEx(JpegGetData,&JPEGFile,&JpegInfo);
 	XSize = JpegInfo.XSize;	//JPEG图片X大小
 	YSize = JpegInfo.YSize;	//JPEG图片Y大小
+	int xx = LCD_GetXSize();
+	int yy = LCD_GetYSize();
+	if (XSize > LCD_GetXSize() || YSize > LCD_GetYSize()) {
+		f_close(&JPEGFile);		//关闭BMPFile文件
+		return 0;
+	}
 	switch(mode)
 	{
 		case 0:	//在指定位置显示图片
@@ -212,61 +218,18 @@ static int dumphex(const unsigned char *buf, int size)
 	return 0;
 }
 
-#define JPEG_DELAY_MS 100
+#define JPEG_DELAY_MS 1000
 void jpegdisplay_demo(void)
 {
-
-//	GUI_SetBkColor(GUI_BLUE);
-//	GUI_SetColor(GUI_RED);
-	//GUI_SetFont(&GUI_FontHZ16);
-	//GUI_UC_SetEncodeUTF8();
-	//GUI_Clear();
-	
+	char buf[100];
+	int num = 0;
 	while(1)
 	{
-		//GUI_DispStringHCenterAt("在指定位置显示一张加载到RAM中的JPEG图片",240,0);
-		//GUI_DispStringHCenterAt(GB2312_TO_UTF8_LOCAL("在指定位置显示一张加载到RAM中的JPEG图片"),0,0);
-		//displayjpegex("0:/PICTURE/JPEG/实例图片.jpg",0,0,0,1,1);
-		displayjpegex("0:/320x480_1.jpg",0,0,0,1,1);
-		GUI_DispStringHCenterAt(GB2312_TO_UTF8_LOCAL("第一张图片"), 320/2, 0);
+		vvsprintf(buf, sizeof(buf), "0:/320x480/320x480_%d.jpg", num%30+1);
+		displayjpegex(buf,0,0,0,1,1);
+		vvsprintf(buf, sizeof(buf), "第%d张图片", num++%30+1);
+		GUI_DispStringHCenterAt(GB2312_TO_UTF8_LOCAL(buf), LCD_GetXSize()/2, 0);
 		GUI_Delay(JPEG_DELAY_MS);
 		GUI_Clear();
-
-		displayjpegex("0:/320x480_2.jpg",0,0,0,1,1);
-		GUI_DispStringHCenterAt(GB2312_TO_UTF8_LOCAL("第二张图片"), 320/2, 0);
-		GUI_Delay(JPEG_DELAY_MS);
-		GUI_Clear();
-
-		displayjpegex("0:/320x480_3.jpg",0,0,0,1,1);
-		GUI_DispStringHCenterAt(GB2312_TO_UTF8_LOCAL("第三张图片"), 320/2, 0);
-		GUI_Delay(JPEG_DELAY_MS);
-		GUI_Clear();
-
-#if 0
-		GUI_DispStringHCenterAt("在LCD中间显示一张扩大2倍的加载到RAM中的JPEG图片",240,0);
-		displyjpeg("0:/PICTURE/JPEG/jpeg0.jpg",1,0,	0,2,1);
-		GUI_Delay(1000);
-		GUI_Clear();
-	
-		GUI_DispStringHCenterAt("在LCD中间显示一张缩小1/2的加载到RAM中的JPEG图片",240,0);
-		displyjpeg("0:/PICTURE/JPEG/SIM900A.jpg",1,0,0,1,2);
-		GUI_Delay(1000);
-		GUI_Clear();
-		
-		GUI_DispStringHCenterAt("在指定位置显示一张无需加载的JPEG图片",240,0);
-		displayjpegex("0:/PICTURE/JPEG/实例图片.jpg",0,0,0,1,1);
-		GUI_Delay(1000);
-		GUI_Clear();
-	
-		GUI_DispStringHCenterAt("在LCD中间显示一张扩大2倍的无需加载的JPEG图片",240,0);
-		displayjpegex("0:/PICTURE/JPEG/jpeg0.jpg",1,0,0,2,1);
-		GUI_Delay(1000);
-		GUI_Clear();
-	
-		GUI_DispStringHCenterAt("在LCD中间显示一张缩小1/2的无需加载的JPEG图片",240,0);
-		displayjpegex("0:/PICTURE/JPEG/SIM900A.jpg",1,0,0,1,2);
-		GUI_Delay(1000);
-		GUI_Clear();
-#endif
 	}
 }

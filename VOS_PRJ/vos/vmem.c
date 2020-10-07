@@ -14,6 +14,8 @@
 #include "vmem.h"
 #include "vheap.h"
 
+s32 VBoudaryCheck(struct StVMemHeap *pheap);
+
 #define VMEM_LOCK() 	pheap->irq_save = __vos_irq_save()
 #define VMEM_UNLOCK()   __vos_irq_restore(pheap->irq_save)
 
@@ -226,6 +228,9 @@ struct StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size, s32 align_bytes,
 	}
 #endif
 	/******** *********** ***********/
+#if VOS_RUNTIME_BOUDARY_CHECK
+	VBoudaryCheck(pheap);
+#endif
 	return pheap;
 }
 
@@ -252,6 +257,9 @@ void *VMemMalloc(struct StVMemHeap *pheap, u32 size)
 	/******** 先查找SLAB分配器 ***********/
 	if (pheap && pheap->slab_ptr) {
 		pObj = VSlabBlockAlloc(pheap->slab_ptr, size);
+		#if VOS_RUNTIME_BOUDARY_CHECK
+			VBoudaryCheck(pheap);
+		#endif
 		if (pObj) return pObj;
 	}
 	/******** *********** ***********/
@@ -324,6 +332,9 @@ void *VMemMalloc(struct StVMemHeap *pheap, u32 size)
 
 END_VMEMMALLOC:
 
+#if VOS_RUNTIME_BOUDARY_CHECK
+	VBoudaryCheck(pheap);
+#endif
 	return pObj;
 }
 
@@ -352,6 +363,9 @@ s32 VMemFree(struct StVMemHeap *pheap, void *p)
 	if (pheap && pheap->slab_ptr && VSlabBlockFree(pheap->slab_ptr, p)) {
 		//指针在slab范围内，直接返回
 		ret = 0;
+		#if VOS_RUNTIME_BOUDARY_CHECK
+			VBoudaryCheck(pheap);
+		#endif
 		return ret;
 	}
 	/******** *********** ***********/
@@ -458,6 +472,9 @@ s32 VMemFree(struct StVMemHeap *pheap, void *p)
 	}
 	ret = 0; //成功在本堆释放
 	VMEM_UNLOCK();
+#if VOS_RUNTIME_BOUDARY_CHECK
+	VBoudaryCheck(pheap);
+#endif
 	return ret;
 }
 /********************************************************************************************************

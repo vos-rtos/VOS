@@ -244,7 +244,7 @@ struct StVSlabMgr *VSlabBuild(u8 *mem, s32 len, s32 page_size,
 
 
 /********************************************************************************************************
-* 函数：struct StVSlabPage *VSlabPageBuild(u8 *mem, s32 len, s32 block_size, struct StVSlabMgr *pslab);
+* 函数：struct StVSlabPage *VSlabPageBuild(u8 *mem, s32 len, s32 block_size, struct StVSlabMgr *pSlabMgr);
 * 描述: 这个函数是最新vmalloc的页里创建管理blocks的管理区域
 * 参数:
 * [1] mem: buddy系统vmalloc出来的页基地址
@@ -252,15 +252,15 @@ struct StVSlabMgr *VSlabBuild(u8 *mem, s32 len, s32 page_size,
 * [3] block_size: 这个是slab_class[n]对应的那一类块大小，例如：slab_class[6]， 基于8倍数递增，则就是56字节
 * [4] align_bytes: 字节对齐，例如8，就是8字节对齐
 * [5] step_size: 递增步长，单位：字节
-* [6] pslab: slabMgr对象
+* [6] pSlabMgr: slabMgr对象
 * 返回：页管理对象指针
 * 注意：无
 *********************************************************************************************************/
-struct StVSlabPage *VSlabPageBuild(u8 *mem, s32 len, s32 block_size, struct StVSlabMgr *pslab)
+struct StVSlabPage *VSlabPageBuild(u8 *mem, s32 len, s32 block_size, struct StVSlabMgr *pSlabMgr)
 {
-	s32 page_size = pslab->page_size;
-	s32 align_bytes = pslab->align_bytes;
-	s32 step_size = pslab->step_size;
+	s32 page_size = pSlabMgr->page_size;
+	s32 align_bytes = pSlabMgr->align_bytes;
+	s32 step_size = pSlabMgr->step_size;
 
 	s32 nBlocks = 0;
 	s32 block_space = 0;
@@ -269,6 +269,7 @@ struct StVSlabPage *VSlabPageBuild(u8 *mem, s32 len, s32 block_size, struct StVS
 	if (mem == 0 || len < page_header_size) {
 		return 0;
 	}
+	VSLAB_LOCK();
 	//页面最高地址存放页管理区信息
 	pSlabPage = (struct StVSlabPage*)(mem+len- page_header_size);
 	//block_space为所有blocks数据区的总大小
@@ -291,7 +292,7 @@ struct StVSlabPage *VSlabPageBuild(u8 *mem, s32 len, s32 block_size, struct StVS
 	pSlabPage->bitmap_max = (nBlocks + 8 - 1) / 8;
 	//bitmap_max计算页管理区位图数组大小（最大值）
 	//pSlabPage->bitmap_max = (page_size / step_size + 8 - 1) / 8;
-
+	VSLAB_UNLOCK();
 
 	return pSlabPage;
 }
@@ -643,6 +644,8 @@ s32 VSlabInfohow(struct StVSlabMgr *pSlabMgr)
 	struct list_head *list;
 	struct StVSlabClass *pClass = 0;
 	struct StVSlabPage *pPage = 0;
+
+	VSLAB_LOCK();
 	kprintf(" slab 管理区信息：\r\n");
 	kprintf(" slab 名字: \"%s\", slab 头总大小: %d, 页管理区总大小: %d\r\n",
 			pSlabMgr->name, pSlabMgr->slab_header_size, pSlabMgr->page_header_size);
@@ -659,7 +662,7 @@ s32 VSlabInfohow(struct StVSlabMgr *pSlabMgr)
 
 			kprintf(" <种类编号: %d>\r\n", i);
 			if (!list_empty(&pClass->page_full)) {
-				kprintf("   == 全满页链: 步长<%d>, 页数<%04d>\r\n", (i+1)*pSlabMgr->step_size, pClass->page_full_num);
+				kprintf("   == 全满页链: 块大小<%d>, 页数<%04d>\r\n", (i+1)*pSlabMgr->step_size, pClass->page_full_num);
 				list_for_each(list, &pClass->page_full) {
 					pPage = list_entry(list, struct StVSlabPage, list);
 					kprintf("   [页头信息: 魔数-0x%08x, 页基址-0x%08x, 位图:位数-<%04d>,空闲块数-<%04d>]\r\n",
@@ -668,7 +671,7 @@ s32 VSlabInfohow(struct StVSlabMgr *pSlabMgr)
 				}
 			}
 			if (!list_empty(&pClass->page_partial)) {
-				kprintf("   == 部分页链: 步长<%d>, 页数<%04d>\r\n", (i + 1)*pSlabMgr->step_size, pClass->page_partial_num);
+				kprintf("   == 部分页链: 块大小<%d>, 页数<%04d>\r\n", (i + 1)*pSlabMgr->step_size, pClass->page_partial_num);
 				list_for_each(list, &pClass->page_partial) {
 					pPage = list_entry(list, struct StVSlabPage, list);
 					kprintf("   [页头信息: 魔数-0x%08x, 页基址-0x%08x, 位图:位数-<%04d>,空闲块数-<%04d>]\r\n",
@@ -677,7 +680,7 @@ s32 VSlabInfohow(struct StVSlabMgr *pSlabMgr)
 				}
 			}
 			if (!list_empty(&pClass->page_free)) {
-				kprintf("   == 全空页链: 步长<%d>, 页数<%04d>\r\n", (i + 1)*pSlabMgr->step_size, pClass->page_free_num);
+				kprintf("   == 全空页链: 块大小<%d>, 页数<%04d>\r\n", (i + 1)*pSlabMgr->step_size, pClass->page_free_num);
 				list_for_each(list, &pClass->page_free) {
 					pPage = list_entry(list, struct StVSlabPage, list);
 					kprintf("   [页头信息: 魔数-0x%08x, 页基址-0x%08x, 位图:位数-<%04d>,空闲块数-<%04d>]\r\n",
@@ -687,6 +690,7 @@ s32 VSlabInfohow(struct StVSlabMgr *pSlabMgr)
 			}
 		}
 	}
+	VSLAB_UNLOCK();
 	return 0;
 }
 
@@ -722,7 +726,7 @@ s32 VSlabBoudaryCheck(struct StVSlabMgr *pSlabMgr)
 	s32 counter_free = 0;
 	s32 counter_partial = 0;
 	void *iter = 0; 
-
+	VSLAB_LOCK();
 	//判断pSlabMgr内部所有元素是否正常
 	if (pSlabMgr->align_bytes != VSLAB_ALIGN_SIZE) BOUNDARY_ERROR();
 	if (pSlabMgr->page_size != VSLAB_PAGE_SIZE) BOUNDARY_ERROR();
@@ -801,11 +805,11 @@ s32 VSlabBoudaryCheck(struct StVSlabMgr *pSlabMgr)
 			if (pClass->page_free_num > VSLAB_FREE_PAGES_THREHOLD) BOUNDARY_ERROR();
 		}
 	}
-
+	VSLAB_UNLOCK();
 	return 0;
 
 ERROR_RET:
-
+	VSLAB_UNLOCK();
 	kprintf("*************\r\nERROR: %s, please check the code!!!\r\n*************\r\n", __FUNCTION__);
 	while (1);
 	return 0;

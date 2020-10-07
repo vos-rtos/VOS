@@ -71,7 +71,7 @@ void emwindemo_task(void *p_arg)
 }
 
 void fatfs_sd_card();
-static long long emwindemo_stack[1024];
+static long long emwindemo_stack[1024*2];
 void emWinTest()
 {
  	LCD_Init();
@@ -80,5 +80,5 @@ void emWinTest()
  	GUI_Init();
 
   	s32 task_id;
- 	task_id = VOSTaskCreate(emwindemo_task, 0, emwindemo_stack, sizeof(emwindemo_stack), TASK_PRIO_NORMAL, "emwindemo_task");
+ 	task_id = VOSTaskCreate(emwindemo_task, 0, emwindemo_stack, sizeof(emwindemo_stack), TASK_PRIO_NORMAL-1, "emwindemo_task");
 }
