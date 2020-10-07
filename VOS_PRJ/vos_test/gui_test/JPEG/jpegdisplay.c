@@ -180,7 +180,7 @@ int displayjpegex(u8 *JPEGFileName,u8 mode,u32 x,u32 y,int member,int denom)
 		case 0:	//在指定位置显示图片
 			if((member == 1) && (denom == 1)) //无需缩放，直接绘制
 			{
-				GUI_JPEG_Draw(JpegGetData,&JPEGFile,x,y);//在指定位置显示BMP图片
+				GUI_JPEG_DrawEx(JpegGetData,&JPEGFile,x,y);//在指定位置显示BMP图片
 			}else //否则图片需要缩放
 			{
 				GUI_JPEG_DrawScaledEx(JpegGetData,&JPEGFile,x,y,member,denom);
@@ -225,10 +225,23 @@ void jpegdisplay_demo(void)
 	while(1)
 	{
 		//GUI_DispStringHCenterAt("在指定位置显示一张加载到RAM中的JPEG图片",240,0);
-		GUI_DispStringHCenterAt(GB2312_TO_UTF8_LOCAL("在指定位置显示一张加载到RAM中的JPEG图片"),0,0);
-		displayjpegex("0:/PICTURE/JPEG/实例图片.jpg",0,0,0,1,1);
-		GUI_Delay(1000);
+		//GUI_DispStringHCenterAt(GB2312_TO_UTF8_LOCAL("在指定位置显示一张加载到RAM中的JPEG图片"),0,0);
+		//displayjpegex("0:/PICTURE/JPEG/实例图片.jpg",0,0,0,1,1);
+		displayjpegex("0:/320x480_1.jpg",0,0,0,1,1);
+		GUI_DispStringHCenterAt(GB2312_TO_UTF8_LOCAL("第一张图片"), 320/2, 0);
+		GUI_Delay(2000);
 		GUI_Clear();
+
+		displayjpegex("0:/320x480_2.jpg",0,0,0,1,1);
+		GUI_DispStringHCenterAt(GB2312_TO_UTF8_LOCAL("第二张图片"), 320/2, 0);
+		GUI_Delay(2000);
+		GUI_Clear();
+
+		displayjpegex("0:/320x480_3.jpg",0,0,0,1,1);
+		GUI_DispStringHCenterAt(GB2312_TO_UTF8_LOCAL("第三张图片"), 320/2, 0);
+		GUI_Delay(2000);
+		GUI_Clear();
+
 #if 0
 		GUI_DispStringHCenterAt("在LCD中间显示一张扩大2倍的加载到RAM中的JPEG图片",240,0);
 		displyjpeg("0:/PICTURE/JPEG/jpeg0.jpg",1,0,	0,2,1);

@@ -250,7 +250,7 @@ int LCD_X_DisplayDriver(unsigned LayerIndex, unsigned Cmd, void * pData) {
 //∆¡ƒª¥Û–°
 #define XSIZE_PHYS  320 //X÷·
 #define YSIZE_PHYS  240 //Y÷·
-#define VXSIZE_PHYS	320 
+#define VXSIZE_PHYS	320
 #define VYSIZE_PHYS 240
 
 

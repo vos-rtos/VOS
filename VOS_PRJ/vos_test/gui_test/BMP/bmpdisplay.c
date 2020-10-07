@@ -170,7 +170,10 @@ int dispbmpex(u8 *BMPFileName,u8 mode,u32 x,u32 y,int member,int denom)
 	
 	result = f_open(&BMPFile,(const TCHAR*)BMPFileName,FA_READ);	//打开文件
 	//文件打开错误
-	if(result != FR_OK) 	return 1;
+	if(result != FR_OK) 	{
+		kprintf("=========error===========\r\n");
+		return 1;
+	}
 		
 	switch(mode)
 	{
@@ -232,7 +235,7 @@ void create_bmppicture(u8 *filename,int x0,int y0,int Xsize,int Ysize)
 	GUI_SetColor(forecolor);		//恢复前景色
 	GUI_SetBkColor(bkcolor);		//恢复背景色
 }	
-
+#define PIC_DELAY 100
 void bmpdisplay_demo(void)
 {
 //	GUI_SetBkColor(GUI_BLUE);
@@ -241,35 +244,36 @@ void bmpdisplay_demo(void)
 	
 	while(1)
 	{
-		//GUI_DispStringHCenterAt(GB2312_TO_UTF8_LOCAL("在指定位置显示一张加载到RAM中的BMP图片"),0,0);
-		dispbmpex("0:/PICTURE/BMP/ALIENTEKLOGO.bmp",0,10,	78,	1,1);
-		GUI_Delay(1000);
+		GUI_DispStringHCenterAt(GB2312_TO_UTF8_LOCAL("在指定位置显示一张加载到RAM中的BMP图片"),0,0);
+		//dispbmpex("0:/PICTURE/BMP/ALIENTEKLOGO.bmp",0,10,	78,	1,1);
+		GUI_Delay(PIC_DELAY);
 		GUI_Clear();
 	
-		//GUI_DispStringHCenterAt(GB2312_TO_UTF8_LOCAL("在LCD中间显示一张缩小1/2的加载到RAM中的BMP图片"),50,5);
-		dispbmpex("0:/PICTURE/BMP/ALIENTEKLOGO.bmp",1,0,	0,	1,2);
-		GUI_Delay(1000);
+		GUI_DispStringHCenterAt(GB2312_TO_UTF8_LOCAL("在LCD中间显示一张缩小1/2的加载到RAM中的BMP图片"),50,5);
+		//dispbmpex("0:/PICTURE/BMP/ALIENTEKLOGO.bmp",1,0,	0,	1,2);
+		GUI_Delay(PIC_DELAY);
 		GUI_Clear();
-	
-		//GUI_DispStringHCenterAt(GB2312_TO_UTF8_LOCAL("在LCD中间显示一张扩大4/3倍的加载到RAM中的BMP图片"),50,5);
-		dispbmpex("0:/PICTURE/BMP/ALIENTEKLOGO.bmp",1,0,	0,	4,3);
-		GUI_Delay(1000);
+#if 1
+		GUI_DispStringHCenterAt(GB2312_TO_UTF8_LOCAL("在LCD中间显示一张扩大4/3倍的加载到RAM中的BMP图片"),50,5);
+		//dispbmpex("0:/PICTURE/BMP/ALIENTEKLOGO.bmp",1,0,	0,	4,3);
+		GUI_Delay(PIC_DELAY);
 		GUI_Clear();
 		
-		//GUI_DispStringHCenterAt(GB2312_TO_UTF8_LOCAL("在指定位置显示一张无需加载的BMP图片"),50,5);
-		dispbmpex("0:/PICTURE/BMP/ALIENTEKLOGO.bmp",0,10,	78,	1,1);
-		GUI_Delay(1000);
+		GUI_DispStringHCenterAt(GB2312_TO_UTF8_LOCAL("在指定位置显示一张无需加载的BMP图片"),50,5);
+		//dispbmpex("0:/PICTURE/BMP/ALIENTEKLOGO.bmp",0,10,	78,	1,1);
+		GUI_Delay(PIC_DELAY);
 		GUI_Clear();
 	
 	
-		//GUI_DispStringHCenterAt(GB2312_TO_UTF8_LOCAL("在LCD中间显示一张缩小1/2的无需加载的BMP图片"),50,5);
-		dispbmpex("0:/PICTURE/BMP/ALIENTEKLOGO.bmp",1,0,	0,	1,2);
-		GUI_Delay(1000);
+		GUI_DispStringHCenterAt(GB2312_TO_UTF8_LOCAL("在LCD中间显示一张缩小1/2的无需加载的BMP图片"),50,5);
+		//dispbmpex("0:/PICTURE/BMP/ALIENTEKLOGO.bmp",1,0,	0,	1,2);
+		GUI_Delay(PIC_DELAY);
 		GUI_Clear();
 	
-		//GUI_DispStringHCenterAt(GB2312_TO_UTF8_LOCAL("在LCD中间显示一张扩大4/3倍的无需加载的BMP图片"),50,5);
-		dispbmpex("0:/PICTURE/BMP/ALIENTEKLOGO.bmp",1,0,	0,	4,3);
-		GUI_Delay(1000);
+		GUI_DispStringHCenterAt(GB2312_TO_UTF8_LOCAL("在LCD中间显示一张扩大4/3倍的无需加载的BMP图片"),50,5);
+		//dispbmpex("0:/PICTURE/BMP/ALIENTEKLOGO.bmp",1,0,	0,	4,3);
+		GUI_Delay(PIC_DELAY);
 		GUI_Clear();
+#endif
 	}
 }

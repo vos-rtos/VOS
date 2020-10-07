@@ -10,7 +10,7 @@ s8 *GB2312_TO_UTF8_LOCAL(s8 *gb2312)
 		vfree(OutPtr);
 	}
 	if (OutPtr = (s8*)vmalloc(len*2+1)) {
-		memset(OutPtr, 0, len*2);
+		memset(OutPtr, 0, len*2+1);
 		if (Gb2312ToUtf8(gb2312, strlen(gb2312), OutPtr, len*2, &needlen) <= 0) {
 			vfree(OutPtr);
 			OutPtr = 0;

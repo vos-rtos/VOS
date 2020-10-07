@@ -45,27 +45,31 @@ void emwindemo_task(void *p_arg)
 
 	void jpegdisplay_demo(void);
 	void bmpdisplay_demo(void);
+#if 1
 	int result;
 	result=Create_TTFFont("0:/msyh3500a.ttf");
 	if(result) {
 		kprintf("TTF font build failed!\r\n");
 		return;
 	}
-
+	GUI_UC_SetEncodeUTF8();
+	GUI_SetFont(&TTF24_Font);
+#endif
 	GUI_SetBkColor(GUI_WHITE);
-	GUI_SetColor(GUI_DARKBLUE);
+	GUI_SetColor(GUI_YELLOW);
+
+	GUI_SetTextMode(GUI_TM_TRANS);
 
 	GUI_Clear();
-	GUI_UC_SetEncodeUTF8();
-	GUI_SetFont(&TTF18_Font);
-	//jpegdisplay_demo();
-	bmpdisplay_demo();
+
+	jpegdisplay_demo();
+	//bmpdisplay_demo();
 
 #endif
 }
 
 void fatfs_sd_card();
-static long long emwindemo_stack[2048/*1024*/];
+static long long emwindemo_stack[1024];
 void emWinTest()
 {
  	LCD_Init();
