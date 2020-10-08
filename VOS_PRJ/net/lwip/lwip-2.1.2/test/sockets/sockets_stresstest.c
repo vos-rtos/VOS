@@ -66,7 +66,7 @@
 #define TEST_SOCKETS_STRESS   LWIP_DBG_OFF
 #endif
 
-#define TEST_TIME_SECONDS     10
+#define TEST_TIME_SECONDS     (60*5)
 #define TEST_TXRX_BUFSIZE     (TCP_MSS * 2)
 #define TEST_MAX_RXWAIT_MS    50
 #define TEST_MAX_CONNECTIONS  50
@@ -165,6 +165,10 @@ recv_and_check_data_return_offset(int s, char *rxbuf, size_t rxbufsize, size_t r
   if (ret == -1) {
     /* TODO: for this to work, 'errno' has to support multithreading... */
     int err = errno;
+    if (err == EAGAIN) {
+        *closed = 0;
+        return rxoff;
+    }
     if (err == ENOTCONN) {
       *closed = 1;
       return 0;

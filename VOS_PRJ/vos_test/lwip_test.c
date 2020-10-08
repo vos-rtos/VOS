@@ -171,7 +171,7 @@ void sockets_stresstest_init_server(int addr_family, u16_t server_port);
 void sockets_stresstest_init_client(const char *remote_ip, u16_t remote_port);
 void lwip_inner_test()
 {
-	sockets_stresstest_init_client("192.168.2.100", 6666);
+	sockets_stresstest_init_client("192.168.2.100", 5555);
 }
 
 
