@@ -232,8 +232,10 @@ void jpegdisplay_demo(void)
 	while(1)
 	{
 		vvsprintf(buf, sizeof(buf), "0:/320x480/320x480_%d.jpg", num%30+1);
-		//displayjpegex(buf,0,0,0,1,1);
-		displyjpeg(buf,0,0,0,1,1);
+		displayjpegex(buf,0,0,0,1,1);
+		//displyjpeg(buf,0,0,0,1,1);
+		GUI_Delay(100);
+		memset(buf, 0, sizeof(buf));
 		vvsprintf(buf, sizeof(buf), "µ⁄%d’≈Õº∆¨", num++%30+1);
 		GUI_DispStringHCenterAt(GB2312_TO_UTF8_LOCAL(buf), LCD_GetXSize()/2, 0);
 		GUI_Delay(JPEG_DELAY_MS);

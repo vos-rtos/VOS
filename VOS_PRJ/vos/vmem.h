@@ -123,7 +123,7 @@ struct StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size, s32 align_bytes,
 												s32 heap_attr, s8 *name, s32 enable_slab);
 void *VMemMalloc(struct StVMemHeap *pheap, u32 size, s32 is_slab);
 s32 VMemFree (struct StVMemHeap *pheap, void *p, s32 is_slab);
-void *VMemRealloc(struct StVMemHeap *pheap, void *p, u32 size);
+void *VMemExpAlloc(struct StVMemHeap *pheap, void *p, u32 size);
 void *VMemGetPageBaseAddr(struct StVMemHeap *pheap, void *any_addr);
 s32 VMemGetHeapInfo(struct StVMemHeap *pheap, struct StVMemHeapInfo *pheadinfo);
 

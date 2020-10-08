@@ -71,7 +71,7 @@ void emwindemo_task(void *p_arg)
 }
 
 void fatfs_sd_card();
-static long long emwindemo_stack[1024*2];
+static long long emwindemo_stack[1024*3];
 void emWinTest()
 {
  	LCD_Init();

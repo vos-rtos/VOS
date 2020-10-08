@@ -532,63 +532,42 @@ s32 VMemFree(struct StVMemHeap *pheap, void *p, s32 is_slab)
 	return ret;
 }
 /********************************************************************************************************
-* 函数：void *VMemRealloc(StVMemHeap *pheap, void *p, u32 size);
-* 描述:  指定堆里重新申请内存
+* 函数：void *VMemExpAlloc(StVMemHeap *pheap, void *p, u32 size);
+* 描述:  扩展内存空间，只有buddy申请的块才可以扩展
 * 参数:
 * [1] pheap: 指定的堆
 * [2] p: 原指针，如果等于0，就malloc(size)
-* [3] size: 申请内存大小，如果等于0，则释放原来p指向的内存，同时返回0
+* [3] size: 申请的尺寸必须是小于或等于该内存块总大小
 * 返回：返回指针，指向重新分配大小的内存。如果请求失败，则返回NULL
-* 注意：这个函数如果原来块里足够空间，就直接返回原指针，否则返回新指针。
+* 注意：无
 *********************************************************************************************************/
-void *VMemRealloc(struct StVMemHeap *pheap, void *p, u32 size)
+void *VMemExpAlloc(struct StVMemHeap *pheap, void *p, u32 size)
 {
 	void *ptr = (void*)0;
 	s32 who = 0;
 	struct StVMemCtrlBlock *pMCB = 0;
-	if (p == 0) { //指针为空，则直接malloc
-		ptr = VMemMalloc(pheap, size, 0);
-		goto END_VMEMREALLOC;
-	}
-	if (size == 0) { //指针不为空，size为0，则释放p, 同时返回0
-		VMemFree(pheap, p, 0);
+	if (p == 0 || size == 0) {
 		goto END_VMEMREALLOC;
 	}
 
 	who = VMemCheckSlabFlag(pheap, p);
-	if (BLOCK_OWN_NONE == who) goto END_VMEMREALLOC;
-	if (BLOCK_OWN_SLAB == who) {
-#if VOS_SLAB_ENABLE
-	if (pheap && pheap->slab_ptr && VSlabBlockFree(pheap->slab_ptr, p)) {
-		//指针在slab范围内，直接返回
-		ptr = VMemMalloc(pheap, size, 0);
-		if (ptr) {
-			memcpy(ptr, p, size);
-		}
-		goto END_VMEMREALLOC;
-	}
-#endif
-	}
 
-	//判断是本堆的malloc
-	VMEM_LOCK();
-	if ((u8*)p >= pheap->page_base &&
-		(u8*)p < pheap->mem_end &&
-		((u8*)p - pheap->page_base) % pheap->page_size == 0) {
-		pMCB = &pheap->pMCB_base[((u8*)p - pheap->page_base) / pheap->page_size];
-		//判断size是否超出本块最大尺寸
-		if (pMCB->status == VMEM_STATUS_USED && //必须是已经分配出去状态
-			pMCB->page_max * pheap->page_size >= size) { //分配的剩余空间足够多
-			ptr = p;
-			VMEM_UNLOCK();
-			goto END_VMEMREALLOC;
+	if (BLOCK_OWN_BUDDY == who) {
+		//判断是本堆的malloc
+		VMEM_LOCK();
+		if ((u8*)p >= pheap->page_base &&
+			(u8*)p < pheap->mem_end &&
+			((u8*)p - pheap->page_base) % pheap->page_size == 0) {
+			pMCB = &pheap->pMCB_base[((u8*)p - pheap->page_base) / pheap->page_size];
+			//判断size是否超出本块最大尺寸
+			if (pMCB->status == VMEM_STATUS_USED && //必须是已经分配出去状态
+				pMCB->page_max * pheap->page_size >= size) { //分配的剩余空间足够多
+				ptr = p;
+				VMEM_UNLOCK();
+				goto END_VMEMREALLOC;
+			}
 		}
-	}
-	VMEM_UNLOCK();
-	//超过剩余空间或者不在本区域内，直接malloc和memcpy
-	ptr = VMemMalloc(pheap, size, 0);
-	if (ptr) {
-		memcpy(ptr, p, size);
+		VMEM_UNLOCK();
 	}
 
 END_VMEMREALLOC:

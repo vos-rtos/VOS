@@ -207,15 +207,33 @@ void *vrealloc(void *ptr, u32 size)
 	void *ptr_tmp = 0;
 	struct list_head *list;
 	struct StVMemHeap *pheap = 0;
+
+	if (ptr == 0) { //指针为空，则直接malloc
+		ptr_tmp = vmalloc(size);
+		return ptr_tmp;
+	}
+	if (size == 0) { //指针不为空，size为0，则释放p, 同时返回0
+		vfree(ptr);
+		return ptr_tmp;
+	}
+
 	VHEAP_LOCK();
 	list_for_each(list, &gVheapMgr.heap) {
 		pheap = list_entry(list, struct StVMemHeap, list_heap);
 		if (pheap->heap_attr == VHEAP_ATTR_SYS &&
-				(ptr_tmp = VMemRealloc(pheap, ptr, size))) {//通用堆里分配
+				(ptr_tmp = VMemExpAlloc(pheap, ptr, size))) {//通用堆里分配
 			break;
 		}
 	}
 	VHEAP_UNLOCK();
+	//当所在的堆malloc不出来，其他堆又不是相同的地址空间而退出，最后要重新全局malloc和赋值。
+	if (ptr_tmp==0) {
+		ptr_tmp = vmalloc(size);
+		if (ptr_tmp) {//只有拷贝成功，才释放原来的指针，如果没申请到足够内存，保留原来的内存，不释放。
+			memcpy(ptr_tmp, ptr, size);
+			vfree(ptr);
+		}
+	}
 	return ptr_tmp;
 }
 
