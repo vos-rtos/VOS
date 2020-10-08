@@ -39,21 +39,21 @@ void vmem_test_by_man()
 	VMemInfoDump(pheap);
 	VBoudaryCheck(pheap);
 
-	p[0] = (u8*)VMemMalloc(pheap, 1024 * 1 + 1);
+	p[0] = (u8*)VMemMalloc(pheap, 1024 * 1 + 1, 0);
 	VMemInfoDump(pheap);
 	VBoudaryCheck(pheap);
 
-	p[1] = (u8*)VMemMalloc(pheap, 1024 * 1 + 1);
-
-	VMemInfoDump(pheap);
-	VBoudaryCheck(pheap);
-
-	VMemFree(pheap, p[0]);
+	p[1] = (u8*)VMemMalloc(pheap, 1024 * 1 + 1, 0);
 
 	VMemInfoDump(pheap);
 	VBoudaryCheck(pheap);
 
-	VMemFree(pheap, p[1]);
+	VMemFree(pheap, p[0], 0);
+
+	VMemInfoDump(pheap);
+	VBoudaryCheck(pheap);
+
+	VMemFree(pheap, p[1], 0);
 
 	VMemInfoDump(pheap);
 	VBoudaryCheck(pheap);
@@ -62,7 +62,7 @@ void vmem_test_by_man()
 	* 测试二：
 	* 测试对象： 每次申请1页，耗尽测试,会内存泄漏
 	*******************************************************************************************************/
-	while (VMemMalloc(pheap, 1024)) {
+	while (VMemMalloc(pheap, 1024, 0)) {
 		VBoudaryCheck(pheap);
 		VMemInfoDump(pheap);
 	}
@@ -116,9 +116,9 @@ void vmem_test_random()
 			rand_num = rand() % 1000;
 			for (i = 0; i < rand_num; i++) {
 				malloc_size = rand() % 1024;
-				p[0] = VMemMalloc(pheap, malloc_size);
+				p[0] = VMemMalloc(pheap, malloc_size, 0);
 				VBoudaryCheck(pheap);
-				VMemFree(pheap, p[0]);
+				VMemFree(pheap, p[0], 0);
 				VBoudaryCheck(pheap);
 			}
 		}
@@ -133,7 +133,7 @@ void vmem_test_random()
 		{
 			malloc_size = rand() % 1024;
 			if (j < sizeof(p)/sizeof(p[0])) {
-				p[j] = VMemMalloc(pheap, malloc_size);
+				p[j] = VMemMalloc(pheap, malloc_size, 0);
 				if (p[j] == 0) {//申请失败，跳出，但是还没耗尽
 					VBoudaryCheck(pheap);
 					break;
@@ -143,7 +143,7 @@ void vmem_test_random()
 			}
 			else {//只是p耗尽，释放后，继续申请直到mallo返回0
 				for (j = 0; j < sizeof(p)/sizeof(p[0]); j++) {
-					VMemFree(pheap, p[j]);
+					VMemFree(pheap, p[j], 0);
 					VBoudaryCheck(pheap);
 				}
 				j = 0;
@@ -153,7 +153,7 @@ void vmem_test_random()
 		VMemInfoDump(pheap);
 		//重新释放全部
 		for (j = 0; j < sizeof(p) / sizeof(p[0]); j++) {
-			VMemFree(pheap, p[j]);
+			VMemFree(pheap, p[j], 0);
 			VBoudaryCheck(pheap);
 		}
 		//全部回收
@@ -168,12 +168,12 @@ void vmem_test_random()
 			j = rand() % (sizeof(p)/sizeof(p[0]));
 			for (i = 0; i < j; i++) {
 				malloc_size = rand() % 1024;
-				p[i] = VMemMalloc(pheap, malloc_size);
+				p[i] = VMemMalloc(pheap, malloc_size, 0);
 				VBoudaryCheck(pheap);
 			}
 			VMemInfoDump(pheap);
 			for (i = 0; i < j; i++) {
-				VMemFree(pheap, p[i]);
+				VMemFree(pheap, p[i], 0);
 				VBoudaryCheck(pheap);
 			}
 			VMemInfoDump(pheap);

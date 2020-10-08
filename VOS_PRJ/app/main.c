@@ -71,16 +71,15 @@ void main(void *param)
 	//tp_dev.init();
 	//rtp_test();
 	//lwip_test();
-
 	//sd_test_test();
 	//fatfs_test();
 	//return;
 	emWinTest();
 
-	NetDhcpClient(30*1000);
-	//SetNetWorkInfo ("192.168.2.150", "255.255.255.0", "192.168.2.101");
+	//NetDhcpClient(30*1000);
+	SetNetWorkInfo ("192.168.2.150", "255.255.255.0", "192.168.2.101");
 	//lwip_inner_test();
-	sock_tcp_test();
+	//sock_tcp_test();
 
 //	kprintf("total: %d, free: %d!\r\n", total, free);
 	dma_printf("hello world!\r\n");

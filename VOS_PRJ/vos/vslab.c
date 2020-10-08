@@ -375,7 +375,7 @@ void *VSlabBlockAlloc(struct StVSlabMgr *pSlabMgr, s32 size)
 			slab_page = 0;
 			if (pSlabMgr->pheap) { //从堆里申请一页
 				VSLAB_UNLOCK();
-				u8 *tmp_ptr = (u8*)VMemMalloc(pSlabMgr->pheap, pSlabMgr->page_size);
+				u8 *tmp_ptr = (u8*)VMemMalloc(pSlabMgr->pheap, pSlabMgr->page_size, 1);//1为标志slab使用，释放时使用
 				VSLAB_LOCK();
 				slab_page = VSlabPageBuild(tmp_ptr, pSlabMgr->page_size, (index+1)*pSlabMgr->step_size, pSlabMgr);
 			}
@@ -399,6 +399,8 @@ void *VSlabBlockAlloc(struct StVSlabMgr *pSlabMgr, s32 size)
 	}
 	//查找位图，找到第一个空闲块并置位
 	pnew = SlabBitMapSet(slab_page, &status);
+
+
 	if (status == SLAB_BITMAP_FULL) { //置位后满，把页移到page_full链表
 									  //先从page_partial链表删除
 		list_del(&slab_page->list);
@@ -494,6 +496,7 @@ s32 VSlabBlockFree(struct StVSlabMgr *pSlabMgr, void *ptr)
 
 	//根据页管理区里的block_size块尺寸，计算slab_class索引号地址
 	index =  (slab_page->block_size + pSlabMgr->step_size - 1) / pSlabMgr->step_size - 1;
+
 	if (index >= pSlabMgr->class_max) {
 		goto END_SLAB_BLOCK_FREE;
 	}
@@ -523,7 +526,7 @@ s32 VSlabBlockFree(struct StVSlabMgr *pSlabMgr, void *ptr)
 
 			if (pSlabMgr->pheap) {
 				VSLAB_UNLOCK();
-				VMemFree (pSlabMgr->pheap , pPageBase);
+				VMemFree (pSlabMgr->pheap , pPageBase, 1);//指示slab调用释放函数，要buddy释放自己的内存。
 				VSLAB_LOCK();
 			}
 		}

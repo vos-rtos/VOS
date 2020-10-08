@@ -159,7 +159,7 @@ void *vmalloc(u32 size)
 	list_for_each(list, &gVheapMgr.heap) {
 		pheap = list_entry(list, struct StVMemHeap, list_heap);
 		if (pheap->heap_attr == VHEAP_ATTR_SYS &&
-				(ptr = VMemMalloc(pheap, size))) {//通用堆里分配
+				(ptr = VMemMalloc(pheap, size, 0))) {//通用堆里分配
 			break;
 		}
 	}
@@ -186,7 +186,7 @@ void vfree(void *ptr)
 	list_for_each(list, &gVheapMgr.heap) {
 		pheap = list_entry(list, struct StVMemHeap, list_heap);
 		//VMemFree返回0，则成功从本堆释放掉内存，小于0，返回释放失败，则从下个堆释放指定地址内存。
-		if (pheap->heap_attr == VHEAP_ATTR_SYS && VMemFree(pheap, ptr)==0) {//通用堆里分配
+		if (pheap->heap_attr == VHEAP_ATTR_SYS && VMemFree(pheap, ptr, 0)==0) {//通用堆里分配
 			break;
 		}
 	}

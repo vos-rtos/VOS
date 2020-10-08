@@ -11,7 +11,7 @@ extern struct StVSlabMgr;
 
 extern struct StVMemHeap;
 struct StVMemHeap *gpheap = 0;
-void *VMemMalloc(struct StVMemHeap *pheap, u32 size);
+void *VMemMalloc(struct StVMemHeap *pheap, u32 size, s32 flag);
 #define vmalloc(x)  VMemMalloc(gpheap, (x))
 #define kprintf printf
 
@@ -36,7 +36,7 @@ void vslab_test_by_man()
 	s32 malloc_size = SlabMgrHeaderGetSize(1024, 8, 8);
 
 	gpheap = VMemBuild(&arr_heap[0], sizeof(arr_heap), 1024, VSLAB_ALIGN_SIZE, VHEAP_ATTR_SYS, "test_heap", 1);
-	p = (u8*)VMemMalloc(gpheap, malloc_size);
+	p = (u8*)VMemMalloc(gpheap, malloc_size, 0);
 	struct StVSlabMgr *pslab = VSlabBuild(p, malloc_size, 1024, VSLAB_ALIGN_SIZE, VSLAB_STEP_SIZE, "test_slab", gpheap);
 	memset(pnew, 0, sizeof(pnew) / sizeof(pnew[0]));
 	for (i = 0; i < 84; i++) {
@@ -85,7 +85,7 @@ void vslab_test_random()
 	malloc_size = SlabMgrHeaderGetSize(1024, VSLAB_ALIGN_SIZE, VSLAB_STEP_SIZE);
 
 	gpheap = VMemBuild(&arr_heap[0], sizeof(arr_heap), 1024, VSLAB_ALIGN_SIZE, VHEAP_ATTR_SYS, "test_heap", 1);
-	p = (u8*)VMemMalloc(gpheap, malloc_size);
+	p = (u8*)VMemMalloc(gpheap, malloc_size, 0);
 	struct StVSlabMgr *pslab = VSlabBuild(p, malloc_size, 1024, VSLAB_ALIGN_SIZE, VSLAB_STEP_SIZE, "test_slab", gpheap);
 
 

@@ -76,6 +76,12 @@ typedef struct StVMemHeapInfo {
 struct StVMemCtrlBlock;
 struct StVSlabMgr;
 
+enum {
+	BLOCK_OWN_NONE = 0,
+	BLOCK_OWN_SLAB,
+	BLOCK_OWN_BUDDY,
+};
+
 typedef struct StVMemHeap {
 	s8 *name; //堆名字
 	u8 *mem_end; //内存对齐后的结束地址，用来判断释放是否越界
@@ -100,11 +106,13 @@ typedef struct StVMemCtrlBlock {
 #if VMEM_TRACER_ENABLE
 	u32 used_num; //当前使用了多少字节，用来调试是否越界写入，用法就是剩余空闲去添加指定数据，检查是否越界写入
 #endif
+	u32 flag_who; //	BLOCK_OWN_NONE, BLOCK_OWN_SLAB, BLOCK_OWN_BUDDY
 	u16 page_max; //最大分配了多少页, 2^n
 	s8 status; //VMEM_STATUS_FREE,VMEM_STATUS_USED,VMEM_STATUS_UNKNOWN
 	//已分配内存属于的任务id,注意：如果空闲块，这里设置为0xFF(空闲任务), 但是空闲任务不申请内存（特殊处理）
 	//在中断上下文或者系统任务还没启动前，都设定VMEM_BELONG_TO_NONE, 代码不在任务上下文使用
 	u8 task_id;
+
 }StVMemCtrlBlock;
 
 #define ALIGN_UP(mem, align) 	((u32)(mem) & ~((align)-1))
@@ -113,8 +121,8 @@ typedef struct StVMemCtrlBlock {
 
 struct StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size, s32 align_bytes,
 												s32 heap_attr, s8 *name, s32 enable_slab);
-void *VMemMalloc(struct StVMemHeap *pheap, u32 size);
-s32 VMemFree (struct StVMemHeap *pheap, void *p);
+void *VMemMalloc(struct StVMemHeap *pheap, u32 size, s32 is_slab);
+s32 VMemFree (struct StVMemHeap *pheap, void *p, s32 is_slab);
 void *VMemRealloc(struct StVMemHeap *pheap, void *p, u32 size);
 void *VMemGetPageBaseAddr(struct StVMemHeap *pheap, void *any_addr);
 s32 VMemGetHeapInfo(struct StVMemHeap *pheap, struct StVMemHeapInfo *pheadinfo);

@@ -120,6 +120,12 @@ int displyjpeg(u8 *JPEGFileName,u8 mode,u32 x,u32 y,int member,int denom)
 	GUI_JPEG_GetInfo(jpegbuffer,JPEGFile.fsize,&JpegInfo); //获取JEGP图片信息
 	XSize = JpegInfo.XSize;	//获取JPEG图片的X轴大小
 	YSize = JpegInfo.YSize;	//获取JPEG图片的Y轴大小
+
+	if (XSize > LCD_GetXSize() || YSize > LCD_GetYSize()) {
+		f_close(&JPEGFile);		//关闭BMPFile文件
+		vfree(jpegbuffer);	//释放内存
+		return 0;
+	}
 	switch(mode)
 	{
 		case 0:	//在指定位置显示图片
@@ -226,7 +232,8 @@ void jpegdisplay_demo(void)
 	while(1)
 	{
 		vvsprintf(buf, sizeof(buf), "0:/320x480/320x480_%d.jpg", num%30+1);
-		displayjpegex(buf,0,0,0,1,1);
+		//displayjpegex(buf,0,0,0,1,1);
+		displyjpeg(buf,0,0,0,1,1);
 		vvsprintf(buf, sizeof(buf), "第%d张图片", num++%30+1);
 		GUI_DispStringHCenterAt(GB2312_TO_UTF8_LOCAL(buf), LCD_GetXSize()/2, 0);
 		GUI_Delay(JPEG_DELAY_MS);

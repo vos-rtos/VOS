@@ -234,16 +234,19 @@ struct StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size, s32 align_bytes,
 	return pheap;
 }
 
+
+
 /********************************************************************************************************
 * 函数：void *VMemMalloc(StVMemHeap *pheap, u32 size);
 * 描述:  指定堆里申请size空间内存
 * 参数:
 * [1] pheap: 指定的堆
 * [2] size: 申请的大小，单位字节
+* [3] is_slab: slab申请内存
 * 返回：申请的内存空间起始地址
 * 注意：buddy算法，如果申请内存块对应的链表为空，则往上申请，直接申请成功或失败。
 *********************************************************************************************************/
-void *VMemMalloc(struct StVMemHeap *pheap, u32 size)
+void *VMemMalloc(struct StVMemHeap *pheap, u32 size, s32 is_slab)
 {
 	void *pObj = 0;
 	s32 i;
@@ -255,11 +258,13 @@ void *VMemMalloc(struct StVMemHeap *pheap, u32 size)
 
 #if VOS_SLAB_ENABLE
 	/******** 先查找SLAB分配器 ***********/
-	if (pheap && pheap->slab_ptr) {
+	if (!is_slab && pheap && pheap->slab_ptr) {
 		pObj = VSlabBlockAlloc(pheap->slab_ptr, size);
+
 		#if VOS_RUNTIME_BOUDARY_CHECK
 			VBoudaryCheck(pheap);
 		#endif
+
 		if (pObj) return pObj;
 	}
 	/******** *********** ***********/
@@ -298,6 +303,8 @@ void *VMemMalloc(struct StVMemHeap *pheap, u32 size)
 #endif
 			pMCBRight->status = pMCB->status = VMEM_STATUS_FREE;
 
+			pMCBRight->flag_who = pMCB->flag_who = BLOCK_OWN_NONE;
+
 			index_top--;
 
 			//插入到page_class[n]中， 插入有右边的，左边继续分配
@@ -308,6 +315,13 @@ void *VMemMalloc(struct StVMemHeap *pheap, u32 size)
 		pMCB->status = VMEM_STATUS_USED;
 		//设定任务ID
 		pMCB->task_id = GetCurTaskId();
+		//如果slab申请，标志，在free时使用到
+		if (is_slab) {
+			pMCB->flag_who = BLOCK_OWN_SLAB;
+		}
+		else {
+			pMCB->flag_who = BLOCK_OWN_BUDDY;
+		}
 
 #if VMEM_TRACER_ENABLE
 		pMCB->used_num = size;
@@ -335,7 +349,35 @@ END_VMEMMALLOC:
 #if VOS_RUNTIME_BOUDARY_CHECK
 	VBoudaryCheck(pheap);
 #endif
+
 	return pObj;
+}
+
+/********************************************************************************************************
+* 函数：s32 VMemCheckSlabFlag (StVMemHeap *pheap, void *p);
+* 描述: 主要是检查释放的指针是buddy释放，还是交给slab释放
+* 参数:
+* [1] pheap: 指定的堆
+* [2] p: 释放的地址，这个地址必须是申请时的起始地址
+* 返回：0：成功;  -1：失败；（多堆情况，成功立即退出，不成功交给下个堆释放）
+* 注意：
+*********************************************************************************************************/
+s32 VMemCheckSlabFlag(struct StVMemHeap *pheap, void *p)
+{
+	s32 ret = -1;
+	s32 size = 0;
+	struct StVMemCtrlBlock *pMCB = 0;
+
+	if ((u8*)p < pheap->page_base || (u8*)p >= pheap->mem_end) {
+		return BLOCK_OWN_NONE;
+	}
+	size = (u8*)p - pheap->page_base;
+	pMCB = &pheap->pMCB_base[size/pheap->page_size];
+	if (pMCB->status != VMEM_STATUS_USED) {
+		return BLOCK_OWN_NONE;
+	}
+
+	return pMCB->flag_who;
 }
 
 /********************************************************************************************************
@@ -344,35 +386,42 @@ END_VMEMMALLOC:
 * 参数:
 * [1] pheap: 指定的堆
 * [2] p: 释放的地址，这个地址必须是申请时的起始地址
-* 返回：0：成功;  -1：失败；（多堆情况，成功立即退出，不成功交给下个堆释放）
-* 注意：buddy算法，如果内存释放后邻居也空闲，则合并到上一级的page_class[n]的链表中，直到最顶链表。
-*           多堆情况，根据返回值来判断是否继续交给下个堆开始释放。
+* [3] is_slab: 指定slab调用释放函数，这时就算who == BLOCK_OWN_SLAB也要交给buddy释放
+* 返回：BLOCK_OWN_NONE， BLOCK_OWN_SLAB， BLOCK_OWN_UDDY , 指示由哪个分配器释放
+* 注意：无
 *********************************************************************************************************/
-s32 VMemFree(struct StVMemHeap *pheap, void *p)
+s32 VMemFree(struct StVMemHeap *pheap, void *p, s32 is_slab)
 {
 	s32 ret = -1;
 	s32 size = 0;
 	s32 offset = 0;
 	s32 page_max = 0;
 	s32 index = 0;
+	s32 who = 0;
 	struct StVMemCtrlBlock *pMCB = 0;
 	struct StVMemCtrlBlock *pMCBTemp = 0;
 
+	if (pheap==0) return ret;
+
+	who = VMemCheckSlabFlag(pheap, p);
+
+	if (who == BLOCK_OWN_NONE) return ret;
+	if (who == BLOCK_OWN_SLAB && is_slab == 0) {//is_slab调用VMemFree释放自己时，需要交给buddy释放
 #if VOS_SLAB_ENABLE
-	/******** 先释放SLAB分配器 ***********/
-	if (pheap && pheap->slab_ptr && VSlabBlockFree(pheap->slab_ptr, p)) {
-		//指针在slab范围内，直接返回
-		ret = 0;
-		#if VOS_RUNTIME_BOUDARY_CHECK
-			VBoudaryCheck(pheap);
-		#endif
-		return ret;
-	}
-	/******** *********** ***********/
+		if (pheap->slab_ptr && VSlabBlockFree(pheap->slab_ptr, p)) {//指针在slab范围内，直接返回
+			ret = 0;
+			#if VOS_RUNTIME_BOUDARY_CHECK
+				VBoudaryCheck(pheap);
+			#endif
+			return ret;
+		}
 #endif
-	//指针在slab范围外，交给slab释放
-	if ((u8*)p < pheap->page_base || (u8*)p >= pheap->mem_end) return ret; //地址范围溢出
-																	   //判断p地址必须是页面对齐，否者不释放
+	}
+	//buddy释放如下：
+
+//	//指针在slab范围外，交给下个堆释放
+//	if ((u8*)p < pheap->page_base || (u8*)p >= pheap->mem_end) return ret; //地址范围溢出
+//																	   //判断p地址必须是页面对齐，否者不释放
 	size = (u8*)p - pheap->page_base;
 	if (size % pheap->page_size) return ret; //地址距离必须是page_size倍数
 
@@ -380,9 +429,9 @@ s32 VMemFree(struct StVMemHeap *pheap, void *p)
 	pMCB = &pheap->pMCB_base[offset];
 	page_max = pMCB->page_max;
 
-	if (pMCB->status != VMEM_STATUS_USED) {
-		return ret;
-	}
+//	if (pMCB->status != VMEM_STATUS_USED) {
+//		return ret;
+//	}
 
 	VMEM_LOCK();
 	//释放时也得从已分配链表中删除
@@ -414,6 +463,7 @@ s32 VMemFree(struct StVMemHeap *pheap, void *p)
 				pMCB->used_num = 0;
 #endif
 				pMCB->status = VMEM_STATUS_FREE;
+				pMCB->flag_who = BLOCK_OWN_NONE;
 				//往上层合并
 				//pMCB = pMCB;
 				page_max = pMCB->page_max;
@@ -445,6 +495,7 @@ s32 VMemFree(struct StVMemHeap *pheap, void *p)
 				pMCBTemp->used_num = 0;
 #endif
 				pMCBTemp->status = VMEM_STATUS_FREE;
+				pMCBTemp->flag_who = BLOCK_OWN_NONE;
 				//往上层合并
 				pMCB = pMCBTemp;
 				page_max = pMCB->page_max;
@@ -461,6 +512,9 @@ s32 VMemFree(struct StVMemHeap *pheap, void *p)
 	if (index < MAX_PAGE_CLASS_MAX) {
 		//再添加到空闲链表
 		pMCB->status = VMEM_STATUS_FREE;
+
+		pMCB->flag_who = BLOCK_OWN_NONE;
+
 		//空闲时任务id设置为空
 		pMCB->task_id = VMEM_BELONG_TO_NONE;
 
@@ -490,28 +544,31 @@ s32 VMemFree(struct StVMemHeap *pheap, void *p)
 void *VMemRealloc(struct StVMemHeap *pheap, void *p, u32 size)
 {
 	void *ptr = (void*)0;
+	s32 who = 0;
 	struct StVMemCtrlBlock *pMCB = 0;
 	if (p == 0) { //指针为空，则直接malloc
-		ptr = VMemMalloc(pheap, size);
+		ptr = VMemMalloc(pheap, size, 0);
 		goto END_VMEMREALLOC;
 	}
 	if (size == 0) { //指针不为空，size为0，则释放p, 同时返回0
-		VMemFree(pheap, p);
+		VMemFree(pheap, p, 0);
 		goto END_VMEMREALLOC;
 	}
 
+	who = VMemCheckSlabFlag(pheap, p);
+	if (BLOCK_OWN_NONE == who) goto END_VMEMREALLOC;
+	if (BLOCK_OWN_SLAB == who) {
 #if VOS_SLAB_ENABLE
-	/******** 先释放SLAB分配器 ***********/
 	if (pheap && pheap->slab_ptr && VSlabBlockFree(pheap->slab_ptr, p)) {
 		//指针在slab范围内，直接返回
-		ptr = VMemMalloc(pheap, size);
+		ptr = VMemMalloc(pheap, size, 0);
 		if (ptr) {
 			memcpy(ptr, p, size);
 		}
 		goto END_VMEMREALLOC;
 	}
-	/******** *********** ***********/
 #endif
+	}
 
 	//判断是本堆的malloc
 	VMEM_LOCK();
@@ -529,7 +586,7 @@ void *VMemRealloc(struct StVMemHeap *pheap, void *p, u32 size)
 	}
 	VMEM_UNLOCK();
 	//超过剩余空间或者不在本区域内，直接malloc和memcpy
-	ptr = VMemMalloc(pheap, size);
+	ptr = VMemMalloc(pheap, size, 0);
 	if (ptr) {
 		memcpy(ptr, p, size);
 	}
