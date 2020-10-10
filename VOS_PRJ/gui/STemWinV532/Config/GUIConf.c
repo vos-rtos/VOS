@@ -65,7 +65,7 @@ Purpose     : Display controller initialization
 #include "vos.h"
 #include "vheap.h"
 
-#define GUI_NUMBYTES  (128*1024) //0x200000
+#define GUI_NUMBYTES  (64*1024) //0x200000
 
 /*********************************************************************
 *

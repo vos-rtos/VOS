@@ -240,13 +240,13 @@ int LCD_X_DisplayDriver(unsigned LayerIndex, unsigned Cmd, void * pData) {
 #include "GUIDRV_Template.h"
 #include "GUIDRV_FlexColor.h"
 
-//与触摸屏有关定义，根据实际情况填写
-#define TOUCH_AD_TOP		160  	//按下触摸屏的顶部，写下 Y 轴模拟输入值。
-#define TOUCH_AD_BOTTOM		3990 	//按下触摸屏的底部，写下 Y 轴模拟输入值。
-#define TOUCH_AD_LEFT 		160		//按下触摸屏的左侧，写下 X 轴模拟输入值。
-#define TOUCH_AD_RIGHT		3990	//按下触摸屏的右侧，写下 X 轴模拟输入值。
-
-
+////与触摸屏有关定义，根据实际情况填写
+//#define TOUCH_AD_TOP		160  	//按下触摸屏的顶部，写下 Y 轴模拟输入值。
+//#define TOUCH_AD_BOTTOM		3990 	//按下触摸屏的底部，写下 Y 轴模拟输入值。
+//#define TOUCH_AD_LEFT 		160		//按下触摸屏的左侧，写下 X 轴模拟输入值。
+//#define TOUCH_AD_RIGHT		3990	//按下触摸屏的右侧，写下 X 轴模拟输入值。
+//
+//
 //屏幕大小
 #define XSIZE_PHYS  320 //X轴
 #define YSIZE_PHYS  240 //Y轴
@@ -275,10 +275,28 @@ int LCD_X_DisplayDriver(unsigned LayerIndex, unsigned Cmd, void * pData) {
   #error No display driver defined!
 #endif
 
-  
+extern _m_tp_dev tp_dev;
+extern _lcd_dev lcddev;
+int GetTpPosXAdVaule(_m_tp_dev *touch, _lcd_dev *lcd, int X)
+{
+	int Xpos = (X - touch->xoff)/touch->xfac;
+	return Xpos;
+}
+
+int GetTpPosYAdVaule(_m_tp_dev *touch, _lcd_dev *lcd, int Y)
+{
+	int Ypos = (Y - touch->yoff)/touch->yfac;
+	return Ypos;
+}
 
 //配置程序,用于创建显示驱动器件,设置颜色转换程序和显示尺寸
-void LCD_X_Config(void) {
+void LCD_X_Config(void)
+{
+	int Xmin = GetTpPosXAdVaule(&tp_dev, &lcddev, 0);
+	int Xmax = GetTpPosXAdVaule(&tp_dev, &lcddev, lcddev.width-1);
+	int Ymin = GetTpPosYAdVaule(&tp_dev, &lcddev, 0);
+	int Ymax = GetTpPosYAdVaule(&tp_dev, &lcddev, lcddev.height-1);
+
 	GUI_DEVICE_CreateAndLink(&GUIDRV_Template_API, GUICC_M565, 0, 0); //创建显示驱动器件
 	LCD_SetSizeEx    (0, lcddev.width, lcddev.height);
 	LCD_SetVSizeEx   (0, lcddev.width, lcddev.height);
@@ -309,9 +327,11 @@ void LCD_X_Config(void) {
 	}else if(lcddev.id == 0X5310 || lcddev.id == 0X6804) //0X5510 0X6804为3.5寸 320x480
 	{
 		if(lcddev.dir == 0) //竖屏 	
-		{							
-			GUI_TOUCH_Calibrate(GUI_COORD_X,0,320,3931,226);
-			GUI_TOUCH_Calibrate(GUI_COORD_Y,0,480,3812,196);
+		{
+//			GUI_TOUCH_Calibrate(GUI_COORD_X,0,320,226, 3931);
+//			GUI_TOUCH_Calibrate(GUI_COORD_Y,0,480,196, 3812);
+			GUI_TOUCH_Calibrate(GUI_COORD_X,0,lcddev.width-1,Xmin, Xmax);
+			GUI_TOUCH_Calibrate(GUI_COORD_Y,0,lcddev.height-1,Ymin, Ymax);
 		}else //横屏
 		{
 			GUI_TOUCH_SetOrientation(GUI_SWAP_XY|GUI_MIRROR_Y); 
@@ -323,8 +343,8 @@ void LCD_X_Config(void) {
 	{
 		if(lcddev.dir == 0) //竖屏
 		{					
-			GUI_TOUCH_Calibrate(GUI_COORD_X,0,lcddev.width,155,3903);
-			GUI_TOUCH_Calibrate(GUI_COORD_Y,0,lcddev.height,188,3935);
+			GUI_TOUCH_Calibrate(GUI_COORD_X,0,lcddev.width-1,155,3903);
+			GUI_TOUCH_Calibrate(GUI_COORD_Y,0,lcddev.height-1,188,3935);
 		}else //横屏
 		{
 			GUI_TOUCH_SetOrientation(GUI_SWAP_XY|GUI_MIRROR_Y); 

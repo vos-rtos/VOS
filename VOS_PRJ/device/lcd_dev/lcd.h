@@ -11,9 +11,9 @@ typedef struct
 	u16 height;			//LCD 高度
 	u16 id;				//LCD ID
 	u8  dir;			//横屏还是竖屏控制：0，竖屏；1，横屏。	
-	u16	wramcmd;		//开始写gram指令
-	u16  setxcmd;		//设置x坐标指令
-	u16  setycmd;		//设置y坐标指令 
+	volatile u16	wramcmd;		//开始写gram指令
+	volatile u16  setxcmd;		//设置x坐标指令
+	volatile u16  setycmd;		//设置y坐标指令
 }_lcd_dev; 	  
 
 //LCD参数
@@ -29,8 +29,8 @@ extern u16  BACK_COLOR; //背景颜色.默认为白色
 //LCD地址结构体
 typedef struct
 {
-	u16 LCD_REG;
-	u16 LCD_RAM;
+	volatile u16 LCD_REG;
+	volatile u16 LCD_RAM;
 } LCD_TypeDef;
 //使用NOR/SRAM的 Bank1.sector4,地址位HADDR[27,26]=11 A6作为数据命令区分线 
 //注意设置时STM32内部会右移一位对其! 111 1110=0X7E			    

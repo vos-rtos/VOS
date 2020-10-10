@@ -101,11 +101,11 @@ u16 LCD_ReadPoint(u16 x,u16 y)
 	else LCD_WR_REG(R34);      		 				//其他IC发送读GRAM指令
 	if(lcddev.id==0X9320)opt_delay(2);				//FOR 9320,延时2us	    
  	LCD_RD_DATA();									//dummy Read	   
-	opt_delay(2);	  
+	opt_delay(2);
  	r=LCD_RD_DATA();  		  						//实际坐标颜色
  	if(lcddev.id==0X9341||lcddev.id==0X5310||lcddev.id==0X5510)		//9341/NT35310/NT35510要分2次读出
  	{
-		opt_delay(2);	  
+		opt_delay(2);
 		b=LCD_RD_DATA(); 
 		g=r&0XFF;		//对于9341/5310/5510,第一次读取的是RG的值,R在前,G在后,各占8位
 		g<<=8;
@@ -562,7 +562,7 @@ void LCD_Init(void)
   GPIO_PinAFConfig(GPIOG,GPIO_PinSource12,GPIO_AF_FSMC);
 
 
-  readWriteTiming.FSMC_AddressSetupTime = 0XF;	 //地址建立时间（ADDSET）为16个HCLK 1/168M=6ns*16=96ns	
+  readWriteTiming.FSMC_AddressSetupTime = 0XF;	 //地址建立时间（ADDSET）为16个HCLK 1/168M=6ns*16=96ns
   readWriteTiming.FSMC_AddressHoldTime = 0x00;	 //地址保持时间（ADDHLD）模式A未用到	
   readWriteTiming.FSMC_DataSetupTime = 24;			//数据保存时间为25个HCLK	=6*25=150ns
   readWriteTiming.FSMC_BusTurnAroundDuration = 0x00;
@@ -571,7 +571,7 @@ void LCD_Init(void)
   readWriteTiming.FSMC_AccessMode = FSMC_AccessMode_A;	 //模式A 
     
 
-	writeTiming.FSMC_AddressSetupTime =8;	      //地址建立时间（ADDSET）为8个HCLK =48ns 
+	writeTiming.FSMC_AddressSetupTime =8;	      //地址建立时间（ADDSET）为8个HCLK =48ns
   writeTiming.FSMC_AddressHoldTime = 0x00;	 //地址保持时间（A		
   writeTiming.FSMC_DataSetupTime = 8;		 //数据保存时间为6ns*9个HCLK=54ns
   writeTiming.FSMC_BusTurnAroundDuration = 0x00;
@@ -592,7 +592,7 @@ void LCD_Init(void)
   FSMC_NORSRAMInitStructure.FSMC_WriteOperation = FSMC_WriteOperation_Enable;	//  存储器写使能
   FSMC_NORSRAMInitStructure.FSMC_WaitSignal = FSMC_WaitSignal_Disable;   
   FSMC_NORSRAMInitStructure.FSMC_ExtendedMode = FSMC_ExtendedMode_Enable; // 读写使用不同的时序
-  FSMC_NORSRAMInitStructure.FSMC_WriteBurst = FSMC_WriteBurst_Disable; 
+  FSMC_NORSRAMInitStructure.FSMC_WriteBurst = FSMC_WriteBurst_Disable;
   FSMC_NORSRAMInitStructure.FSMC_ReadWriteTimingStruct = &readWriteTiming; //读写时序
   FSMC_NORSRAMInitStructure.FSMC_WriteTimingStruct = &writeTiming;  //写时序
 

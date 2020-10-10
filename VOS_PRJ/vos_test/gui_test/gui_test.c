@@ -5,6 +5,11 @@
 #include "vmisc.h"
 #include "ffconf.h"
 #include "ff.h"
+#include "lcd_dev/lcd.h"
+#include "tp_dev/touch.h"
+#include "GUI.h"
+#include "FRAMEWIN.h"
+
 void emwindemo_task(void *p_arg)
 {
 
@@ -58,13 +63,20 @@ void emwindemo_task(void *p_arg)
 	GUI_SetFont(&TTF36_Font);
 #endif
 	GUI_SetBkColor(GUI_WHITE);
-	GUI_SetColor(GUI_DARKBLUE);
+	GUI_SetColor(GUI_RED);
 
-	GUI_SetTextMode(GUI_TM_TRANS);
+	GUI_SetTextMode(LCD_DRAWMODE_XOR);
 
 	GUI_Clear();
 
-	jpegdisplay_demo();
+	WM_SetCreateFlags(WM_CF_MEMDEV);
+	CreateFramewin();
+	while(1) {
+		GUI_Exec();
+		GUI_TOUCH_Exec();
+	}
+
+	//jpegdisplay_demo();
 	//bmpdisplay_demo();
 
 #endif
@@ -75,6 +87,7 @@ static long long emwindemo_stack[1024*3];
 void emWinTest()
 {
  	LCD_Init();
+ 	tp_dev.init();
  	fatfs_sd_card();
  	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_CRC,ENABLE);
  	GUI_Init();

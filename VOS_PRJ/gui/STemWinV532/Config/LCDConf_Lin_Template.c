@@ -1,3 +1,4 @@
+#if 0
 /*********************************************************************
 *          Portions COPYRIGHT 2016 STMicroelectronics                *
 *          Portions SEGGER Microcontroller GmbH & Co. KG             *
@@ -259,3 +260,4 @@ int LCD_X_DisplayDriver(unsigned LayerIndex, unsigned Cmd, void * pData) {
 }
 
 /*************************** End of file ****************************/
+#endif

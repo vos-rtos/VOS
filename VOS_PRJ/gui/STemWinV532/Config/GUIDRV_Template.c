@@ -142,37 +142,30 @@ typedef struct {
 *   calling this routine make sure that the coordinates are in range, so
 *   that no check on the parameters needs to be performed.
 */
-//static void _SetPixelIndex(GUI_DEVICE * pDevice, int x, int y, int PixelIndex) {
-//    //
-//    // Convert logical into physical coordinates (Dep. on LCDConf.h)
-//    //
-//    #if (LCD_MIRROR_X == 1) || (LCD_MIRROR_Y == 1) || (LCD_SWAP_XY == 1)
-//      int xPhys, yPhys;
-//
-//      xPhys = LOG2PHYS_X(x, y);
-//      yPhys = LOG2PHYS_Y(x, y);
-//    #else
-//      #define xPhys x
-//      #define yPhys y
-//    #endif
-//    GUI_USE_PARA(pDevice);
-//    GUI_USE_PARA(x);
-//    GUI_USE_PARA(y);
-//    GUI_USE_PARA(PixelIndex);
-//    {
-//      //
-//      // Write into hardware ... Adapt to your system
-//      //
-//      // TBD by customer...
-//      //
-//    }
-//    #if (LCD_MIRROR_X == 0) && (LCD_MIRROR_Y == 0) && (LCD_SWAP_XY == 0)
-//      #undef xPhys
-//      #undef yPhys
-//    #endif
-//}
 static void _SetPixelIndex(GUI_DEVICE * pDevice, int x, int y, int PixelIndex) {
-	LCD_Fast_DrawPoint(x,y,PixelIndex);
+    //
+    // Convert logical into physical coordinates (Dep. on LCDConf.h)
+    //
+    #if (LCD_MIRROR_X == 1) || (LCD_MIRROR_Y == 1) || (LCD_SWAP_XY == 1)
+      int xPhys, yPhys;
+
+      xPhys = LOG2PHYS_X(x, y);
+      yPhys = LOG2PHYS_Y(x, y);
+    #else
+      #define xPhys x
+      #define yPhys y
+    #endif
+    GUI_USE_PARA(pDevice);
+    GUI_USE_PARA(x);
+    GUI_USE_PARA(y);
+    GUI_USE_PARA(PixelIndex);
+    {
+    	LCD_Fast_DrawPoint(x,y,PixelIndex);
+    }
+    #if (LCD_MIRROR_X == 0) && (LCD_MIRROR_Y == 0) && (LCD_SWAP_XY == 0)
+      #undef xPhys
+      #undef yPhys
+    #endif
 }
 
 /*********************************************************************
@@ -202,12 +195,6 @@ static unsigned int _GetPixelIndex(GUI_DEVICE * pDevice, int x, int y) {
     GUI_USE_PARA(x);
     GUI_USE_PARA(y);
     {
-      //
-      // Write into hardware ... Adapt to your system
-      //
-      // TBD by customer...
-      //
-      //PixelIndex = 0;
     	PixelIndex = LCD_ReadPoint(x,y);
     }
     #if (LCD_MIRROR_X == 0) && (LCD_MIRROR_Y == 0) && (LCD_SWAP_XY == 0)
@@ -234,27 +221,28 @@ static void _XorPixel(GUI_DEVICE * pDevice, int x, int y) {
 *
 *       _FillRect
 */
-//static void _FillRect(GUI_DEVICE * pDevice, int x0, int y0, int x1, int y1) {
-//  LCD_PIXELINDEX PixelIndex;
-//  int x;
-//
-//  PixelIndex = LCD__GetColorIndex();
-//  if (GUI_pContext->DrawMode & LCD_DRAWMODE_XOR) {
-//    for (; y0 <= y1; y0++) {
-//      for (x = x0; x <= x1; x++) {
-//        _XorPixel(pDevice, x, y0);
-//      }
-//    }
-//  } else {
-//    for (; y0 <= y1; y0++) {
-//      for (x = x0; x <= x1; x++) {
-//        _SetPixelIndex(pDevice, x, y0, PixelIndex);
-//      }
-//    }
-//  }
-//}
 static void _FillRect(GUI_DEVICE * pDevice, int x0, int y0, int x1, int y1) {
-	LCD_Fill(x0,y0,x1,y1,LCD_COLORINDEX);
+#if 0
+  LCD_PIXELINDEX PixelIndex;
+  int x;
+
+  PixelIndex = LCD__GetColorIndex();
+  if (GUI_pContext->DrawMode & LCD_DRAWMODE_XOR) {
+    for (; y0 <= y1; y0++) {
+      for (x = x0; x <= x1; x++) {
+        _XorPixel(pDevice, x, y0);
+      }
+    }
+  } else {
+    for (; y0 <= y1; y0++) {
+      for (x = x0; x <= x1; x++) {
+        _SetPixelIndex(pDevice, x, y0, PixelIndex);
+      }
+    }
+  }
+#else
+  LCD_Fill(x0,y0,x1,y1,LCD__GetColorIndex());
+#endif
 }
 
 
@@ -510,21 +498,20 @@ static void  _DrawBitLine8BPP(GUI_DEVICE * pDevice, int x, int y, U8 const GUI_U
 *   Drawing of 16bpp high color bitmaps.
 *   Only required for 16bpp color depth of target. Should be removed otherwise.
 */
-//static void _DrawBitLine16BPP(GUI_DEVICE * pDevice, int x, int y, U16 const GUI_UNI_PTR * p, int xsize) {
-//  for (;xsize > 0; xsize--, x++, p++) {
-//    _SetPixelIndex(pDevice, x, y, *p);
-//  }
-//}
 static void _DrawBitLine16BPP(GUI_DEVICE * pDevice, int x, int y, U16 const GUI_UNI_PTR * p, int xsize) {
-
+#if 0
+  for (;xsize > 0; xsize--, x++, p++) {
+    _SetPixelIndex(pDevice, x, y, *p);
+  }
+#else
 	LCD_PIXELINDEX pixel;
 	LCD_SetCursor(x,y);
 	*(volatile unsigned short *)(UCGUI_LCD_CMD)  = lcddev.wramcmd;  //Ð´ÈëÑÕÉ«Öµ
-	for (;xsize > 0; xsize--, x++, p++)
+	for (; xsize > 0; xsize--, x++, p++)
 	{
-		pixel = *p;
-        *(volatile unsigned short *)(UCGUI_LCD_DATA) =pixel;
-    }
+		*(volatile unsigned short *)(UCGUI_LCD_DATA) = *p;
+	}
+#endif
 }
 
 /*********************************************************************
