@@ -1,3 +1,4 @@
+#if 0
 /**
   ******************************************************************************
   * @file    stm32f4xx_hal_msp_template.c
@@ -99,3 +100,4 @@ void HAL_PPP_MspDeInit(void)
   */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+#endif

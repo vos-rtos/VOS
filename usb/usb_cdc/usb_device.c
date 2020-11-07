@@ -1,3 +1,4 @@
+#if 0
 /**
   ******************************************************************************
   * @file           : usb_device.c
@@ -119,3 +120,4 @@ void MX_USB_DEVICE_Init(void)
   */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+#endif
