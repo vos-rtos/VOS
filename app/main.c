@@ -1,12 +1,4 @@
-/********************************************************************************************************
-* 版    权: Copyright (c) 2020, VOS Open source. All rights reserved.
-* 文    件: main.c
-* 作    者: 156439848@qq.com; vincent_cws2008@gmail.com
-* 版    本: VOS V1.0
-* 历    史：
-* --20200801：创建文件
-* --20200828：添加注释
-*********************************************************************************************************/
+
 
 #include "stm32f4xx.h"
 #include "vtype.h"
@@ -21,7 +13,7 @@ void lwip_test();
 s32 NetDhcpClient(u32 timeout);
 void emWinTest();
 int usb2uart_test();
-#if 0
+#if 1
 #include "usbh_core.h"
 #include "usbh_msc.h"
 typedef enum {
@@ -80,24 +72,11 @@ static void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id)
 #include "usbd_def.h"
 #include "usbd_desc.h"
 #include "usbd_cdc.h"
-#include "usbd_cdc_interface.h"
 USBD_HandleTypeDef  USBD_Device;
+void MX_USB_DEVICE_Init(void);
 void udisk_test()
 {
-
-	  /* Init Device Library */
-	  USBD_Init(&USBD_Device, &VCP_Desc, 0);
-
-	  /* Add Supported Class */
-	  USBD_RegisterClass(&USBD_Device, USBD_CDC_CLASS);
-
-	  /* Add CDC Interface Class */
-	  USBD_CDC_RegisterInterface(&USBD_Device, &USBD_CDC_fops);
-
-	  /* Start Device Process */
-	  USBD_Start(&USBD_Device);
-
-	  /* Run Application (Interrupt mode) */
+	  MX_USB_DEVICE_Init();
 	  while (1)
 	  {
 		  VOSTaskDelay(100);
@@ -135,7 +114,11 @@ void udisk_test()
 
 void HAL_Delay(uint32_t Delay)
 {
+#if 0
 	VOSTaskDelay(Delay);
+#else
+	VOSDelayUs(Delay*1000);
+#endif
 }
 #endif
 void main(void *param)
@@ -146,13 +129,13 @@ void main(void *param)
 	uart_init(115200);
 	kprintf("hello world!\r\n");
 	dma_printf("=============%d============\r\n", 100);
-	TIM3_Init(5000,9000);
-	uart_test();
-#if 0
+	//TIM3_Init(5000,9000);
+	//uart_test();
+
 	kprintf("hello!\r\n");
 
 	udisk_test();
-
+#if 0
 	usb2uart_test();
 
 	emWinTest();

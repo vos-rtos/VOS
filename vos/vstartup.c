@@ -29,7 +29,7 @@ extern unsigned int _Heap_ccmram_Limit;
 
 extern void misc_init ();
 extern void main(void *param);
-long long main_stack[1024];
+long long main_stack[1024*2];
 
 /********************************************************************************************************
 * 函数：void init_data_and_bss();
@@ -100,7 +100,7 @@ vos_start(void)
 	SystemInit();
 	init_data_and_bss (); //这里由于清除全局变量，不用被包含到__vos_irq_save里，里面有使用全局变量计数
 
-	VOSSysTickSet();//设置tick时钟间隔
+
 
 	irq_save = __vos_irq_save();
 
@@ -123,6 +123,7 @@ vos_start(void)
 	VOSTaskInit();
 
 	misc_init ();
+
 
 	VOSTimerInit(); //定时器初始化，依赖信号量，互斥量，不能关中断里执行，因为里面有使用svn中断
 

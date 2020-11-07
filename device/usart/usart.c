@@ -238,6 +238,10 @@ void UartxRecvStartup()
 	      //while(1);
 	  }
 }
+
+void HAL_UART1_RxCpltCallback(UART_HandleTypeDef *huart);
+void HAL_UART1_RxHalfCpltCallback(UART_HandleTypeDef *huart);
+
 void uart_init(u32 bound)
 {
 
@@ -257,7 +261,15 @@ void uart_init(u32 bound)
 		Error_Handler();
 	}
 
+	if (HAL_OK == HAL_UART_RegisterCallback(&UartHandle, HAL_UART_RX_COMPLETE_CB_ID, HAL_UART1_RxCpltCallback)) {
+
+	}
+	if (HAL_OK == HAL_UART_RegisterCallback(&UartHandle, HAL_UART_RX_HALFCOMPLETE_CB_ID, HAL_UART1_RxHalfCpltCallback)) {
+
+	}
 	UartxRecvStartup();
+
+
 
  	//≥ı ºªØRingBuf
  	gRingBuf = VOSRingBufBuild(gRxRingBuf, sizeof(gRxRingBuf));
@@ -395,7 +407,7 @@ int fputc(int ch, FILE *f)
 	return ch;
 }
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+void HAL_UART1_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 	s32 ret = 0;
 	//s32 len = 0;
@@ -410,7 +422,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 }
 
 
-void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart)
+void HAL_UART1_RxHalfCpltCallback(UART_HandleTypeDef *huart)
 {
 	s32 ret = 0;
 	s32 len = 0;

@@ -1,13 +1,17 @@
 /**
   ******************************************************************************
-  * @file    USB_Device/CDC_Standalone/Inc/usbd_desc.h
-  * @author  MCD Application Team
-  * @brief   Header for usbd_desc.c module
+  * @file           : usb_device.c
+  * @version        : v1.0_Cube
+  * @brief          : This file implements the USB Device
   ******************************************************************************
-  * @attention
+  * This notice applies to any and all portions of this file
+  * that are not between comment pairs USER CODE BEGIN and
+  * USER CODE END. Other portions of this file, whether 
+  * inserted by the user or by software development tools
+  * are owned by their respective copyright owners.
   *
-  * <h2><center>&copy; Copyright (c) 2017 STMicroelectronics International N.V. 
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2020 STMicroelectronics International N.V. 
+  * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
   * modification, are permitted, provided that the following conditions are met:
@@ -42,24 +46,76 @@
   *
   ******************************************************************************
   */
-/* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __USBD_DESC_H
-#define __USBD_DESC_H
 
 /* Includes ------------------------------------------------------------------*/
-#include "usbd_def.h"
+#include "usbd_conf.h"
+#include "usb_device.h"
+#include "usbd_core.h"
+#include "usbd_desc.h"
+#include "usbd_cdc.h"
+#include "usbd_cdc_if.h"
 
-/* Exported types ------------------------------------------------------------*/
-/* Exported constants --------------------------------------------------------*/
-#define         DEVICE_ID1          (0x1FFF7A10)
-#define         DEVICE_ID2          (0x1FFF7A14)
-#define         DEVICE_ID3          (0x1FFF7A18)
+/* USER CODE BEGIN Includes */
 
-#define  USB_SIZ_STRING_SERIAL       0x1A
-/* Exported macro ------------------------------------------------------------*/
-/* Exported functions ------------------------------------------------------- */
-extern USBD_DescriptorsTypeDef VCP_Desc;
+/* USER CODE END Includes */
 
-#endif /* __USBD_DESC_H */
- 
+/* USER CODE BEGIN PV */
+/* Private variables ---------------------------------------------------------*/
+
+/* USER CODE END PV */
+
+/* USER CODE BEGIN PFP */
+/* Private function prototypes -----------------------------------------------*/
+
+/* USER CODE END PFP */
+
+/* USB Device Core handle declaration. */
+USBD_HandleTypeDef hUsbDeviceFS;
+
+/*
+ * -- Insert your variables declaration here --
+ */
+/* USER CODE BEGIN 0 */
+
+/* USER CODE END 0 */
+
+/*
+ * -- Insert your external function declaration here --
+ */
+/* USER CODE BEGIN 1 */
+
+/* USER CODE END 1 */
+
+/**
+  * Init USB device Library, add supported class and start the library
+  * @retval None
+  */
+void MX_USB_DEVICE_Init(void)
+{
+  /* USER CODE BEGIN USB_DEVICE_Init_PreTreatment */
+  
+  /* USER CODE END USB_DEVICE_Init_PreTreatment */
+  
+  /* Init Device Library, add supported class and start the library. */
+  USBD_Init(&hUsbDeviceFS, &FS_Desc, DEVICE_FS);
+
+  USBD_RegisterClass(&hUsbDeviceFS, &USBD_CDC);
+
+  USBD_CDC_RegisterInterface(&hUsbDeviceFS, &USBD_Interface_fops_FS);
+
+  USBD_Start(&hUsbDeviceFS);
+
+  /* USER CODE BEGIN USB_DEVICE_Init_PostTreatment */
+  
+  /* USER CODE END USB_DEVICE_Init_PostTreatment */
+}
+
+/**
+  * @}
+  */
+
+/**
+  * @}
+  */
+
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
