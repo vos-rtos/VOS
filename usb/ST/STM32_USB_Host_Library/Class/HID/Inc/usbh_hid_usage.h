@@ -1,28 +1,35 @@
 /**
   ******************************************************************************
-  * @file    usbh_hid_usage.c
+  * @file    usbh_hid_usage.c 
   * @author  MCD Application Team
-  * @brief   This file contain the USAGE page codes
+  * @version V3.2.2
+  * @date    07-July-2015
+  * @brief   This file contain the USAGE page codes              
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2015 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * <h2><center>&copy; COPYRIGHT 2015 STMicroelectronics</center></h2>
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                      www.st.com/SLA0044
+  * Licensed under MCD-ST Liberty SW License Agreement V2, (the "License");
+  * You may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at:
+  *
+  *        http://www.st.com/software_license_agreement_liberty_v2
+  *
+  * Unless required by applicable law or agreed to in writing, software 
+  * distributed under the License is distributed on an "AS IS" BASIS, 
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
   *
   ******************************************************************************
   */
-
 /* Define to prevent recursive  ----------------------------------------------*/
 #ifndef __USDH_HID_USAGE_H
 #define __USDH_HID_USAGE_H
 
 #ifdef __cplusplus
-extern "C" {
+ extern "C" {
 #endif
 
 /** @addtogroup USBH_LIB
@@ -36,11 +43,11 @@ extern "C" {
 /** @addtogroup USBH_HID_CLASS
   * @{
   */
-
+  
 /** @defgroup USBH_HID_USAGE
   * @brief This file is the Header file for usbh_hid_usage.c
   * @{
-  */
+  */ 
 
 
 /** @defgroup USBH_HID_USAGE_Exported_Types
@@ -167,7 +174,7 @@ extern "C" {
 
 /**
   * @}
-  */
+  */ 
 
 #ifdef __cplusplus
 }
@@ -177,17 +184,17 @@ extern "C" {
 
 /**
   * @}
-  */
+  */ 
 
 /**
   * @}
-  */
+  */ 
 
 /**
   * @}
-  */
+  */ 
 
 /**
   * @}
-  */
+  */ 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

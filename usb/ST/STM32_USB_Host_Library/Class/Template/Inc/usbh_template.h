@@ -1,3 +1,4 @@
+#if 0
 /**
   ******************************************************************************
   * @file    usbh_template.h
@@ -119,3 +120,4 @@ USBH_StatusTypeDef USBH_TEMPLATE_Init(USBH_HandleTypeDef *phost);
 */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
 
+#endif

@@ -51,7 +51,12 @@
 #include "vconf.h"
 #include "usb_host.h"
 #include "usbh_core.h"
+#include "usbh_audio.h"
+#include "usbh_cdc.h"
 #include "usbh_msc.h"
+#include "usbh_hid.h"
+#include "usbh_mtp.h"
+
 
 /* USER CODE BEGIN Includes */
 
@@ -105,7 +110,18 @@ void MX_USB_HOST_Init(void)
   /* Init host Library, add supported class and start the library. */
   USBH_Init(&hUsbHostFS, USBH_UserProcess, HOST_FS);
 
+
+  USBH_RegisterClass(&hUsbHostFS, USBH_HID_CLASS);
+
   USBH_RegisterClass(&hUsbHostFS, USBH_MSC_CLASS);
+
+  USBH_RegisterClass(&hUsbHostFS, USBH_MTP_CLASS);
+
+  USBH_RegisterClass(&hUsbHostFS, USBH_AUDIO_CLASS);
+
+  USBH_RegisterClass(&hUsbHostFS, USBH_CDC_CLASS);
+
+  USBH_RegisterClass(&hUsbHostFS, USBH_CDC_CLASS);
 
   USBH_Start(&hUsbHostFS);
 

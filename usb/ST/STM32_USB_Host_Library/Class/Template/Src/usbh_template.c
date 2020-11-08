@@ -1,3 +1,4 @@
+#if 0
 /**
   ******************************************************************************
   * @file    usbh_mtp.c
@@ -236,3 +237,4 @@ USBH_StatusTypeDef USBH_TEMPLATE_IOProcess(USBH_HandleTypeDef *phost)
 */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+#endif
