@@ -3,15 +3,24 @@
 #include "vmisc.h"
 #include "vtype.h"
 #include "vos.h"
-
-//#include "stm32f4xx_hal_pwr_ex.h"
-
 #include "stm32f4xx_hal.h"
 
 void SystemInit(void);
 void HAL_IncTick(void);
 void VOSExceptHandler(u32 *sp, s32 is_psp);
 
+volatile s32 gUsbWorkMode = 0;
+
+
+void SetUSBWorkMode(s32 mode)
+{
+	gUsbWorkMode = mode;
+}
+
+s32 GetUSBWorkMode()
+{
+	return gUsbWorkMode;
+}
 
 static void SystemClock_Config(void)
 {
@@ -29,8 +38,8 @@ static void SystemClock_Config(void)
 	  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
 	  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
 	  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-	  RCC_OscInitStruct.PLL.PLLM = 8;
-	  RCC_OscInitStruct.PLL.PLLN = 336;
+	  RCC_OscInitStruct.PLL.PLLM = 4;
+	  RCC_OscInitStruct.PLL.PLLN = 168;
 	  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
 	  RCC_OscInitStruct.PLL.PLLQ = 7;
 	  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
@@ -86,12 +95,22 @@ void VOSSysTickSet()
 	//SystemClock_Config();
 }
 
+void HAL_Delay(uint32_t Delay)
+{
+#if 0
+	VOSTaskDelay(Delay);
+#else
+	VOSDelayUs(Delay*1000);
+#endif
+}
+
 
 void __attribute__ ((section(".after_vectors")))
 SysTick_Handler()
 {
 	VOSIntEnter();
 	VOSSysTick();
+	//HAL_IncTick();
 	VOSIntExit ();
 }
 
@@ -239,6 +258,25 @@ NMI_Handler ()
 		  " b		. 		\n"
 		  " pop		{pc}	\n"
 	);
+}
+
+
+extern HCD_HandleTypeDef hhcd_USB_OTG_FS;
+extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
+void OTG_FS_IRQHandler(void)
+{
+  /* USER CODE BEGIN OTG_FS_IRQn 0 */
+  VOSIntEnter();
+
+  if (GetUSBWorkMode()==USB_WORK_AS_DEVICE) {
+	  HAL_PCD_IRQHandler(&hpcd_USB_OTG_FS);
+  }
+  else {
+	  HAL_HCD_IRQHandler(&hhcd_USB_OTG_FS);
+  }
+  /* USER CODE BEGIN OTG_FS_IRQn 1 */
+  VOSIntExit ();
+  /* USER CODE END OTG_FS_IRQn 1 */
 }
 
 

@@ -1,13 +1,16 @@
 /**
   ******************************************************************************
-  * @file    USB_Host/MSC_Standalone/Inc/usbh_conf.h
-  * @author  MCD Application Team
-  * @brief   General low level driver configuration
+  * @file   fatfs.h
+  * @brief  Header for fatfs applications
   ******************************************************************************
-  * @attention
+  * This notice applies to any and all portions of this file
+  * that are not between comment pairs USER CODE BEGIN and
+  * USER CODE END. Other portions of this file, whether 
+  * inserted by the user or by software development tools
+  * are owned by their respective copyright owners.
   *
-  * <h2><center>&copy; Copyright (c) 2017 STMicroelectronics International N.V. 
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2020 STMicroelectronics International N.V. 
+  * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
   * modification, are permitted, provided that the following conditions are met:
@@ -41,70 +44,36 @@
   * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   *
   ******************************************************************************
-  */  
+  */
+
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __USBH_CONF_H
-#define __USBH_CONF_H
-
-/* Includes ------------------------------------------------------------------*/
-#include "stm32f4xx.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-/* Exported types ------------------------------------------------------------*/
-#define USBH_MAX_NUM_ENDPOINTS                2
-#define USBH_MAX_NUM_INTERFACES               2
-#define USBH_MAX_NUM_CONFIGURATION            1
-#define USBH_MAX_NUM_SUPPORTED_CLASS          1
-#define USBH_KEEP_CFG_DESCRIPTOR              0
-#define USBH_MAX_SIZE_CONFIGURATION           0x200
-#define USBH_MAX_DATA_BUFFER                  0x200
-#define USBH_DEBUG_LEVEL                      2
-#define USBH_USE_OS                           0
-
-/* Exported constants --------------------------------------------------------*/
-/* Exported macro ------------------------------------------------------------*/
-/* CMSIS OS macros */   
-#if (USBH_USE_OS == 1)
-  #include "cmsis_os.h"
-  #define   USBH_PROCESS_PRIO    osPriorityNormal
+#ifndef __fatfs_H
+#define __fatfs_H
+#ifdef __cplusplus
+ extern "C" {
 #endif
 
-/* Memory management macros */   
-#define USBH_malloc               malloc
-#define USBH_free                 free
-#define USBH_memset               memset
-#define USBH_memcpy               memcpy
-    
-/* DEBUG macros */   
-#if (USBH_DEBUG_LEVEL > 0)
-#define USBH_UsrLog(...)   printf(__VA_ARGS__);\
-                           printf("\n");
-#else
-#define USBH_UsrLog(...)   
-#endif 
-                            
-                            
-#if (USBH_DEBUG_LEVEL > 1)
+#include "ff.h"
+#include "ff_gen_drv.h"
+#include "usbh_diskio.h" /* defines USBH_Driver as external */
 
-#define USBH_ErrLog(...)   printf("ERROR: ") ;\
-                           printf(__VA_ARGS__);\
-                           printf("\n");
-#else
-#define USBH_ErrLog(...)   
-#endif 
-                                                      
-#if (USBH_DEBUG_LEVEL > 2)                         
-#define  USBH_DbgLog(...)   printf("DEBUG : ") ;\
-                            printf(__VA_ARGS__);\
-                            printf("\n");
-#else
-#define USBH_DbgLog(...)                         
+/* USER CODE BEGIN Includes */
+
+/* USER CODE END Includes */
+
+extern uint8_t retUSBH; /* Return value for USBH */
+extern char USBHPath[4]; /* USBH logical drive path */
+extern FATFS USBHFatFS; /* File system object for USBH logical drive */
+extern FIL USBHFile; /* File object for USBH */
+
+void MX_FATFS_Init(void);
+
+/* USER CODE BEGIN Prototypes */
+
+/* USER CODE END Prototypes */
+#ifdef __cplusplus
+}
 #endif
-
-/* Exported functions ------------------------------------------------------- */
-
-#endif /* __USB_CONF_H */
+#endif /*__fatfs_H */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

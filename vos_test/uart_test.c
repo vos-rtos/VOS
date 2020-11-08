@@ -11,6 +11,10 @@
 #include "vtype.h"
 #include "vos.h"
 
+s32 usbd_uart_app_gets(u8* buf, s32 size);
+int usb_printf(char* format, ...);
+#define vgets usbd_uart_app_gets
+#define kprintf usb_printf
 
 s32 data_check(s8 *buf, s32 len)
 {
@@ -77,7 +81,7 @@ void task_uartin(void *param)
 			if (counts > mark_cnts+5000){
 				mark_cnts = counts;
 				time_spend = (s32)(VOSGetTimeMs()-mark_ms);
-				kprintf("speed[%08dms:%08dB:%05dBps]\r\n", time_spend, counts, (s32)((u32)(counts)*1000/time_spend));
+				kprintf("speed[%08d(ms):%08d(B):%05d(KBps)]\r\n", time_spend, counts, (s32)((u32)(counts)/time_spend));
 			}
 		}
 		VOSTaskDelay(1);

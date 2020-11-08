@@ -1,5 +1,4 @@
 #include "usbd_conf.h"
-#include "usb_device.h"
 #include "usbd_core.h"
 #include "usbd_desc.h"
 #include "usbd_cdc.h"
@@ -7,6 +6,7 @@
 #include "usbd_uart.h"
 
 #include "vringbuf.h"
+
 
 USBD_HandleTypeDef hUsbDeviceFS;
 
@@ -17,7 +17,6 @@ StVOSRingBuf *VOSRingBufBuild(u8 *buf, s32 len);
 typedef struct StUsbdUart {
 	StVOSRingBuf *pRingBuf;
 	u8 buf[sizeof(StVOSRingBuf)+USBD_UART_RECV_MAX];
-	s32 status;
 	s32 init_flag;
 }StUsbdUart;
 
@@ -27,6 +26,8 @@ s32 usbd_uart_init()
 {
 	StUsbdUart *pUsbdUart = &gUsbdUart;
 	if (pUsbdUart->init_flag == 1) return 1;
+
+	SetUSBWorkMode(USB_WORK_AS_DEVICE);
 
 	/* Init Device Library, add supported class and start the library. */
 	USBD_Init(&hUsbDeviceFS, &FS_Desc, DEVICE_FS);
@@ -42,8 +43,6 @@ s32 usbd_uart_init()
 	pUsbdUart->pRingBuf = VOSRingBufBuild(pUsbdUart->buf, sizeof(pUsbdUart->buf));
 
 	pUsbdUart->init_flag = 1;
-
-	pUsbdUart->status = STATUS_USBD_UART_OK;
 
 	/* Return OK */
 	return 0;
@@ -87,21 +86,13 @@ s32 usbd_uart_app_puts(u8* buf, s32 len)
 	return USBD_OK;
 }
 
-s32 usbd_uart_status_get()
+s32 usbd_uart_deinit()
 {
 	StUsbdUart *pUsbdUart = &gUsbdUart;
-	if (pUsbdUart->init_flag == 0) {
-		pUsbdUart->status = STATUS_USBD_UART_ERROR;
+	if (pUsbdUart->init_flag == 1) {
+		USBD_Stop(&hUsbDeviceFS);
+		USBD_DeInit(&hUsbDeviceFS);
 	}
-	return pUsbdUart->status;
+	pUsbdUart->init_flag = 0;
+	return 0;
 }
-
-void usbd_uart_status_set(s32 status)
-{
-	StUsbdUart *pUsbdUart = &gUsbdUart;
-	if (pUsbdUart->init_flag == 0) {
-		pUsbdUart->status = STATUS_USBD_UART_ERROR;
-	}
-	pUsbdUart->status = status;
-}
-

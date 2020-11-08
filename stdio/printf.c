@@ -211,6 +211,21 @@ int c_snprintf(char *buf, size_t buf_size, const char *fmt, ...) {
   return result;
 }
 
+s32 usbd_uart_app_puts(u8* buf, s32 len);
+int usb_printf(char* format, ...)
+{
+	char temp[200];
+	int i=0;
+	va_list lst;
+	va_start (lst, format);
+	i=c_vsnprintf(temp, sizeof(temp), format, lst);
+	if (i > 0) {
+		usbd_uart_app_puts(temp, i);
+	}
+	va_end(lst);
+	return i;
+}
+
 int kprintf(char* format, ...)
 {
 	char temp[200];

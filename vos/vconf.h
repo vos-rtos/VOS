@@ -12,6 +12,10 @@
 #ifndef __VCONF_H__
 #define __VCONF_H__
 
+
+#define USB_WORK_AS_DEVICE 	0
+#define USB_WORK_AS_HOST 	1
+
 #define VOS_LIST_DEBUG 0
 
 #define TASK_LEVEL  0 //0:任务工作在特权级+PSP,1：任务工作在线程级+PSP
