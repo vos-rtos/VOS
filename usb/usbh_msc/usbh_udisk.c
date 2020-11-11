@@ -88,10 +88,16 @@ static void MSC_Application(void)
     }
 }
 
+
+u32 __CUSTOM_DirectWriteAT(u8 *pBuf, u32 dwLen, u32 dwTimeout);
+u32 __CUSTOM_DirectReadAT(u8 *pBuf, u32 dwLen, u32 dwTimeout);
+
+
 void usbh_udisk_test()
 {
+
 	  MX_USB_HOST_Init();
-	  MX_FATFS_Init();
+	  //MX_FATFS_Init();
 	  while (1)
 	  {
 	    /* USER CODE END WHILE */
@@ -101,8 +107,9 @@ void usbh_udisk_test()
 		switch(Appli_state)
 		{
 		case APPLICATION_READY:
-			MSC_Application();
-			Appli_state = APPLICATION_START;
+			//MSC_Application();
+
+			//Appli_state = APPLICATION_START;
 			break;
 
 		case APPLICATION_START:

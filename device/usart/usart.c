@@ -504,6 +504,9 @@ void UART_IDLE_Callback(UART_HandleTypeDef *huart)
 			if (ret != len) {
 				//kprintf("warning: %s->VOSRingBufSet overflow!\r\n", __FUNCTION__);
 			}
+	        if (gArrUart[0].event != 0) {
+	        	VOSEventSet(gArrUart[0].task_id, gArrUart[0].event);
+	        }
 		}
 		RecvIdx = 0;
 		HAL_UART_Receive_DMA(&UartHandle, (uint8_t *)RecvBuff, RECV_BUF_SIZE);

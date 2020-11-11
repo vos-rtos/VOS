@@ -1095,26 +1095,52 @@ static void HCD_RXQLVL_IRQHandler(HCD_HandleTypeDef *hhcd)
   switch (pktsts)
   {
   case GRXSTS_PKTSTS_IN:
-    /* Read the data into the host buffer. */
-    if ((pktcnt > 0U) && (hhcd->hc[channelnum].xfer_buff != (void  *)0))
-    {  
-      
-      USB_ReadPacket(hhcd->Instance, hhcd->hc[channelnum].xfer_buff, pktcnt);
-      
-      /*manage multiple Xfer */
-      hhcd->hc[channelnum].xfer_buff += pktcnt;           
-      hhcd->hc[channelnum].xfer_count  += pktcnt;
-      
-      if((USBx_HC(channelnum)->HCTSIZ & USB_OTG_HCTSIZ_PKTCNT) > 0)
-      {
-        /* re-activate the channel when more packets are expected */
-        tmpreg = USBx_HC(channelnum)->HCCHAR;
-        tmpreg &= ~USB_OTG_HCCHAR_CHDIS;
-        tmpreg |= USB_OTG_HCCHAR_CHENA;
-        USBx_HC(channelnum)->HCCHAR = tmpreg;
-        hhcd->hc[channelnum].toggle_in ^= 1;
-      }
-    }
+	    if(!hhcd->hc[channelnum].async)
+	    {
+			/* Read the data into the host buffer. */
+			if ((pktcnt > 0U) && (hhcd->hc[channelnum].xfer_buff != (void  *)0))
+			{
+
+			  USB_ReadPacket(hhcd->Instance, hhcd->hc[channelnum].xfer_buff, pktcnt);
+
+			  /*manage multiple Xfer */
+			  hhcd->hc[channelnum].xfer_buff += pktcnt;
+			  hhcd->hc[channelnum].xfer_count  += pktcnt;
+
+			  if((USBx_HC(channelnum)->HCTSIZ & USB_OTG_HCTSIZ_PKTCNT) > 0)
+			  {
+				/* re-activate the channel when more packets are expected */
+				tmpreg = USBx_HC(channelnum)->HCCHAR;
+				tmpreg &= ~USB_OTG_HCCHAR_CHDIS;
+				tmpreg |= USB_OTG_HCCHAR_CHENA;
+				USBx_HC(channelnum)->HCCHAR = tmpreg;
+				hhcd->hc[channelnum].toggle_in ^= 1;
+			  }
+			}
+	    }
+	    else {
+	        unsigned char buffer[128];
+	        if(pktcnt > 0)
+	        {
+	            void USBH_Store(unsigned char bPipe, unsigned char *pData, unsigned int dwLen);
+	            USB_ReadPacket(hhcd->Instance, buffer, pktcnt);
+	            USBH_Store(channelnum, buffer, pktcnt);
+	        }
+
+	        /*manage multiple Xfer */
+	        hhcd->hc[channelnum].xfer_buff += pktcnt;
+	        hhcd->hc[channelnum].xfer_count  += pktcnt;
+
+	        if((USBx_HC(channelnum)->HCTSIZ & USB_OTG_HCTSIZ_PKTCNT) > 0)
+	        {
+	            /* re-activate the channel when more packets are expected */
+	            tmpreg = USBx_HC(channelnum)->HCCHAR;
+	            tmpreg &= ~USB_OTG_HCCHAR_CHDIS;
+	            tmpreg |= USB_OTG_HCCHAR_CHENA;
+	            USBx_HC(channelnum)->HCCHAR = tmpreg;
+	            hhcd->hc[channelnum].toggle_in ^= 1;
+	        }
+	    }
     break;
     
   case GRXSTS_PKTSTS_DATA_TOGGLE_ERR:

@@ -637,4 +637,35 @@ void USBH_Delay(uint32_t Delay)
   HAL_Delay(Delay);
 }
 
+/**
+  * @brief
+  * @param
+  * @retval
+  */
+USBH_StatusTypeDef __USBH_LL_EnAsync(USBH_HandleTypeDef *pHost, uint8_t pipe)
+{
+
+    HCD_HandleTypeDef *hhcd = pHost->pData;
+
+    hhcd->hc[pipe].async = 1;
+
+    return (USBH_OK);
+}
+
+
+
+/**
+  * @brief
+  * @param
+  * @retval
+  */
+USBH_StatusTypeDef __USBH_LL_DisAsync(USBH_HandleTypeDef *pHost, uint8_t pipe)
+{
+    HCD_HandleTypeDef *hhcd = pHost->pData;
+
+    hhcd->hc[pipe].async = 0;
+
+    return (USBH_OK);
+}
+
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

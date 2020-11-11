@@ -162,12 +162,14 @@
 #define USBH_memcpy         memcpy
 
 /* DEBUG macros */
+#define printf kprintf
 
 #if (USBH_DEBUG_LEVEL > 0)
 #define USBH_UsrLog(...)    printf(__VA_ARGS__);\
                             printf("\n");
 #else
-#define USBH_UsrLog(...)
+#define USBH_UsrLog(...) 	printf(__VA_ARGS__);\
+        					printf("\r\n");
 #endif
 
 #if (USBH_DEBUG_LEVEL > 1)
@@ -176,7 +178,8 @@
                             printf(__VA_ARGS__);\
                             printf("\n");
 #else
-#define USBH_ErrLog(...)
+#define USBH_ErrLog(...)    printf(__VA_ARGS__);\
+         					printf("\r\n");
 #endif
 
 #if (USBH_DEBUG_LEVEL > 2)
@@ -184,7 +187,8 @@
                             printf(__VA_ARGS__);\
                             printf("\n");
 #else
-#define USBH_DbgLog(...)
+#define USBH_DbgLog(...)	printf(__VA_ARGS__);\
+          					printf("\r\n");
 #endif
 
 /**

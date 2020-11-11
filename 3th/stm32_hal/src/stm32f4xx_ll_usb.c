@@ -861,6 +861,15 @@ HAL_StatusTypeDef USB_EP0StartXfer(USB_OTG_GlobalTypeDef *USBx , USB_OTG_EPTypeD
   return HAL_OK;
 }
 
+//static int dumphex(const unsigned char *buf, int size)
+//{
+//	int i;
+//	for(i=0; i<size; i++)
+//		kprintf("%02x,%s", buf[i], (i+1)%16?"":"\r\n");
+//	if (i%16) kprintf("\r\n");
+//	return 0;
+//}
+
 /**
   * @brief  USB_WritePacket : Writes a packet into the Tx FIFO associated 
   *         with the EP/channel
@@ -878,6 +887,9 @@ HAL_StatusTypeDef USB_WritePacket(USB_OTG_GlobalTypeDef *USBx, uint8_t *src, uin
 {
   uint32_t count32b = 0U , i = 0U;
   
+//  kprintf("write(%d):\r\n", ch_ep_num);
+//  dumphex(src, len);
+
   if (dma == 0U)
   {
     count32b =  (len + 3U) / 4U;
@@ -912,6 +924,8 @@ void *USB_ReadPacket(USB_OTG_GlobalTypeDef *USBx, uint8_t *dest, uint16_t len)
     *(__packed uint32_t *)dest = USBx_DFIFO(0U);
     
   }
+//  kprintf("read:\r\n");
+//  dumphex(dest, len);
   return ((void *)dest);
 }
 

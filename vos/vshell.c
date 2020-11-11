@@ -513,3 +513,16 @@ void VSHELL_FUN(help)(s8 **parr, s32 cnts)
 	}
 }
 
+void VSHELL_FUN_NOTE(modem, "4G modem: AT command")(s8 **parr, s32 cnts)
+{
+	u32 event = 0;
+	s32 task_id = GetTaskIdByName("vshell");
+	if (task_id != -1) {
+		event = VOSEventGet(task_id);
+		VOSEventDisable(task_id, event);//屏蔽接收某些位事件
+	}
+	TestExitFlagSet(0);
+	at_test();
+	VOSEventEnable(task_id, event);//恢复接收某些位事件
+}
+

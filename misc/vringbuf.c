@@ -179,3 +179,10 @@ s32 VOSRingBufPeekGet(StVOSRingBuf *ring, u8 *buf, s32 len)
 	}
 	return copy_len;
 }
+
+
+s32 VOSRingBufIsEmpty(StVOSRingBuf *ring)
+{
+	return ring->cnts==0;
+}
+

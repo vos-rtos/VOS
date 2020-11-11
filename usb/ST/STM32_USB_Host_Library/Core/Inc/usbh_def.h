@@ -306,6 +306,7 @@ typedef enum
   USBH_FAIL,
   USBH_NOT_SUPPORTED,
   USBH_UNRECOVERED_ERROR,
+  USBH_TIMEOUT,
   USBH_ERROR_SPEED_UNKNOWN,
 }USBH_StatusTypeDef;
 
@@ -444,6 +445,7 @@ typedef struct
   USBH_StatusTypeDef  (*BgndProcess) (struct _USBH_HandleTypeDef *phost);
   USBH_StatusTypeDef  (*SOFProcess) (struct _USBH_HandleTypeDef *phost);  
   void*                pData;
+  uint32_t			   ClassState;
 } USBH_ClassTypeDef;
 
 /* USB Host handle structure */
@@ -462,12 +464,12 @@ typedef struct _USBH_HandleTypeDef
   uint8_t               id;  
   void*                 pData;                  
   void                 (* pUser )(struct _USBH_HandleTypeDef *pHandle, uint8_t id);
-  
+  uint32_t dwTimeout;
 #if (USBH_USE_OS == 1)
   osMessageQId          os_event;   
   osThreadId            thread; 
 #endif  
-  
+
 } USBH_HandleTypeDef;
 
 

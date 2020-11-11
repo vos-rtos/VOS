@@ -56,6 +56,7 @@
 #include "usbh_msc.h"
 #include "usbh_hid.h"
 #include "usbh_mtp.h"
+#include "usbh_custom.h"
 
 
 /* USER CODE BEGIN Includes */
@@ -111,6 +112,7 @@ void MX_USB_HOST_Init(void)
   USBH_Init(&hUsbHostFS, USBH_UserProcess, HOST_FS);
 
 
+  USBH_RegisterClass(&hUsbHostFS, USBH_CUSTOM_CLASS);
   USBH_RegisterClass(&hUsbHostFS, USBH_HID_CLASS);
 
   USBH_RegisterClass(&hUsbHostFS, USBH_MSC_CLASS);
@@ -147,22 +149,33 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
   switch(id)
   {
   case HOST_USER_SELECT_CONFIGURATION:
-  break;
+	  kprintf("USBH_UserProcess->HOST_USER_SELECT_CONFIGURATION!\r\n");
+	  Appli_state = APPLICATION_START;
+	  break;
+
+  case HOST_USER_CLASS_SELECTED:
+	  kprintf("USBH_UserProcess->HOST_USER_CLASS_SELECTED!\r\n");
+	  Appli_state = APPLICATION_READY;
+	  break;
 
   case HOST_USER_DISCONNECTION:
-  Appli_state = APPLICATION_DISCONNECT;
-  break;
+	  kprintf("USBH_UserProcess->HOST_USER_DISCONNECTION!\r\n");
+	  Appli_state = APPLICATION_DISCONNECT;
+	  break;
 
   case HOST_USER_CLASS_ACTIVE:
-  Appli_state = APPLICATION_READY;
-  break;
+	  kprintf("USBH_UserProcess->HOST_USER_CLASS_ACTIVE!\r\n");
+	  Appli_state = APPLICATION_READY;
+	  break;
 
   case HOST_USER_CONNECTION:
-  Appli_state = APPLICATION_START;
-  break;
+	  kprintf("USBH_UserProcess->HOST_USER_CONNECTION!\r\n");
+	  Appli_state = APPLICATION_START;
+	  break;
 
   default:
-  break;
+	  kprintf("USBH_UserProcess->unkonwn!\r\n");
+	  break;
   }
   /* USER CODE END CALL_BACK_1 */
 }

@@ -518,6 +518,8 @@ USBH_StatusTypeDef  USBH_Process(USBH_HandleTypeDef *phost)
       {
         if(phost->pClass[idx]->ClassCode == phost->device.CfgDesc.Itf_Desc[0].bInterfaceClass)
         {
+        	kprintf("phost->pClass[idx]->ClassCode: 0x%x, phost->device.CfgDesc.Itf_Desc[0].bInterfaceClass: 0x%x!\r\n",
+        			phost->pClass[idx]->ClassCode, phost->device.CfgDesc.Itf_Desc[0].bInterfaceClass);
           phost->pActiveClass = phost->pClass[idx];
         }
       }

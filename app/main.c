@@ -16,10 +16,17 @@ int usb2uart_test();
 
 void usbh_udisk_test();
 
+u64 xx_stack[1024];
+
+void task_usbh_test(void *p)
+{
+	usbh_udisk_test();
+}
+
 void main(void *param)
 {
 	s32 res;
-
+	s8 buf[100];
 	void uart_init(u32 bound);
 	uart_init(115200);
 	kprintf("hello world!\r\n");
@@ -30,7 +37,10 @@ void main(void *param)
 
 	kprintf("hello!\r\n");
 
-	usbh_udisk_test();
+
+	s32 task_id;
+	task_id = VOSTaskCreate(task_usbh_test, 0, xx_stack, sizeof(xx_stack), TASK_PRIO_NORMAL, "task_usbh_test");
+	VOSTaskDelay(5000);
 
 
 	//udisk_test();
