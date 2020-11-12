@@ -80,3 +80,85 @@ u32 __CUSTOM_DirectReadAT(u8 *pBuf, u32 dwLen, u32 dwTimeout)
 
     return (dwLen - len);
 }
+
+s32 CUSTOM_WriteMODEM(u8 *pBuf, u32 dwLen, u32 dwTimeout)
+{
+    USBH_HandleTypeDef *host = gUsbModem.pHandle;
+    u8 *buf = pBuf;
+    u32 len = dwLen;
+    u32 timeout = dwTimeout;
+
+    if(!host)
+    {
+        printf("\r\n: warn : usb    : modem device(channel) is not register.");
+        return (0);
+    }
+
+
+    USBH_CUSTOM_MODEM_Transmit(host, buf, &len, timeout);
+
+    return (dwLen - len);
+}
+
+s32 CUSTOM_ReadMODEM(u8 *pBuf, u32 dwLen, u32 dwTimeout)
+{
+    USBH_HandleTypeDef *host = gUsbModem.pHandle;
+    u32 len = dwLen;
+
+    if(!host){
+        return (0);
+    }
+
+	USBH_CUSTOM_MODEM_Receive(host, pBuf, &len, dwTimeout);
+	return dwLen - len;
+}
+
+
+// ============================================================================
+// 功能：通过DEBUG接口发送数据
+// 参数：pBuf -- 命令；dwLen -- 命令字节长；dwOffset（未用）；dwTimeout -- 等待完成时间。
+// 返回：实际发送字节数；
+// 备注：dwTimeout为零，则采用默认的等待时间。
+// ============================================================================
+s32 CUSTOM_WriteDEBUG(u8 *pBuf, u32 dwLen, u32 dwTimeout)
+{
+    USBH_HandleTypeDef *host = gUsbModem.pHandle;
+    u8 *command = pBuf;
+    u32 len = dwLen;
+    u32 timeout = dwTimeout;
+
+    if(!host)
+    {
+        printf("\r\n: warn : usb: custom debug device(channel) is not register.\r\n");
+        return (0);
+    }
+    USBH_CUSTOM_DEBUG_Transmit(host, command, &len, timeout);
+
+    return (dwLen - len);
+}
+
+// ============================================================================
+// 功能：通过DEBUG接口接收数据
+// 参数：pBuf -- 数据缓冲；dwLen -- 数据字节长；dwOffset（未用）；dwTimeout -- 等待完成时间。
+// 返回：实际接收字节数；
+// 备注：dwTimeout为零，则采用默认的等待时间。
+// ============================================================================
+s32 CUSTOM_ReadDEBUG(u8 *pBuf, u32 dwLen, u32 dwTimeout)
+{
+    USBH_HandleTypeDef *host = gUsbModem.pHandle;
+    u8 *command = pBuf;
+    u32 len = dwLen;
+    u32 timeout = dwTimeout;
+
+    if(!host)
+    {
+        printf("\r\n: warn : usb    : \"modem\" device channel is not register.");
+        return (0);
+    }
+
+    USBH_CUSTOM_DEBUG_Receive(host, command, &len, timeout);
+
+    return (dwLen - len);
+}
+
+

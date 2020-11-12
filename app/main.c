@@ -23,6 +23,16 @@ void task_usbh_test(void *p)
 	usbh_udisk_test();
 }
 
+int dumphex(const unsigned char *buf, int size)
+{
+	int i;
+	for(i=0; i<size; i++)
+		printf("%02x,%s", buf[i], (i+1)%16?"":"\r\n");
+	return 0;
+}
+
+
+s32 CUSTOM_ReadMODEM(u8 *pBuf, u32 dwLen, u32 dwTimeout);
 void main(void *param)
 {
 	s32 res;
@@ -41,7 +51,6 @@ void main(void *param)
 	s32 task_id;
 	task_id = VOSTaskCreate(task_usbh_test, 0, xx_stack, sizeof(xx_stack), TASK_PRIO_NORMAL, "task_usbh_test");
 	VOSTaskDelay(5000);
-
 
 	//udisk_test();
 #if 0

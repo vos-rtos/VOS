@@ -33,14 +33,32 @@ static s32 is_quit(u8 ch)
 	return ret;
 }
 
+static int dumphex(const unsigned char *buf, int size)
+{
+	int i;
+	for(i=0; i<size; i++)
+		kprintf("%02x,%s", buf[i], (i+1)%16?"":"\r\n");
+	if (i%16) kprintf("\r\n");
+	return 0;
+}
+
+
+
+s32 CUSTOM_ReadMODEM(u8 *pBuf, u32 dwLen, u32 dwTimeout);
+s32 CUSTOM_WriteMODEM(u8 *pBuf, u32 dwLen, u32 dwTimeout);
+
+#define MODEM_WRITE CUSTOM_WriteMODEM//__CUSTOM_DirectWriteAT
+#define MODEM_READ CUSTOM_ReadMODEM//__CUSTOM_DirectReadAT
 void task_modem(void *param)
 {
+	s32 at_done = 0;
 	s32 ret = 0;
 	u8 echo[100];
-	u8 cmd[100];
+	u8 cmd[16*100];
 	s32 mark = 0;
 	int i = 0;
-
+	s32 writed = 0;
+	s32 readed = 0;
 	while(1) {
 		ret = peek_vgets(echo, sizeof(echo)-1);
 		if (ret > 0) { //echo
@@ -58,7 +76,7 @@ void task_modem(void *param)
 					cmd[i++] = '\r';
 					cmd[i++] = '\n';
 					cmd[i] = 0;
-					__CUSTOM_DirectWriteAT(cmd, strlen(cmd), 2000);
+					writed = MODEM_WRITE(cmd, strlen(cmd), 2000);
 					break;
 				}
 			}
@@ -67,9 +85,16 @@ void task_modem(void *param)
 		}
 		//这里有modem的通知信息，也能正常打印出来。
 		memset(cmd, 0, sizeof(cmd));
-		__CUSTOM_DirectReadAT(cmd, sizeof(cmd)-1, 10);
-		if (cmd[0]) {
+		readed = MODEM_READ(cmd, sizeof(cmd)-1, 10);
+		if (at_done == 0 && cmd[0]) {
 			kprintf("%s", cmd);
+			if (strstr(cmd, "CONNECT") || strstr(cmd, "connnect")) {
+				at_done = 1;
+			}
+		}
+		if (at_done && readed > 0) {
+			kprintf("modem recv:\r\n");
+			dumphex(cmd, readed);
 		}
 		VOSTaskDelay(1);
 	}
