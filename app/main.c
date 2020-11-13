@@ -31,7 +31,7 @@ int dumphex(const unsigned char *buf, int size)
 	return 0;
 }
 
-
+s32 PppCheck();
 s32 CUSTOM_ReadMODEM(u8 *pBuf, u32 dwLen, u32 dwTimeout);
 void main(void *param)
 {
@@ -44,7 +44,7 @@ void main(void *param)
 	//TIM3_Init(5000,9000);
 //	usbd_uart_init();
 //	uart_test();
-
+    //lwip_comm_init();
 	kprintf("hello!\r\n");
 
 
@@ -69,6 +69,12 @@ void main(void *param)
 #endif
 	while (1) {
 		VOSTaskDelay(1*1000);
+//		if (PppCheck()){
+//			kprintf("PppCheck OK!\r\n");
+//		}
+//		else {
+//			kprintf("PppCheck running!\r\n");
+//		}
 	}
 
 }

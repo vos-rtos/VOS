@@ -1,3 +1,4 @@
+#if 0
 #include "vos.h"
 #include "lwip/ip_addr.h"
 #include "lwip/netif.h"
@@ -44,7 +45,7 @@ s32 net_init()
   	gw.addr 		= 0;
 
   	irq_save = __vos_irq_save();
-  	new_netif = netif_add(&gVosNetIf, &ipaddr, &netmask, &gw, NULL, &ethernetif_init, &tcpip_input);
+  	//new_netif = netif_add(&gVosNetIf, &ipaddr, &netmask, &gw, NULL, &ethernetif_init, &tcpip_input);
   	__vos_irq_restore(irq_save);
   	if(new_netif) {
   		netif_set_default(&gVosNetIf);
@@ -82,3 +83,4 @@ void NetAddrInfoPrt(struct netif *pNetIf)
 	}
 }
 
+#endif

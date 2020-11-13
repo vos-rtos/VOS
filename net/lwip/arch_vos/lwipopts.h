@@ -106,6 +106,11 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
 
 #define MAX_QUEUE_ENTRIES 50
 
+#define PPP_SUPPORT				1
+#define PAP_SUPPORT				1
+#define CHAP_SUPPORT			1
+#define PPP_IPV4_SUPPORT		1
+
 /**
  * TCPIP_MBOX_SIZE: The mailbox size for the tcpip thread messages
  * The queue size value itself is platform-dependent, but is passed to

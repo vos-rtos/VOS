@@ -1,3 +1,4 @@
+#if 0
 #include "ethernetif.h"
 #include "lan8720.h"  
 #include "netif/etharp.h"  
@@ -138,17 +139,4 @@ err_t ethernetif_init(struct netif *netif)
 	low_level_init(netif);
 	return ERR_OK;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#endif

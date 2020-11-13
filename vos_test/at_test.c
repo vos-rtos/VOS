@@ -47,8 +47,8 @@ static int dumphex(const unsigned char *buf, int size)
 s32 CUSTOM_ReadMODEM(u8 *pBuf, u32 dwLen, u32 dwTimeout);
 s32 CUSTOM_WriteMODEM(u8 *pBuf, u32 dwLen, u32 dwTimeout);
 
-#define MODEM_WRITE CUSTOM_WriteMODEM//__CUSTOM_DirectWriteAT
-#define MODEM_READ CUSTOM_ReadMODEM//__CUSTOM_DirectReadAT
+#define MODEM_WRITE CUSTOM_WriteMODEM //__CUSTOM_DirectWriteAT
+#define MODEM_READ CUSTOM_ReadMODEM //__CUSTOM_DirectReadAT
 void task_modem(void *param)
 {
 	s32 at_done = 0;
@@ -61,12 +61,13 @@ void task_modem(void *param)
 	s32 readed = 0;
 	while(1) {
 		ret = peek_vgets(echo, sizeof(echo)-1);
-		if (ret > 0) { //echo
+
+		if (ret > 0 && at_done==0) { //echo
 			echo[ret] = 0;
 			kprintf("%s", &echo[mark]);
 			mark = ret;
 		}
-		if (ret > 0 && (echo[ret-1]=='\r'||echo[ret-1]=='\n')) {
+		if (at_done==0 && ret > 0 && (echo[ret-1]=='\r'||echo[ret-1]=='\n')) {
 			ret = vgets(cmd, sizeof(cmd)-1);
 			if (strlen(cmd)) kprintf("\r\n");
 			if (strncmp("quit", cmd, 4) == 0) goto END_UARTIN;
@@ -82,6 +83,12 @@ void task_modem(void *param)
 			}
 			mark = 0;
 			ret = 0;
+		}
+		else {//透穿二进制数据
+			ret = vgets(cmd, sizeof(cmd)-1);
+			if (ret > 0) {
+				writed = MODEM_WRITE(cmd, ret, 2000);
+			}
 		}
 		//这里有modem的通知信息，也能正常打印出来。
 		memset(cmd, 0, sizeof(cmd));
@@ -103,7 +110,6 @@ END_UARTIN:
 	TestExitFlagSet(1);
 	return;
 }
-
 
 
 
