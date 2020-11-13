@@ -14,6 +14,10 @@ extern void vfree(void *ptr);
 extern void *vrealloc(void *ptr, unsigned int size);
 extern void *vcalloc(unsigned int nitems, unsigned int size);
 
+#define LWIP_RAW 1
+
+#define PING_USE_SOCKETS 0
+
 #define LWIP_RAND() rand()
 
 #define LWIP_TIMEVAL_PRIVATE	0

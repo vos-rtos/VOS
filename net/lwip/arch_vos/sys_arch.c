@@ -306,6 +306,11 @@ u32_t sys_now()
 	return VOSGetTimeMs();
 }
 
+u32 VOSGetTicks();
+u32_t sys_jiffies()
+{
+	return VOSGetTicks();
+}
 
 #if LWIP_NETCONN_SEM_PER_THREAD
 #error LWIP_NETCONN_SEM_PER_THREAD==1 not supported

@@ -32,6 +32,7 @@ int dumphex(const unsigned char *buf, int size)
 }
 
 s32 PppCheck();
+s32 PppModemInit();
 s32 CUSTOM_ReadMODEM(u8 *pBuf, u32 dwLen, u32 dwTimeout);
 void main(void *param)
 {
@@ -44,16 +45,19 @@ void main(void *param)
 	//TIM3_Init(5000,9000);
 //	usbd_uart_init();
 //	uart_test();
-    //lwip_comm_init();
-	kprintf("hello!\r\n");
 
+	kprintf("hello!\r\n");
 
 	s32 task_id;
 	task_id = VOSTaskCreate(task_usbh_test, 0, xx_stack, sizeof(xx_stack), TASK_PRIO_NORMAL, "task_usbh_test");
 	VOSTaskDelay(5000);
 
-	//udisk_test();
+	PppModemInit();
+
+
 #if 0
+	//udisk_test();
+
 	usb2uart_test();
 
 	emWinTest();
@@ -68,13 +72,13 @@ void main(void *param)
 	kprintf("main function!\r\n");
 #endif
 	while (1) {
-		VOSTaskDelay(1*1000);
-//		if (PppCheck()){
-//			kprintf("PppCheck OK!\r\n");
-//		}
-//		else {
-//			kprintf("PppCheck running!\r\n");
-//		}
+		VOSTaskDelay(5*1000);
+		if (PppCheck()){
+			kprintf("PppCheck OK!\r\n");
+		}
+		else {
+			kprintf("PppCheck running!\r\n");
+		}
 	}
 
 }

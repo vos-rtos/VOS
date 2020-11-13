@@ -1,3 +1,4 @@
+#if 0
 /**
  * makefsdata: Converts a directory structure for use with the lwIP httpd.
  *
@@ -1249,3 +1250,4 @@ int s_put_ascii(char *buf, const char *ascii_string, int len, int *i)
   }
   return len;
 }
+#endif

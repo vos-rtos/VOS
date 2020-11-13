@@ -772,7 +772,7 @@ quad_t strtoq(const char *nptr, char **endptr, int base)
         *endptr = (char *)(any ? s - 1 : nptr);
     return (acc);
 }
-
+#if 0
 unsigned long long strtoull(const char *str, char **endptr, int base)
 {
     const char *s;
@@ -840,7 +840,7 @@ unsigned long long strtoull(const char *str, char **endptr, int base)
         *endptr = (char *) (any ? s - 1 : str);
     return (acc);
 }
-
+#endif
 unsigned long long strtouq(const char *nptr, char **endptr, int base)
 {
     return strtoull(nptr, endptr, base);
