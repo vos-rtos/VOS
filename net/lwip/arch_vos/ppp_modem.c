@@ -21,7 +21,7 @@ err_t ppposnetif_init(struct netif* netif);
 err_t tcp_Client_connected(void* arg, struct tcp_pcb* pcb, err_t err);
 
 void hex_str_dump (const char *desc, const void *addr, const int len);
-
+#define hex_str_dump
 ppp_pcb*     ppp = NULL;
 struct netif ppp_netif;
 
@@ -305,41 +305,42 @@ void status_cb(ppp_pcb* pcb, int err_code, void* ctx)
 
 
 #define printf kprintf
-void hex_str_dump (const char *desc, const void *addr, const int len)
-{
-    int i;
-    unsigned char buff[17];
-    unsigned char *pc = (unsigned char*)addr;
-    // Output description if given.
-    if (desc != NULL)
-        printf ("%s:\r\n", desc);
-    // Process every byte in the data.
-    for (i = 0; i < len; i++) {
-        // Multiple of 16 means new line (with line offset).
-        if ((i % 16) == 0) {
-            // Just don't print ASCII for the zeroth line.
-            if (i != 0)
-                printf ("  %s\r\n", buff);
-            // Output the offset.
-            printf ("  %04x ", i);
-        }
-        // Now the hex code for the specific character.
-        printf (" %02x", pc[i]);
-        // And store a printable ASCII character for later.
-        if ((pc[i] < 0x20) || (pc[i] > 0x7e))
-            buff[i % 16] = '.';
-        else
-            buff[i % 16] = pc[i];
-        buff[(i % 16) + 1] = '\0';
-    }
-    // Pad out last line if not exactly 16 characters.
-    while ((i % 16) != 0) {
-        printf ("   ");
-        i++;
-    }
-    // And print the final ASCII bit.
-    printf ("  %s\r\n", buff);
-}
+#define hex_str_dump
+//void hex_str_dump (const char *desc, const void *addr, const int len)
+//{
+//    int i;
+//    unsigned char buff[17];
+//    unsigned char *pc = (unsigned char*)addr;
+//    // Output description if given.
+//    if (desc != NULL)
+//        printf ("%s:\r\n", desc);
+//    // Process every byte in the data.
+//    for (i = 0; i < len; i++) {
+//        // Multiple of 16 means new line (with line offset).
+//        if ((i % 16) == 0) {
+//            // Just don't print ASCII for the zeroth line.
+//            if (i != 0)
+//                printf ("  %s\r\n", buff);
+//            // Output the offset.
+//            printf ("  %04x ", i);
+//        }
+//        // Now the hex code for the specific character.
+//        printf (" %02x", pc[i]);
+//        // And store a printable ASCII character for later.
+//        if ((pc[i] < 0x20) || (pc[i] > 0x7e))
+//            buff[i % 16] = '.';
+//        else
+//            buff[i % 16] = pc[i];
+//        buff[(i % 16) + 1] = '\0';
+//    }
+//    // Pad out last line if not exactly 16 characters.
+//    while ((i % 16) != 0) {
+//        printf ("   ");
+//        i++;
+//    }
+//    // And print the final ASCII bit.
+//    printf ("  %s\r\n", buff);
+//}
 
 void TaskPppInput(void *param)
 {
@@ -348,31 +349,27 @@ void TaskPppInput(void *param)
 	s32 readed = 0;
 	struct StPppNetDev *pPppNetDev = &gPppNetDev;
 
-    for (;;)
-    {
-        if (1)
-        {
-        	readed = MODEM_READ(buf, sizeof(buf), 10);
-        	if (readed > 0) {
-				//irq_save = __local_irq_save();
-				if (pPppNetDev->status == STATUS_PPP_DATA_MODE) {
-					hex_str_dump ("MODEM RECV: ", buf, readed);
+    while (1) {
+		readed = MODEM_READ(buf, sizeof(buf), 10);
+		if (readed > 0) {
+			if (pPppNetDev->status == STATUS_PPP_DATA_MODE) {
+				hex_str_dump ("MODEM RECV: ", buf, readed);
+				if (ppp) {
 					pppos_input_tcpip(ppp, buf, readed);  // 0x7e
-				}else {
-					//__local_irq_restore(irq_save);
-					if (pPppNetDev->pRecvRing) {
-						if (readed != VOSRingBufSet(pPppNetDev->pRecvRing, buf, readed)) {
-							kprintf("warnning: PPP recv ring buf overflow!\r\n");
-						}
+				}
+			}else {
+				if (pPppNetDev->pRecvRing) {
+					if (readed != VOSRingBufSet(pPppNetDev->pRecvRing, buf, readed)) {
+						kprintf("warnning: PPP recv ring buf overflow!\r\n");
 					}
 				}
-        	}
-        }
-		VOSTaskDelay(10);
+			}
+		}
+		else {
+			VOSTaskDelay(10);
+		}
     }
 }
-
-
 
 static long long ppp_input_stack[1024];
 
@@ -408,11 +405,12 @@ uint8_t lwip_comm_init(void)
     ppp_set_default(ppp);
 
     ping_init();
-	void lwip_ping(char *ip_str);
-	while (1) {
-	lwip_ping("221.122.82.30");
-	VOSTaskDelay(2000);
-	}
+    dns_init();
+//	void lwip_ping(char *ip_str);
+//	while (1) {
+//	lwip_ping("221.122.82.30");
+//	VOSTaskDelay(2000);
+//	}
     return ctx;
 }
 

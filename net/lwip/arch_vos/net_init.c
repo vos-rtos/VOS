@@ -1,4 +1,4 @@
-#if 0
+#if 1
 #include "vos.h"
 #include "lwip/ip_addr.h"
 #include "lwip/netif.h"
@@ -37,7 +37,7 @@ s32 net_init()
   	if (LAN8720_Init())	return -2;
 
   	//lan8720Regs();
-
+#if 1
   	tcpip_init(NULL, NULL);
 
   	ipaddr.addr 	= 0;
@@ -45,13 +45,14 @@ s32 net_init()
   	gw.addr 		= 0;
 
   	irq_save = __vos_irq_save();
-  	//new_netif = netif_add(&gVosNetIf, &ipaddr, &netmask, &gw, NULL, &ethernetif_init, &tcpip_input);
+  	new_netif = netif_add(&gVosNetIf, &ipaddr, &netmask, &gw, NULL, &ethernetif_init, &tcpip_input);
   	__vos_irq_restore(irq_save);
   	if(new_netif) {
   		netif_set_default(&gVosNetIf);
   		netif_set_up(&gVosNetIf);
   	}
   	init_flag = 1;
+#endif
   	return 0;
 }
 

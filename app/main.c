@@ -22,15 +22,15 @@ void task_usbh_test(void *p)
 {
 	usbh_udisk_test();
 }
-
-int dumphex(const unsigned char *buf, int size)
-{
-	int i;
-	for(i=0; i<size; i++)
-		printf("%02x,%s", buf[i], (i+1)%16?"":"\r\n");
-	return 0;
-}
-
+int dumphex(const unsigned char *buf, int size);
+//int dumphex(const unsigned char *buf, int size)
+//{
+//	int i;
+//	for(i=0; i<size; i++)
+//		printf("%02x,%s", buf[i], (i+1)%16?"":"\r\n");
+//	return 0;
+//}
+s32 net_init();
 s32 PppCheck();
 s32 PppModemInit();
 s32 CUSTOM_ReadMODEM(u8 *pBuf, u32 dwLen, u32 dwTimeout);
@@ -47,13 +47,13 @@ void main(void *param)
 //	uart_test();
 
 	kprintf("hello!\r\n");
-
+#if 0
 	s32 task_id;
 	task_id = VOSTaskCreate(task_usbh_test, 0, xx_stack, sizeof(xx_stack), TASK_PRIO_NORMAL, "task_usbh_test");
 	VOSTaskDelay(5000);
 
 	PppModemInit();
-
+#endif
 
 #if 0
 	//udisk_test();
@@ -71,10 +71,16 @@ void main(void *param)
 	dma_printf("hello world!\r\n");
 	kprintf("main function!\r\n");
 #endif
+	if (0 == NetDhcpClient(30*1000)) {
+		sock_tcp_test();
+	}
+
 	while (1) {
 		VOSTaskDelay(5*1000);
 		if (PppCheck()){
 			kprintf("PppCheck OK!\r\n");
+			void  sock_tcp_test();
+			sock_tcp_test();
 		}
 		else {
 			kprintf("PppCheck running!\r\n");

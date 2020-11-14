@@ -16,6 +16,8 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
 
 #define LWIP_RAW 1
 
+#define LWIP_DNS 1
+
 #define PING_USE_SOCKETS 0
 
 #define LWIP_RAND() rand()
@@ -87,7 +89,7 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
 #define MEMP_NUM_TCP_SEG        15
 
 //MEMP_NUM_SYS_TIMEOUT:能够同时激活的timeout个数
-#define MEMP_NUM_SYS_TIMEOUT    8
+#define MEMP_NUM_SYS_TIMEOUT    9
 
 
 /* ---------- Pbuf选项---------- */

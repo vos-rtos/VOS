@@ -22,4 +22,6 @@
 int Gb2312ToUtf8(char *s, int slen, char *d, int dlen, int *needsize);
 s8 *GB2312_TO_UTF8_LOCAL(s8 *gb2312);
 
+int dumphex(const unsigned char *buf, int size);
+
 #endif

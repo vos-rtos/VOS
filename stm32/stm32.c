@@ -97,12 +97,18 @@ void VOSSysTickSet()
 
 void HAL_Delay(uint32_t Delay)
 {
-#if 0
+#if 1
 	VOSTaskDelay(Delay);
 #else
 	VOSDelayUs(Delay*1000);
 #endif
 }
+
+uint32_t HAL_GetTick(void)
+{
+	return VOSGetTicks();
+}
+
 
 
 void __attribute__ ((section(".after_vectors")))

@@ -18,3 +18,13 @@ s8 *GB2312_TO_UTF8_LOCAL(s8 *gb2312)
 	}
 	return OutPtr;
 }
+
+int dumphex(const unsigned char *buf, int size)
+{
+	int i;
+	for(i=0; i<size; i++)
+		kprintf("%02x,%s", buf[i], (i+1)%16?"":"\r\n");
+	if (i%16) kprintf("\r\n");
+	return 0;
+}
+

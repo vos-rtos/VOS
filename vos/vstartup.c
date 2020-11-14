@@ -29,7 +29,7 @@ extern unsigned int _Heap_ccmram_Limit;
 
 extern void misc_init ();
 extern void main(void *param);
-long long main_stack[1024*4];
+long long main_stack[1024];
 
 /********************************************************************************************************
 * º¯Êý£ºvoid init_data_and_bss();

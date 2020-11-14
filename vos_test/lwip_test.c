@@ -67,17 +67,20 @@ void  sock_tcp_test()
     }
     memset(&servaddr, 0, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
-    servaddr.sin_port = htons(5555);
-    if( inet_aton("192.168.2.100", &servaddr.sin_addr) <= 0){
+    servaddr.sin_port = htons(55750);
+    //if( inet_aton("103.46.128.49", &servaddr.sin_addr) <= 0){
+    if( inet_aton("192.168.2.101", &servaddr.sin_addr) <= 0){
     	kprintf("ERROR!\r\n");
     }
     if( connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0){
     	kprintf("ERROR!\r\n");
     }
     kprintf("send msg to server: \n");
+    s8 send_buf[] = "hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!";
+    //s8 send_buf[] = "hello world!";
     while(1)
     {
-		if( send(sockfd, "hello world!", strlen("hello world!"), 0) < 0)
+		if( send(sockfd, send_buf, strlen(send_buf), 0) < 0)
 		{
 			kprintf("ERROR!\r\n");
 			//break;

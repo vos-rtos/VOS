@@ -22,9 +22,9 @@
 
 #define VOS_SHELL_TEST 0 //是否打开测试命令
 
-#define MAX_VOS_SEMAPHONRE_NUM  10
-#define MAX_VOS_MUTEX_NUM   10
-#define MAX_VOS_MSG_QUE_NUM   10
+#define MAX_VOS_SEMAPHONRE_NUM  50
+#define MAX_VOS_MUTEX_NUM   50
+#define MAX_VOS_MSG_QUE_NUM   50
 
 //#define MAX_VOS_TASK_PRIO	255U // 0-255优先级，0最高，255最低
 #define MAX_VOS_TASK_PRIO_NUM	256U // 0-255优先级，共266个， 0最高，255最低
