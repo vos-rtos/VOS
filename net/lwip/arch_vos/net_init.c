@@ -1,4 +1,3 @@
-#if 1
 #include "vos.h"
 #include "lwip/ip_addr.h"
 #include "lwip/netif.h"
@@ -83,5 +82,3 @@ void NetAddrInfoPrt(struct netif *pNetIf)
 				gateway[0], gateway[1], gateway[2], gateway[3]);
 	}
 }
-
-#endif
