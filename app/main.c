@@ -23,17 +23,13 @@ void task_usbh_test(void *p)
 	usbh_udisk_test();
 }
 int dumphex(const unsigned char *buf, int size);
-//int dumphex(const unsigned char *buf, int size)
-//{
-//	int i;
-//	for(i=0; i<size; i++)
-//		printf("%02x,%s", buf[i], (i+1)%16?"":"\r\n");
-//	return 0;
-//}
+
 s32 net_init();
 s32 PppCheck();
 s32 PppModemInit();
 s32 CUSTOM_ReadMODEM(u8 *pBuf, u32 dwLen, u32 dwTimeout);
+void LCD_Init();
+#include "lcd_dev/lcd.h"
 void main(void *param)
 {
 	s32 res;
@@ -45,6 +41,10 @@ void main(void *param)
 	//TIM3_Init(5000,9000);
 //	usbd_uart_init();
 //	uart_test();
+	LCD_Init();
+	LCD_Clear(RED);
+	VOSTaskDelay(5000);
+	LCD_Clear(GREEN);
 
 	kprintf("hello!\r\n");
 #if 0
