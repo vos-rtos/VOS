@@ -94,30 +94,32 @@ int displyjpeg(u8 *JPEGFileName,u8 mode,u32 x,u32 y,int member,int denom)
 	int XSize,YSize;
 	GUI_JPEG_INFO JpegInfo;
 	float Xflag,Yflag;
+	u32 fsize;
 	
 	#if SYSTEM_SUPPORT_OS
 		CPU_SR_ALLOC();
 	#endif
 
 	result = f_open(&JPEGFile,(const TCHAR*)JPEGFileName,FA_READ);	//打开文件
+
 	//文件打开错误或者文件大于JPEGMEMORYSIZE
-	if((result != FR_OK) || (JPEGFile.fsize>JPEGMEMORYSIZE)) 	return 1;
+	if((result != FR_OK) || (f_size(&JPEGFile)>JPEGMEMORYSIZE)) 	return 1;
 	
-	jpegbuffer=vmalloc(JPEGFile.fsize);	//申请内存
+	jpegbuffer=vmalloc(f_size(&JPEGFile));	//申请内存
 	if(jpegbuffer == NULL) return 2;
 	
 	#if SYSTEM_SUPPORT_OS
 		OS_CRITICAL_ENTER();		//临界区
 	#endif
 		
-	result = f_read(&JPEGFile,jpegbuffer,JPEGFile.fsize,(UINT *)&bread); //读取数据
+	result = f_read(&JPEGFile,jpegbuffer,f_size(&JPEGFile),(UINT *)&bread); //读取数据
 	if(result != FR_OK) return 3;
 	
 	#if SYSTEM_SUPPORT_OS
 		OS_CRITICAL_EXIT();	//退出临界区
 	#endif
 	
-	GUI_JPEG_GetInfo(jpegbuffer,JPEGFile.fsize,&JpegInfo); //获取JEGP图片信息
+	GUI_JPEG_GetInfo(jpegbuffer,f_size(&JPEGFile),&JpegInfo); //获取JEGP图片信息
 	XSize = JpegInfo.XSize;	//获取JPEG图片的X轴大小
 	YSize = JpegInfo.YSize;	//获取JPEG图片的Y轴大小
 
@@ -131,24 +133,24 @@ int displyjpeg(u8 *JPEGFileName,u8 mode,u32 x,u32 y,int member,int denom)
 		case 0:	//在指定位置显示图片
 			if((member == 1) && (denom == 1)) //无需缩放，直接绘制
 			{
-				GUI_JPEG_Draw(jpegbuffer,JPEGFile.fsize,x,y);	//在指定位置显示JPEG图片
+				GUI_JPEG_Draw(jpegbuffer,f_size(&JPEGFile),x,y);	//在指定位置显示JPEG图片
 			}else //否则图片需要缩放
 			{
-				GUI_JPEG_DrawScaled(jpegbuffer,JPEGFile.fsize,x,y,member,denom);
+				GUI_JPEG_DrawScaled(jpegbuffer,f_size(&JPEGFile),x,y,member,denom);
 			}
 			break;
 		case 1:	//在LCD中间显示图片
 			if((member == 1) && (denom == 1)) //无需缩放，直接绘制
 			{
 				//在LCD中间显示图片
-				GUI_JPEG_Draw(jpegbuffer,JPEGFile.fsize,(lcddev.width-XSize)/2-1,(lcddev.height-YSize)/2-1);
+				GUI_JPEG_Draw(jpegbuffer,f_size(&JPEGFile),(lcddev.width-XSize)/2-1,(lcddev.height-YSize)/2-1);
 			}else //否则图片需要缩放
 			{
 				Xflag = (float)XSize*((float)member/(float)denom);
 				Yflag = (float)YSize*((float)member/(float)denom);
 				XSize = (lcddev.width-(int)Xflag)/2-1;
 				YSize = (lcddev.height-(int)Yflag)/2-1;
-				GUI_JPEG_DrawScaled(jpegbuffer,JPEGFile.fsize,XSize,YSize,member,denom);
+				GUI_JPEG_DrawScaled(jpegbuffer,f_size(&JPEGFile),XSize,YSize,member,denom);
 			}
 			break;
 	}
@@ -216,13 +218,8 @@ int displayjpegex(u8 *JPEGFileName,u8 mode,u32 x,u32 y,int member,int denom)
 	f_close(&JPEGFile);		//关闭BMPFile文件
 	return 0;
 }	
-static int dumphex(const unsigned char *buf, int size)
-{
-	int i;
-	for(i=0; i<size; i++)
-		printf("%02x,%s", buf[i], (i+1)%16?"":"\r\n");
-	return 0;
-}
+int dumphex(const unsigned char *buf, int size);
+
 
 #define JPEG_DELAY_MS 1000
 void jpegdisplay_demo(void)

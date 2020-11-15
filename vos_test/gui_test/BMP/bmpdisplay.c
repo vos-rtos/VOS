@@ -98,16 +98,16 @@ int dispbmp(u8 *BMPFileName,u8 mode,u32 x,u32 y,int member,int denom)
 	bkcolor=GUI_GetBkColor();			//获取当前背景色
 	result = f_open(&BMPFile,(const TCHAR*)BMPFileName,FA_READ);	//打开文件
 	//文件打开错误或者文件大于BMPMEMORYSIZE
-	if((result != FR_OK) || (BMPFile.fsize>BMPMEMORYSIZE)) 	return 1;
+	if((result != FR_OK) || (f_size(&BMPFile)>BMPMEMORYSIZE)) 	return 1;
 
-	bmpbuffer = vmalloc(BMPFile.fsize);//申请内存
+	bmpbuffer = vmalloc(f_size(&BMPFile));//申请内存
 	if(bmpbuffer == NULL) return 2;
 	
 	#if SYSTEM_SUPPORT_OS
 		OS_CRITICAL_ENTER();	//临界区
 	#endif
 		
-	result = f_read(&BMPFile,bmpbuffer,BMPFile.fsize,(UINT *)&bread); //读取数据
+	result = f_read(&BMPFile,bmpbuffer,f_size(&BMPFile),(UINT *)&bread); //读取数据
 	if(result != FR_OK) return 3;
 	
 	#if SYSTEM_SUPPORT_OS

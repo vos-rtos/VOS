@@ -83,13 +83,14 @@ void emwindemo_task(void *p_arg)
 }
 
 void fatfs_sd_card();
-static long long emwindemo_stack[1024*3];
+static long long emwindemo_stack[1024*2];
 void emWinTest()
 {
  	LCD_Init();
  	tp_dev.init();
- 	fatfs_sd_card();
- 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_CRC,ENABLE);
+ 	//fatfs_sd_card();
+ 	//RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_CRC,ENABLE);
+ 	__HAL_RCC_CRC_CLK_ENABLE();
  	GUI_Init();
 
   	s32 task_id;

@@ -54,7 +54,7 @@ int Create_TTFFont(u8 *fxpath)
 		OS_CRITICAL_ENTER();	//临界区
 	#endif
 		
-	result = f_read(&TTFFontFile,TtfBuffer,TTFFontFile.fsize,(UINT *)&bread); //读取数据
+	result = f_read(&TTFFontFile,TtfBuffer,f_size(&TTFFontFile),(UINT *)&bread); //读取数据
 	if(result != FR_OK) return 4;	//文件打开失败，跳出
 	
 	f_close(&TTFFontFile);	//关闭TTFFointFile文件
@@ -63,7 +63,7 @@ int Create_TTFFont(u8 *fxpath)
 	#endif
 	
 	TTFData.pData=TtfBuffer;	//指向文件地址
-	TTFData.NumBytes=TTFFontFile.fsize; //文件大小
+	TTFData.NumBytes=f_size(&TTFFontFile); //文件大小
 	
 	Cs0.pTTF		= &TTFData;	
 	Cs0.PixelHeight	= 12;

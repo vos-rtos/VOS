@@ -29,6 +29,7 @@ s32 PppCheck();
 s32 PppModemInit();
 s32 CUSTOM_ReadMODEM(u8 *pBuf, u32 dwLen, u32 dwTimeout);
 void LCD_Init();
+void emWinTest();
 #include "lcd_dev/lcd.h"
 void main(void *param)
 {
@@ -41,10 +42,12 @@ void main(void *param)
 	//TIM3_Init(5000,9000);
 //	usbd_uart_init();
 //	uart_test();
-	LCD_Init();
-	LCD_Clear(RED);
-	VOSTaskDelay(5000);
-	LCD_Clear(GREEN);
+//	LCD_Init();
+//	LCD_Clear(RED);
+//	VOSTaskDelay(5000);
+//	LCD_Clear(GREEN);
+	spiflash_test();
+	//emWinTest();
 
 	kprintf("hello!\r\n");
 #if 0
