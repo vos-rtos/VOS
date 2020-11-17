@@ -26,9 +26,11 @@ void IIC_Write_One_Byte(u8 daddr,u8 addr,u8 data);
 u8 IIC_Read_One_Byte(u8 daddr,u8 addr);	  
 #else
 
+#include "common.h"
+
 //IO方向设置
-#define SDA_IN()  {GPIOH->MODER&=~(3<<(5*2));GPIOH->MODER|=0<<5*2;}	//PH5输入模式
-#define SDA_OUT() {GPIOH->MODER&=~(3<<(5*2));GPIOH->MODER|=1<<5*2;} //PH5输出模式
+#define SDA_IN()  {GPIOB->MODER&=~(3<<(9*2));GPIOB->MODER|=0<<9*2;}	//PB9输入模式
+#define SDA_OUT() {GPIOB->MODER&=~(3<<(9*2));GPIOB->MODER|=1<<9*2;} //PB9输出模式
 //IO操作
 //#define IIC_SCL   PHout(4) //SCL
 //#define IIC_SDA   PHout(5) //SDA

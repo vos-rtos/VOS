@@ -91,6 +91,7 @@ void __attribute__((weak,noreturn)) abort(void)
 * 返回：无
 * 注意：无
 *********************************************************************************************************/
+extern void SystemClock_Config();
 void __attribute__ ((section(".after_vectors")))
 vos_start(void)
 {
@@ -98,9 +99,12 @@ vos_start(void)
 	u32 irq_save = 0;
 
 	SystemInit();
+
+
 	init_data_and_bss (); //这里由于清除全局变量，不用被包含到__vos_irq_save里，里面有使用全局变量计数
 
-
+	HAL_Init();
+	SystemClock_Config();
 
 	irq_save = __vos_irq_save();
 

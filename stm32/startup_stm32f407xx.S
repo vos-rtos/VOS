@@ -248,6 +248,7 @@ __isr_vectors:
 * this definition.
 * 
 *******************************************************************************/
+/*
    .weak      NMI_Handler
    .thumb_set NMI_Handler,Default_Handler
   
@@ -262,7 +263,7 @@ __isr_vectors:
 
    .weak      UsageFault_Handler
    .thumb_set UsageFault_Handler,Default_Handler
-
+*/
    .weak      SVC_Handler
    .thumb_set SVC_Handler,Default_Handler
 

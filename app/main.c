@@ -16,6 +16,43 @@ int usb2uart_test();
 
 void usbh_udisk_test();
 
+#include "lcd_dev/lcd.h"
+#include "tp_dev/touch.h"
+void Load_Drow_Dialog(void)
+{
+	LCD_Clear(WHITE);
+ 	POINT_COLOR=BLUE;
+	LCD_ShowString(lcddev.width-24,0,200,16,16,"RST");
+  	POINT_COLOR=RED;
+}
+void rtp_test(void)
+{
+	u8 key;
+	u8 i=0;
+	LCD_Init();
+	tp_dev.init();
+	while(1)
+	{
+		tp_dev.scan(0);
+		if(1)
+		{
+		 	if(tp_dev.x[0]<lcddev.width&&tp_dev.y[0]<lcddev.height)
+			{
+				if(tp_dev.x[0]>(lcddev.width-24)&&tp_dev.y[0]<16)Load_Drow_Dialog();
+				else TP_Draw_Big_Point(tp_dev.x[0],tp_dev.y[0],RED);
+			}
+		}else delay_ms(10);
+		if(1)
+		{
+			LCD_Clear(WHITE);
+		    TP_Adjust();
+			TP_Save_Adjdata();
+			Load_Drow_Dialog();
+		}
+		i++;
+	}
+}
+
 u64 xx_stack[1024];
 
 void task_usbh_test(void *p)
@@ -30,24 +67,39 @@ s32 PppModemInit();
 s32 CUSTOM_ReadMODEM(u8 *pBuf, u32 dwLen, u32 dwTimeout);
 void LCD_Init();
 void emWinTest();
-#include "lcd_dev/lcd.h"
+
 void main(void *param)
 {
+
 	s32 res;
 	s8 buf[100];
 	void uart_init(u32 bound);
 	uart_init(115200);
 	kprintf("hello world!\r\n");
+	//rtp_test();
+
 	//dma_printf("=============%d============\r\n", 100);
 	//TIM3_Init(5000,9000);
 //	usbd_uart_init();
 //	uart_test();
-//	LCD_Init();
-//	LCD_Clear(RED);
+	//LCD_Init();
+	//LCD_Clear(RED);
 //	VOSTaskDelay(5000);
 //	LCD_Clear(GREEN);
-	spiflash_test();
-	//emWinTest();
+	//spiflash_test();
+	emWinTest();
+	while (1) {
+		VOSTaskDelay(5*1000);
+	}
+	void fatfs_test();
+	fatfs_test();
+	sd_test_test();
+
+	s32 xxxx = 0;
+	while (1) {
+		kprintf("---%d---\r\n", xxxx++);
+		VOSTaskDelay(1000);
+	}
 
 	kprintf("hello!\r\n");
 #if 0

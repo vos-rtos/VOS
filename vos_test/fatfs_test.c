@@ -23,6 +23,8 @@ void fatfs_sd_card()
 }
 
 
+#include "sd_diskio.h"
+char SDPath[4];
 void fatfs_test()
 {
     FRESULT fr;
@@ -33,11 +35,18 @@ void fatfs_test()
 	s32 res;
 
 #if SD_CARD_FS_TEST
-	while(SD_Init()) {
-		kprintf("SD_Init failed!\r\n");
+//	while(SD_Init()) {
+//		kprintf("SD_Init failed!\r\n");
+//	}
+	if(FATFS_LinkDriver(&SD_Driver, SDPath) != 0) {
+		return ;
+	}
+	if(f_mount(&fs, (TCHAR const*)SDPath, 0) != FR_OK)
+	{
+		return;
 	}
     /* Open or create a log file and ready to append */
-    f_mount(&fs, "0:", 0);
+//    f_mount(&fs, "0:", 0);
     u8 buf[] = "hello world!";
     fr = f_open(&fil, "0:/logfile.txt", FA_WRITE | FA_OPEN_ALWAYS);
     if (fr == FR_OK) {

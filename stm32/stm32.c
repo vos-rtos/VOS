@@ -22,7 +22,7 @@ s32 GetUSBWorkMode()
 	return gUsbWorkMode;
 }
 
-static void SystemClock_Config(void)
+void SystemClock_Config(void)
 {
 #if 1
 	  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
@@ -62,23 +62,11 @@ static void SystemClock_Config(void)
 #endif
 }
 
-void MX_GPIO_Init(void)
-{
-
-  /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOH_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-
-}
 void misc_init()
 {
 	//NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
 	//uart_init(115200);
  	//TIM3_Int_Init(5000-1,8400-1);
-	HAL_Init();
-	SystemClock_Config();
-	MX_GPIO_Init();
 }
 
 
@@ -86,13 +74,6 @@ void HAL_MspInit(void)
 {
   __HAL_RCC_SYSCFG_CLK_ENABLE();
   __HAL_RCC_PWR_CLK_ENABLE();
-}
-
-void VOSSysTickSet()
-{
-	SystemCoreClockUpdate();
-	//SysTick_Config(168000);
-	//SystemClock_Config();
 }
 
 void HAL_Delay(uint32_t Delay)

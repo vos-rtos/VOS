@@ -15,7 +15,7 @@ SRAM_HandleTypeDef ghsram;
 
 /* Exported constants --------------------------------------------------------*/
 
-#define FMC_BANK3_BASE  ((uint32_t)(0x60000000 | 0x08000000))
+#define FMC_BANK3_BASE  ((uint32_t)(0x68000000))
 
 #define SRAM_BANK_ADDR                 FMC_BANK3_BASE
 
@@ -123,12 +123,10 @@ void HAL_SRAM_MspDeInit(SRAM_HandleTypeDef *hsram)
 * ×¢Òâ£ºÎÞ
 *********************************************************************************************************/
 
+FSMC_NORSRAM_TimingTypeDef SRAM_Timing;
 void ExSRamInit()
 {	
-
-	FSMC_NORSRAM_TimingTypeDef SRAM_Timing;
-
-	memset(&ghsram, 0, sizeof(SRAM_HandleTypeDef));
+//	memset(&ghsram, 0, sizeof(SRAM_HandleTypeDef));
 	memset(&SRAM_Timing, 0, sizeof(FSMC_NORSRAM_TimingTypeDef));
 
 	/*##-1- Configure the SRAM device ##########################################*/
@@ -136,12 +134,12 @@ void ExSRamInit()
 	ghsram.Instance  = FSMC_NORSRAM_DEVICE;
 	ghsram.Extended  = FSMC_NORSRAM_EXTENDED_DEVICE;
 
-	SRAM_Timing.AddressSetupTime       = 2;
-	SRAM_Timing.AddressHoldTime        = 1;
-	SRAM_Timing.DataSetupTime          = 2;
-	SRAM_Timing.BusTurnAroundDuration  = 1;
-	SRAM_Timing.CLKDivision            = 2;
-	SRAM_Timing.DataLatency            = 2;
+	SRAM_Timing.AddressSetupTime       = 0x02;
+	SRAM_Timing.AddressHoldTime        = 0x00;
+	SRAM_Timing.DataSetupTime          = 0x08;
+	SRAM_Timing.BusTurnAroundDuration  = 0x00;
+	SRAM_Timing.CLKDivision            = 0x00;
+	SRAM_Timing.DataLatency            = 0x00;
 	SRAM_Timing.AccessMode             = FSMC_ACCESS_MODE_A;
 
 	ghsram.Init.NSBank             = FSMC_NORSRAM_BANK3;
