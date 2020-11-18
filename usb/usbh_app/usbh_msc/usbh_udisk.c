@@ -9,7 +9,8 @@
 #include "fatfs.h"
 #include "usb_host.h"
 
-void MX_USB_DEVICE_Init(void);
+static StUsbHostApp gUDiskApp;
+
 void udisk_test()
 {
 	s32 ret = 0;
@@ -31,24 +32,19 @@ void udisk_test()
 
 
 
-void MX_USB_HOST_Process(void);
-
-extern ApplicationTypeDef Appli_state;
 extern USBH_HandleTypeDef hUsbHostFS;
 extern char USBHPath[4];
 
 void SystemClock_Config(void);
 void Error_Handler(void);
-void MX_USB_HOST_Process(void);
 
-
-static void MSC_Application(void);
+void MSC_Application(void);
 
 
 FATFS USBDISKFatFs;           /* File system object for USB disk logical drive */
 FIL MyFile;                   /* File object */
 
-static void MSC_Application(void)
+void MSC_Application(void)
 {
     FRESULT res;                                          /* FatFs function common result code */
     uint32_t byteswritten;                   /* File write/read counts */
@@ -88,37 +84,52 @@ static void MSC_Application(void)
     }
 }
 
-
-u32 __CUSTOM_DirectWriteAT(u8 *pBuf, u32 dwLen, u32 dwTimeout);
-u32 __CUSTOM_DirectReadAT(u8 *pBuf, u32 dwLen, u32 dwTimeout);
-
-
-void usbh_udisk_test()
+s32 usbh_udisk_do_status(s32 status)
 {
-	  MX_USB_HOST_Init();
-	  //MX_FATFS_Init();
-	  while (1)
-	  {
-	    /* USER CODE END WHILE */
-	    MX_USB_HOST_Process();
+	switch (status) {
+		case APP_STATUS_IDLE:
 
-	    /* USER CODE BEGIN 3 */
-		switch(Appli_state)
-		{
-		case APPLICATION_READY:
-			//MSC_Application();
-
-			//Appli_state = APPLICATION_START;
 			break;
-
-		case APPLICATION_START:
+		case APP_STATUS_START:
 			f_mount(NULL, (TCHAR const*)"", 0);
 			break;
-		case APPLICATION_DISCONNECT:
-			Appli_state = APPLICATION_IDLE;
+		case APP_STATUS_READY:
+			//MSC_Application();
+			break;
+		case APP_STATUS_DISCONNECT:
 			break;
 		default:
 			break;
-		}
-	  }
+	}
+	return status;
 }
+
+s32 usbh_udisk_init()
+{
+	StUsbHostApp *pUsbhApp = 0;
+	s32 ret = 0;
+	pUsbhApp = &gUDiskApp;
+
+	pUsbhApp->status = APP_STATUS_IDLE;
+	pUsbhApp->pfStateDo = usbh_udisk_do_status;
+	pUsbhApp->pclass = USBH_MSC_CLASS;
+
+	RegisterUsbhApp(pUsbhApp);
+
+	MX_FATFS_Init();
+	return ret;
+}
+
+s32 usbh_udisk_status()
+{
+	StUsbHostApp *pUsbhApp = 0;
+	s32 ret = 0;
+	pUsbhApp = &gUDiskApp;
+	return pUsbhApp->status;
+}
+
+StUsbHostApp *usbh_udisk_ptr()
+{
+	return &gUDiskApp;
+}
+

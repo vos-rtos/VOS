@@ -1,30 +1,10 @@
 #include "vos.h"
 #include "usbh_custom.h"
+#include "usbh_modem.h"
 
-enum
-{
-    NORMAL, // 直接访问模式，不存在USB睡眠逻辑
-    SLEEP, // 睡眠模式，即读逻辑通过专用的睡眠线程实现
-    STOP
-};
+#include "usb_host.h"
 
-typedef struct StUsbModem
-{
-    USBH_HandleTypeDef *pHandle;
-    u32 dwJobs; // 允许多个任务同时进行
-    u32 dwSleepCycle;
-    u32 dwWakeCycle;
-    u32 dwBackup;
-    void *pSleep;
-    void *pLock;
-    enum {
-        TASK_OFF,
-        TASK_ON,
-        BLOCK
-    }status;
-    s32 toMode;
-    s32 curMode;
-}StUsbModem;
+static StUsbHostApp gModemApp;
 
 StUsbModem gUsbModem;
 
@@ -160,5 +140,51 @@ s32 CUSTOM_ReadDEBUG(u8 *pBuf, u32 dwLen, u32 dwTimeout)
 
     return (dwLen - len);
 }
+
+s32 usbh_modem_do_status(s32 status)
+{
+	switch (status) {
+		case APP_STATUS_IDLE:
+			break;
+		case APP_STATUS_START:
+			break;
+		case APP_STATUS_READY:
+			break;
+		case APP_STATUS_DISCONNECT:
+			break;
+		default:
+			break;
+	}
+	return status;
+}
+
+s32 usbh_modem_init()
+{
+	StUsbHostApp *pUsbhApp = 0;
+	s32 ret = 0;
+	pUsbhApp = &gModemApp;
+
+	pUsbhApp->status = APP_STATUS_IDLE;
+	pUsbhApp->pfStateDo = usbh_modem_do_status;
+	pUsbhApp->pclass = USBH_CUSTOM_CLASS;
+
+	RegisterUsbhApp(pUsbhApp);
+
+	return ret;
+}
+
+s32 usbh_modem_status()
+{
+	StUsbHostApp *pUsbhApp = 0;
+	s32 ret = 0;
+	pUsbhApp = &gModemApp;
+	return pUsbhApp->status;
+}
+
+StUsbHostApp *usbh_modem_ptr()
+{
+	return &gModemApp;
+}
+
 
 

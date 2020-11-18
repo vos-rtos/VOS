@@ -34,6 +34,9 @@ s32 CUSTOM_ReadMODEM(u8 *pBuf, u32 dwLen, u32 dwTimeout);
 void LCD_Init();
 void emWinTest();
 
+#include "usb_host.h"
+#include "usbh_udisk.h"
+
 //#define DEF_ETH 1
 #define DEF_4G_PPP 1
 void main(void *param)
@@ -44,6 +47,20 @@ void main(void *param)
 	void uart_init(u32 bound);
 	uart_init(115200);
 	kprintf("hello world!\r\n");
+
+#if DEF_USBH_UDISK
+	usb_host_init();
+	usbh_udisk_init();
+
+	while (usbh_udisk_status() != APP_STATUS_READY) {
+		VOSTaskDelay(1000);
+	}
+	void MSC_Application(void);
+	MSC_Application();
+	while (1) {
+		VOSTaskDelay(5*1000);
+	}
+#endif
 
 #if DEF_UART_USB
 	//usb2uart_test();
@@ -79,9 +96,12 @@ void main(void *param)
 #endif
 #if DEF_4G_PPP
 
-	s32 task_id;
-	task_id = VOSTaskCreate(task_usbh_test, 0, xx_stack, sizeof(xx_stack), TASK_PRIO_NORMAL, "task_usbh_test");
-	VOSTaskDelay(5000);
+	usb_host_init();
+	usbh_modem_init();
+
+	while (usbh_modem_status() != APP_STATUS_READY) {
+		VOSTaskDelay(1000);
+	}
 
 	PppModemInit();
 	while (1) {
