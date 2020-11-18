@@ -85,17 +85,19 @@
 									<listOptionValue builtIn="false" value="../usb/ST/STM32_USB_Host_Library/Core/Inc"/>
 									<listOptionValue builtIn="false" value="../usb/ST/STM32_USB_Host_Library/Class/MSC/Inc"/>
 									<listOptionValue builtIn="false" value="../3th/stm32_hal/inc"/>
-									<listOptionValue builtIn="false" value="../usb/usb_cdc"/>
 									<listOptionValue builtIn="false" value="../usb/ST/STM32_USB_Device_Library/Class/CDC/Inc"/>
 									<listOptionValue builtIn="false" value="../3th/cmsis/Device/ST/STM32F4xx/Include"/>
-									<listOptionValue builtIn="false" value="../usb/usbh_msc"/>
 									<listOptionValue builtIn="false" value="../usb/ST/STM32_USB_Host_Library/Class/AUDIO/Inc"/>
 									<listOptionValue builtIn="false" value="../usb/ST/STM32_USB_Host_Library/Class/CDC/Inc"/>
 									<listOptionValue builtIn="false" value="../usb/ST/STM32_USB_Host_Library/Class/HID/Inc"/>
 									<listOptionValue builtIn="false" value="../usb/ST/STM32_USB_Host_Library/Class/MTP/Inc"/>
 									<listOptionValue builtIn="false" value="../usb/ST/STM32_USB_Host_Library/Class/CUSTOM/Inc"/>
-									<listOptionValue builtIn="false" value="../usb/usbh_modem"/>
 									<listOptionValue builtIn="false" value="../net/lwip/lwip-2.1.2/src/apps/ping"/>
+									<listOptionValue builtIn="false" value="../usb/usbh_app/usbh_modem"/>
+									<listOptionValue builtIn="false" value="../usb/usbh_app/usbh_msc"/>
+									<listOptionValue builtIn="false" value="../usb/usbh_app"/>
+									<listOptionValue builtIn="false" value="../usb/usbd_app/usb_cdc"/>
+									<listOptionValue builtIn="false" value="../usb/usbd_app"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs.1583497841" name="Defined symbols (-D)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs" useByScannerDiscovery="true" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="DEBUG=1"/>
@@ -224,17 +226,19 @@
 									<listOptionValue builtIn="false" value="../usb/ST/STM32_USB_Host_Library/Core/Inc"/>
 									<listOptionValue builtIn="false" value="../usb/ST/STM32_USB_Host_Library/Class/MSC/Inc"/>
 									<listOptionValue builtIn="false" value="../3th/stm32_hal/inc"/>
-									<listOptionValue builtIn="false" value="../usb/usb_cdc"/>
 									<listOptionValue builtIn="false" value="../usb/ST/STM32_USB_Device_Library/Class/CDC/Inc"/>
 									<listOptionValue builtIn="false" value="../3th/cmsis/Device/ST/STM32F4xx/Include"/>
-									<listOptionValue builtIn="false" value="../usb/usbh_msc"/>
 									<listOptionValue builtIn="false" value="../usb/ST/STM32_USB_Host_Library/Class/AUDIO/Inc"/>
 									<listOptionValue builtIn="false" value="../usb/ST/STM32_USB_Host_Library/Class/CDC/Inc"/>
 									<listOptionValue builtIn="false" value="../usb/ST/STM32_USB_Host_Library/Class/HID/Inc"/>
 									<listOptionValue builtIn="false" value="../usb/ST/STM32_USB_Host_Library/Class/MTP/Inc"/>
 									<listOptionValue builtIn="false" value="../usb/ST/STM32_USB_Host_Library/Class/CUSTOM/Inc"/>
-									<listOptionValue builtIn="false" value="../usb/usbh_modem"/>
 									<listOptionValue builtIn="false" value="../net/lwip/lwip-2.1.2/src/apps/ping"/>
+									<listOptionValue builtIn="false" value="../usb/usbh_app/usbh_modem"/>
+									<listOptionValue builtIn="false" value="../usb/usbh_app/usbh_msc"/>
+									<listOptionValue builtIn="false" value="../usb/usbh_app"/>
+									<listOptionValue builtIn="false" value="../usb/usbd_app/usb_cdc"/>
+									<listOptionValue builtIn="false" value="../usb/usbd_app"/>
 								</option>
 								<inputType id="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.input.1694708034" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.input"/>
 							</tool>

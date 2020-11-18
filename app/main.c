@@ -34,8 +34,8 @@ s32 CUSTOM_ReadMODEM(u8 *pBuf, u32 dwLen, u32 dwTimeout);
 void LCD_Init();
 void emWinTest();
 
-#define DEF_ETH 1
-
+//#define DEF_ETH 1
+#define DEF_4G_PPP 1
 void main(void *param)
 {
 
