@@ -95,61 +95,60 @@ error:
 static struct pbuf * low_level_input(struct netif *netif)
 {  
 	struct pbuf *p = NULL;
-	    struct pbuf *q;
-	    uint16_t len;
-	    uint8_t *buffer;
-	    __IO ETH_DMADescTypeDef *dmarxdesc;
-	    uint32_t bufferoffset=0;
-	    uint32_t payloadoffset=0;
-	    uint32_t byteslefttocopy=0;
-	    uint32_t i=0;
+	struct pbuf *q;
+	uint16_t len;
+	uint8_t *buffer;
+	__IO ETH_DMADescTypeDef *dmarxdesc;
+	uint32_t bufferoffset=0;
+	uint32_t payloadoffset=0;
+	uint32_t byteslefttocopy=0;
+	uint32_t i=0;
 
-	    if(HAL_ETH_GetReceivedFrame(&ETH_Handler)!=HAL_OK)
-	    return NULL;
+	if(HAL_ETH_GetReceivedFrame(&ETH_Handler)!=HAL_OK)
+	return NULL;
 
-	    len=ETH_Handler.RxFrameInfos.length;
-	    buffer=(uint8_t *)ETH_Handler.RxFrameInfos.buffer;
+	len=ETH_Handler.RxFrameInfos.length;
+	buffer=(uint8_t *)ETH_Handler.RxFrameInfos.buffer;
 
-	    if(len>0) p=pbuf_alloc(PBUF_RAW,len,PBUF_POOL);
-	    if(p!=NULL)
-	    {
-	        dmarxdesc=ETH_Handler.RxFrameInfos.FSRxDesc;
-	        bufferoffset = 0;
-	        for(q=p;q!=NULL;q=q->next)
-	        {
-	            byteslefttocopy=q->len;
-	            payloadoffset=0;
+	if(len>0) p=pbuf_alloc(PBUF_RAW,len,PBUF_POOL);
+	if(p!=NULL)
+	{
+		dmarxdesc=ETH_Handler.RxFrameInfos.FSRxDesc;
+		bufferoffset = 0;
+		for(q=p;q!=NULL;q=q->next)
+		{
+			byteslefttocopy=q->len;
+			payloadoffset=0;
 
-	            while((byteslefttocopy+bufferoffset)>ETH_RX_BUF_SIZE )
-	            {
+			while((byteslefttocopy+bufferoffset)>ETH_RX_BUF_SIZE )
+			{
+				memcpy((uint8_t*)((uint8_t*)q->payload+payloadoffset),(uint8_t*)((uint8_t*)buffer+bufferoffset),(ETH_RX_BUF_SIZE-bufferoffset));
 
-	                memcpy((uint8_t*)((uint8_t*)q->payload+payloadoffset),(uint8_t*)((uint8_t*)buffer+bufferoffset),(ETH_RX_BUF_SIZE-bufferoffset));
+				dmarxdesc=(ETH_DMADescTypeDef *)(dmarxdesc->Buffer2NextDescAddr);
 
-	                dmarxdesc=(ETH_DMADescTypeDef *)(dmarxdesc->Buffer2NextDescAddr);
+				buffer=(uint8_t *)(dmarxdesc->Buffer1Addr);
 
-	                buffer=(uint8_t *)(dmarxdesc->Buffer1Addr);
-
-	                byteslefttocopy=byteslefttocopy-(ETH_RX_BUF_SIZE-bufferoffset);
-	                payloadoffset=payloadoffset+(ETH_RX_BUF_SIZE-bufferoffset);
-	                bufferoffset=0;
-	            }
-	            memcpy((uint8_t*)((uint8_t*)q->payload+payloadoffset),(uint8_t*)((uint8_t*)buffer+bufferoffset),byteslefttocopy);
-	            bufferoffset=bufferoffset+byteslefttocopy;
-	        }
-	    }
-	    dmarxdesc=ETH_Handler.RxFrameInfos.FSRxDesc;
-	    for(i=0;i<ETH_Handler.RxFrameInfos.SegCount; i++)
-	    {
-	        dmarxdesc->Status|=ETH_DMARXDESC_OWN;
-	        dmarxdesc=(ETH_DMADescTypeDef *)(dmarxdesc->Buffer2NextDescAddr);
-	    }
-	    ETH_Handler.RxFrameInfos.SegCount =0;
-	    if((ETH_Handler.Instance->DMASR&ETH_DMASR_RBUS)!=(uint32_t)RESET)
-	    {
-	        ETH_Handler.Instance->DMASR = ETH_DMASR_RBUS;
-	        ETH_Handler.Instance->DMARPDR=0;
-	    }
-	    return p;
+				byteslefttocopy=byteslefttocopy-(ETH_RX_BUF_SIZE-bufferoffset);
+				payloadoffset=payloadoffset+(ETH_RX_BUF_SIZE-bufferoffset);
+				bufferoffset=0;
+			}
+			memcpy((uint8_t*)((uint8_t*)q->payload+payloadoffset),(uint8_t*)((uint8_t*)buffer+bufferoffset),byteslefttocopy);
+			bufferoffset=bufferoffset+byteslefttocopy;
+		}
+	}
+	dmarxdesc=ETH_Handler.RxFrameInfos.FSRxDesc;
+	for(i=0;i<ETH_Handler.RxFrameInfos.SegCount; i++)
+	{
+		dmarxdesc->Status|=ETH_DMARXDESC_OWN;
+		dmarxdesc=(ETH_DMADescTypeDef *)(dmarxdesc->Buffer2NextDescAddr);
+	}
+	ETH_Handler.RxFrameInfos.SegCount =0;
+	if((ETH_Handler.Instance->DMASR&ETH_DMASR_RBUS)!=(uint32_t)RESET)
+	{
+		ETH_Handler.Instance->DMASR = ETH_DMASR_RBUS;
+		ETH_Handler.Instance->DMARPDR=0;
+	}
+	return p;
 } 
 
 err_t ethernetif_input(struct netif *netif)

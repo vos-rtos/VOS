@@ -67,9 +67,10 @@ void  sock_tcp_test()
     }
     memset(&servaddr, 0, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
-    servaddr.sin_port = htons(55750);
+    //servaddr.sin_port = htons(55750);
+    servaddr.sin_port = htons(5555);
     //if( inet_aton("103.46.128.49", &servaddr.sin_addr) <= 0){
-    if( inet_aton("192.168.2.101", &servaddr.sin_addr) <= 0){
+    if( inet_aton("192.168.2.100", &servaddr.sin_addr) <= 0){
     	kprintf("ERROR!\r\n");
     }
     if( connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0){
@@ -85,6 +86,7 @@ void  sock_tcp_test()
 			kprintf("ERROR!\r\n");
 			//break;
 		}
+		//VOSTaskDelay(1*1000);
 //		if ((ret = get_socket_err(sockfd)) < 0) {
 //			kprintf("get_socket_err: %d, \"%s\"!\r\n", ret, lwip_strerr(ret));
 //		}

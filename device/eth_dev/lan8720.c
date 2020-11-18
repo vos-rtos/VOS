@@ -129,11 +129,13 @@ extern void lwip_packet_handler();
 void ETH_IRQHandler(void)
 {
 	u32 ret = 0;
+	s32 cnts = 50;
     while(ret = ETH_GetRxPktSize(ETH_Handler.RxDesc))
     {
 //    	kprintf("ETH RECV:\r\n");
 //		dumphex((unsigned char*)(ETH_Handler.RxDesc->Buffer1Addr), ret);
     	lwip_packet_handler();
+    	if (cnts-- <= 0) break;
     }
     __HAL_ETH_DMA_CLEAR_IT(&ETH_Handler,ETH_DMA_IT_NIS);
     __HAL_ETH_DMA_CLEAR_IT(&ETH_Handler,ETH_DMA_IT_R);

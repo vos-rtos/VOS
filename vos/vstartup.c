@@ -100,7 +100,6 @@ vos_start(void)
 
 	SystemInit();
 
-
 	init_data_and_bss (); //这里由于清除全局变量，不用被包含到__vos_irq_save里，里面有使用全局变量计数
 
 	HAL_Init();

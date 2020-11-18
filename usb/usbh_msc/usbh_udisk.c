@@ -95,7 +95,6 @@ u32 __CUSTOM_DirectReadAT(u8 *pBuf, u32 dwLen, u32 dwTimeout);
 
 void usbh_udisk_test()
 {
-
 	  MX_USB_HOST_Init();
 	  //MX_FATFS_Init();
 	  while (1)
