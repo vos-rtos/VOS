@@ -367,6 +367,14 @@ HAL_StatusTypeDef HAL_DMA_DeInit(DMA_HandleTypeDef *hdma)
   /* Get DMA steam Base Address */  
   regs = (DMA_Base_Registers *)DMA_CalcBaseAndBitshift(hdma);
   
+  /* Clean all callbacks */
+  hdma->XferCpltCallback = NULL;
+  hdma->XferHalfCpltCallback = NULL;
+  hdma->XferM1CpltCallback = NULL;
+  hdma->XferM1HalfCpltCallback = NULL;
+  hdma->XferErrorCallback = NULL;
+  hdma->XferAbortCallback = NULL;
+
   /* Clear all interrupt flags at correct offset within the register */
   regs->IFCR = 0x3FU << hdma->StreamIndex;
 

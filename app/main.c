@@ -38,7 +38,9 @@ void emWinTest();
 #include "usbh_udisk.h"
 
 //#define DEF_ETH 1
-#define DEF_4G_PPP 1
+//#define DEF_4G_PPP 1
+//#define DEF_USBH_UDISK 1
+#define DEF_SD_FATFS 1
 void main(void *param)
 {
 
@@ -55,8 +57,10 @@ void main(void *param)
 	while (usbh_udisk_status() != APP_STATUS_READY) {
 		VOSTaskDelay(1000);
 	}
-	void MSC_Application(void);
-	MSC_Application();
+//	void MSC_Application(void);
+//	MSC_Application();
+	void fatfs_bandmark_test();
+	fatfs_bandmark_test();
 	while (1) {
 		VOSTaskDelay(5*1000);
 	}
@@ -79,7 +83,7 @@ void main(void *param)
 #if DEF_SD_FATFS
 	void fatfs_test();
 	fatfs_test();
-	sd_test_test();
+	//sd_test_test();
 #endif
 
 #if 0

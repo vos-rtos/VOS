@@ -1,16 +1,18 @@
 #include "sd_card/sdio_sdcard.h"
 #include "vmisc.h"
 
-
+#define printf kprintf
 void fatfs_test();
 void SDIO_SHOW_REGS();
 int kprintf(char* format, ...);
 #define PRT_REG(x) kprintf(#x"=0x%08x\r\n", x)
 void SDIO_SHOW_REGS()
 {
-
+	//SDIO->CLKCR = 0x00000100;
+	//SDIO->ARG = 0;
   PRT_REG(SDIO->POWER);
   PRT_REG(SDIO->CLKCR);
+
   PRT_REG(SDIO->ARG);
   PRT_REG(SDIO->CMD);
   PRT_REG(SDIO->RESPCMD);
@@ -35,13 +37,14 @@ void SDIO_SHOW_REGS()
 
 void sd_test_test()
 {
- 	while(BSP_SD_Init())
+ 	while(SD_Init())
 	{
  		VOSTaskDelay(1*1000);
 	}
 	show_sdcard_info();
 	SDIO_SHOW_REGS();
 	u8 *buf=vmalloc(512);
+	memset(buf, 0, 512);
 	if(SD_ReadDisk(buf,0,1)==0)
 	{
 		s32 sd_size = 0;
@@ -52,9 +55,30 @@ void sd_test_test()
 
 void show_sdcard_info(void)
 {
-	HAL_SD_CardInfoTypeDef CardInfo;
-	memset(&CardInfo, 0, sizeof(CardInfo));
-	BSP_SD_GetCardInfo(&CardInfo);
+	uint64_t CardCap;
+	HAL_SD_CardCIDTypeDef SDCard_CID;
+
+	HAL_SD_GetCardCID(&SDCARD_Handler,&SDCard_CID);
+	SD_GetCardInfo(&SDCardInfo);
+	switch(SDCardInfo.CardType)
+	{
+		case CARD_SDSC:
+		{
+			if(SDCardInfo.CardVersion == CARD_V1_X)
+				printf("Card Type:SDSC V1\r\n");
+			else if(SDCardInfo.CardVersion == CARD_V2_X)
+				printf("Card Type:SDSC V2\r\n");
+		}
+		break;
+		case CARD_SDHC_SDXC:printf("Card Type:SDHC\r\n");break;
+	}
+	CardCap=(uint64_t)(SDCardInfo.LogBlockNbr)*(uint64_t)(SDCardInfo.LogBlockSize);
+  	printf("Card ManufacturerID:%d\r\n",SDCard_CID.ManufacturerID);
+ 	printf("Card RCA:%d\r\n",SDCardInfo.RelCardAdd);
+	printf("LogBlockNbr:%d \r\n",(u32)(SDCardInfo.LogBlockNbr));
+	printf("LogBlockSize:%d \r\n",(u32)(SDCardInfo.LogBlockSize));
+	printf("Card Capacity:%d MB\r\n",(u32)(CardCap>>20));
+ 	printf("Card BlockSize:%d\r\n\r\n",SDCardInfo.BlockSize);
 }
 #if 0
 int fatfs_sd_test(void)
