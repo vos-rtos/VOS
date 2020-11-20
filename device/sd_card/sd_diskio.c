@@ -154,8 +154,8 @@ DRESULT SD_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
 	res=SD_ReadDisk(buff,sector,count);
 	while(res)
 	{
-		VOSTaskDelay(1000);
-		if (cnts++ > 10) {
+		VOSTaskDelay(1);
+		if (cnts++ > 3) {
 			res = RES_ERROR;
 			break;
 		}
@@ -182,8 +182,8 @@ DRESULT SD_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count)
 	res=SD_WriteDisk((u8*)buff,sector,count);
 	while(res)
 	{
-		VOSTaskDelay(1000);
-		if (cnts++ > 10) {
+		VOSTaskDelay(1);
+		if (cnts++ > 3) {
 			res = RES_ERROR;
 			break;
 		}

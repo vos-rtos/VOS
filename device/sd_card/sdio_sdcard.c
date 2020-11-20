@@ -15,7 +15,7 @@ DMA_HandleTypeDef SDTxDMAHandler,SDRxDMAHandler;    //SD卡DMA发送和接收句柄
 //SD_ReadDisk/SD_WriteDisk函数专用buf,当这两个函数的数据缓存区地址不是4字节对齐的时候,
 //需要用到该数组,确保数据缓存区地址是4字节对齐的.
 //__align(4) u8 SDIO_DATA_BUFFER[512];
-u8 SDIO_DATA_BUFFER[512] __attribute__ ((aligned (4)));
+//u8 SDIO_DATA_BUFFER[512] __attribute__ ((aligned (4)));
 //SD卡初始化
 //返回值:0 初始化正确；其他值，初始化错误
 u8 SD_Init(void)
@@ -244,21 +244,18 @@ u8 SD_WriteDisk(u8 *buf,u32 sector,u32 cnt)
 //SDMMC1中断服务函数
 void SDMMC1_IRQHandler(void)
 {
-	//kprintf("?");
     HAL_SD_IRQHandler(&SDCARD_Handler);
 }
 
 //DMA2数据流6中断服务函数
 void DMA2_Stream6_IRQHandler(void)
 {
-	//kprintf(".");
     HAL_DMA_IRQHandler(SDCARD_Handler.hdmatx);
 }
 
 //DMA2数据流3中断服务函数
 void DMA2_Stream3_IRQHandler(void)
 {
-	//kprintf("#");
     HAL_DMA_IRQHandler(SDCARD_Handler.hdmarx);
 }
 #else                                   //轮训模式

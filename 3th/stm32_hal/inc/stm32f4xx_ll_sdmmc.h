@@ -336,7 +336,7 @@ typedef struct
   */
 #define SDIO_CCCC_ERASE                   0x00000020U
 
-#define SDIO_CMDTIMEOUT                   800U//5000U        /* Command send and response timeout */
+#define SDIO_CMDTIMEOUT                   1000U//5000U        /* Command send and response timeout */
 #define SDIO_MAXERASETIMEOUT              63000U       /* Max erase Timeout 63 s            */
 
 
