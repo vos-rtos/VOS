@@ -11,8 +11,8 @@
 
 SRAM_HandleTypeDef ghsram;
 
-#define FONT_SIZE  0// 859464 //矢量字库很大，直接划分到exsram里
-
+#define FONT_SIZE  859464 //矢量字库很大，直接划分到exsram里
+//#define FONT_SIZE  0// 859464 //矢量字库很大，直接划分到exsram里
 /* Exported constants --------------------------------------------------------*/
 
 #define FMC_BANK3_BASE  ((uint32_t)(0x68000000))

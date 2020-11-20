@@ -424,7 +424,7 @@ HAL_StatusTypeDef HAL_SD_InitCard(SD_HandleTypeDef *hsd)
   
   /* Enable SDIO Clock */
   __HAL_SD_ENABLE(hsd);
-  
+
   /* Required power up waiting time before starting the SD initialization 
   sequence */
   HAL_Delay(2U);

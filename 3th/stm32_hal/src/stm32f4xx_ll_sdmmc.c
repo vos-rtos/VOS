@@ -229,7 +229,6 @@ static uint32_t SDMMC_GetCmdResp6(SDIO_TypeDef *SDIOx, uint8_t SD_CMD, uint16_t 
   * @param  Init SDMMC initialization structure   
   * @retval HAL status
   */
-#define PRT_REG(x) kprintf(#x"=0x%08x\r\n", x)
 HAL_StatusTypeDef SDIO_Init(SDIO_TypeDef *SDIOx, SDIO_InitTypeDef Init)
 {
   uint32_t tmpreg = 0U;
@@ -253,9 +252,7 @@ HAL_StatusTypeDef SDIO_Init(SDIO_TypeDef *SDIOx, SDIO_InitTypeDef Init)
              ); 
   
   /* Write to SDMMC CLKCR */
-  PRT_REG(SDIOx->CLKCR);
   MODIFY_REG(SDIOx->CLKCR, CLKCR_CLEAR_MASK, tmpreg);  
-  PRT_REG(SDIOx->CLKCR);
   return HAL_OK;
 }
 

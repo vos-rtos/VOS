@@ -41,6 +41,7 @@ void emWinTest();
 //#define DEF_4G_PPP 1
 //#define DEF_USBH_UDISK 1
 #define DEF_SD_FATFS 1
+#define DEF_GUI 1
 void main(void *param)
 {
 
@@ -82,8 +83,10 @@ void main(void *param)
 
 #if DEF_SD_FATFS
 	void fatfs_test();
-	fatfs_test();
+	//fatfs_test();
 	//sd_test_test();
+	void fatfs_bandmark_test();
+	fatfs_bandmark_test();
 #endif
 
 #if 0

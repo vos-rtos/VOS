@@ -34,7 +34,6 @@ void SDIO_SHOW_REGS()
 
 }
 
-
 void sd_test_test()
 {
  	while(SD_Init())
@@ -47,8 +46,7 @@ void sd_test_test()
 	memset(buf, 0, 512);
 	if(SD_ReadDisk(buf,0,1)==0)
 	{
-		s32 sd_size = 0;
-		for(sd_size=0;sd_size<512;sd_size++) kprintf("%x ",buf[sd_size]);
+		dumphex(buf, 512);
 	}
 	vfree(0,buf);
 }

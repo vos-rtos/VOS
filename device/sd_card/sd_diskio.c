@@ -149,14 +149,18 @@ DSTATUS SD_status(BYTE lun)
   */
 DRESULT SD_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
 {
-  DRESULT res = RES_ERROR;
-
+	DRESULT res = RES_ERROR;
+	s32 cnts = 0;
 	res=SD_ReadDisk(buff,sector,count);
 	while(res)
 	{
+		VOSTaskDelay(1000);
+		if (cnts++ > 10) {
+			res = RES_ERROR;
+			break;
+		}
 		SD_Init();
 		res=SD_ReadDisk(buff,sector,count);
-		//printf("sd rd error:%d\r\n",res);
 	}
 
   return res;
@@ -174,10 +178,15 @@ DRESULT SD_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
 DRESULT SD_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count)
 {
   DRESULT res = RES_ERROR;
-
+  s32 cnts = 0;
 	res=SD_WriteDisk((u8*)buff,sector,count);
 	while(res)
 	{
+		VOSTaskDelay(1000);
+		if (cnts++ > 10) {
+			res = RES_ERROR;
+			break;
+		}
 		SD_Init();
 		res=SD_WriteDisk((u8*)buff,sector,count);
 	}

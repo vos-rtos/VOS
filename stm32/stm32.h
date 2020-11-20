@@ -136,8 +136,8 @@ void __attribute__ ((weak, alias ("Default_Handler")))
 DMA2_Stream1_IRQHandler(void);
 void __attribute__ ((weak, alias ("Default_Handler")))
 DMA2_Stream2_IRQHandler(void);
-void __attribute__ ((weak, alias ("Default_Handler")))
-DMA2_Stream3_IRQHandler(void);
+//void __attribute__ ((weak, alias ("Default_Handler")))
+//DMA2_Stream3_IRQHandler(void);
 void __attribute__ ((weak, alias ("Default_Handler")))
 DMA2_Stream4_IRQHandler(void);
 void __attribute__ ((weak, alias ("Default_Handler")))
@@ -156,8 +156,8 @@ void __attribute__ ((weak, alias ("Default_Handler")))
 OTG_FS_IRQHandler(void);
 void __attribute__ ((weak, alias ("Default_Handler")))
 DMA2_Stream5_IRQHandler(void);
-void __attribute__ ((weak, alias ("Default_Handler")))
-DMA2_Stream6_IRQHandler(void);
+//void __attribute__ ((weak, alias ("Default_Handler")))
+//DMA2_Stream6_IRQHandler(void);
 void __attribute__ ((weak, alias ("Default_Handler")))
 DMA2_Stream7_IRQHandler(void);
 void __attribute__ ((weak, alias ("Default_Handler")))

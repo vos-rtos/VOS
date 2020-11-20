@@ -52,7 +52,7 @@ void emwindemo_task(void *p_arg)
 	void bmpdisplay_demo(void);
 
 	int result;
-#if 0
+
 	GUI_TTF_SetCacheSize(1, 1, 16*1024);
 	result=Create_TTFFont("0:/msyh3500a.ttf");
 	if(result) {
@@ -61,22 +61,22 @@ void emwindemo_task(void *p_arg)
 	}
 	GUI_UC_SetEncodeUTF8();
 	GUI_SetFont(&TTF36_Font);
-#endif
+
 	GUI_SetBkColor(GUI_WHITE);
 	GUI_SetColor(GUI_RED);
 
 	GUI_SetTextMode(LCD_DRAWMODE_XOR);
 
 	GUI_Clear();
-
+#if 0
 	WM_SetCreateFlags(WM_CF_MEMDEV);
 	CreateFramewin();
 	while(1) {
 		GUI_Exec();
 		GUI_TOUCH_Exec();
 	}
-
-	//jpegdisplay_demo();
+#endif
+	jpegdisplay_demo();
 	//bmpdisplay_demo();
 
 #endif
@@ -89,8 +89,7 @@ void emWinTest()
 
  	LCD_Init();
  	tp_dev.init();
- 	//fatfs_sd_card();
- 	//RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_CRC,ENABLE);
+ 	fatfs_sd_card();
  	__HAL_RCC_CRC_CLK_ENABLE();
 
  	GUI_Init();

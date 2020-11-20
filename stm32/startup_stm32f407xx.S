@@ -423,8 +423,8 @@ __isr_vectors:
    .weak      FSMC_IRQHandler            
    .thumb_set FSMC_IRQHandler,Default_Handler
                      
-   .weak      SDIO_IRQHandler            
-   .thumb_set SDIO_IRQHandler,Default_Handler
+//   .weak      SDIO_IRQHandler
+//   .thumb_set SDIO_IRQHandler,Default_Handler
                      
    .weak      TIM5_IRQHandler            
    .thumb_set TIM5_IRQHandler,Default_Handler
@@ -453,8 +453,8 @@ __isr_vectors:
    .weak      DMA2_Stream2_IRQHandler               
    .thumb_set DMA2_Stream2_IRQHandler,Default_Handler
             
-   .weak      DMA2_Stream3_IRQHandler               
-   .thumb_set DMA2_Stream3_IRQHandler,Default_Handler
+//   .weak      DMA2_Stream3_IRQHandler
+//   .thumb_set DMA2_Stream3_IRQHandler,Default_Handler
             
    .weak      DMA2_Stream4_IRQHandler               
    .thumb_set DMA2_Stream4_IRQHandler,Default_Handler
@@ -483,8 +483,8 @@ __isr_vectors:
    .weak      DMA2_Stream5_IRQHandler               
    .thumb_set DMA2_Stream5_IRQHandler,Default_Handler
                   
-   .weak      DMA2_Stream6_IRQHandler               
-   .thumb_set DMA2_Stream6_IRQHandler,Default_Handler
+//   .weak      DMA2_Stream6_IRQHandler
+//   .thumb_set DMA2_Stream6_IRQHandler,Default_Handler
                   
    .weak      DMA2_Stream7_IRQHandler               
    .thumb_set DMA2_Stream7_IRQHandler,Default_Handler
