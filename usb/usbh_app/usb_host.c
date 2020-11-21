@@ -116,6 +116,7 @@ void task_usbh_server(void *p)
 	while (1)
 	{
 		USBH_Process(&hUsbHostFS);
+		VOSTaskDelay(10);
 	}
 }
 

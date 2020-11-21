@@ -88,10 +88,9 @@ void fatfs_test()
 }
 #endif
 #include "usbh_diskio.h"
-char USBHPath[4];   /* USBH logical drive path */
-FATFS USBDISKFatFs;           /* File system object for USB disk logical drive */
+
 static u8 buf[512*4] __attribute__ ((aligned (4)));
-void fatfs_bandmark_test()
+void fatfs_sddisk_test()
 {
 	s32 i = 0;
 	u32 totals = 0;
@@ -103,10 +102,10 @@ void fatfs_bandmark_test()
 	s32 res;
 	u32 timemark;
 
-	if(FATFS_LinkDriver(&SD_Driver/*&USBH_Driver*/, USBHPath) != 0) {
+	if(FATFS_LinkDriver(&SD_Driver, SDPath) != 0) {
 		return ;
 	}
-	if(f_mount(&fs, (TCHAR const*)USBHPath, 0) != FR_OK)
+	if(f_mount(&fs, (TCHAR const*)SDPath, 0) != FR_OK)
 	{
 		return;
 	}
