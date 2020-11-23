@@ -25,15 +25,20 @@ void hex_str_dump (const char *desc, const void *addr, const int len);
 ppp_pcb*     ppp = NULL;
 struct netif ppp_netif;
 
+extern volatile s32 last_ppp_pack;
+
+volatile s32 aaaaa = 0;
+
 enum {
 	STATUS_PPP_AT_MODE = 0,
 	STATUS_PPP_DATA_MODE,
 };
-
+#define PPP_SEND_MAX	(1024*2)
 #define PPP_RECV_MAX	1024
 #define MAX_ITEMS(arr) (sizeof(arr)/sizeof(arr[0]))
 typedef struct StPppNetDev {
 	struct StVOSRingBuf *pRecvRing;
+	struct StVOSRingBuf *pSendRing;
 	s32 	status; //AT状态和数据状态
 }StPppNetDev;
 
@@ -49,6 +54,7 @@ s32 PppModemInit()
 	if(pRing == 0) return -1;
 
 	pPppNetDev->pRecvRing = VOSRingBufBuild(pRing, sizeof(struct StVOSRingBuf) + PPP_RECV_MAX);
+	pPppNetDev->pSendRing = VOSRingBufBuild(pRing, sizeof(struct StVOSRingBuf) + PPP_SEND_MAX);
 	pPppNetDev->status = STATUS_PPP_AT_MODE;
 
 	lwip_comm_init();
@@ -303,6 +309,7 @@ void hex_str_dump (const char *desc, const void *addr, const int len)
     int i;
     unsigned char buff[17];
     unsigned char *pc = (unsigned char*)addr;
+    s32 irq_save = __vos_irq_save();
     // Output description if given.
     if (desc != NULL)
         printf ("%s:\r\n", desc);
@@ -332,22 +339,123 @@ void hex_str_dump (const char *desc, const void *addr, const int len)
     }
     // And print the final ASCII bit.
     printf ("  %s\r\n", buff);
+    __vos_irq_restore(irq_save);
 }
 
 uint32_t output_cb(ppp_pcb* pcb, u8_t* data, uint32_t len, void* ctx)
 {
-	s32 writed = 0;
-    writed = MODEM_WRITE(data, len, 1);
-//    if (writed > 0) {
-//    	hex_str_dump ("MODEM SEND: ", data, writed);
-//    }
-    return writed;
+	struct StPppNetDev *pPppNetDev = &gPppNetDev;
+	s32 ret = 0;
+	u32 irq_save = 0;
+	s32 mark = 0;
+#if 0
+	while (1) {
+		irq_save = __vos_irq_save();
+		ret = VOSRingBufSet(pPppNetDev->pSendRing, data+mark, len-mark);
+		if (ret > 0) {
+			mark += ret;
+			if (mark >= len) {
+				__vos_irq_restore(irq_save);
+				ret = mark;
+				kprintf("#");
+				if (last_ppp_pack == 1) {
+					while (VOSRingBufIsEmpty()!=0) {
+						VOSTaskDelay(5);
+					}
+					last_ppp_pack = 0;
+				}
+				break;
+			}
+		}
+		__vos_irq_restore(irq_save);
+		VOSTaskDelay(1);
+	}
+    if (ret < 0) {
+    	ret = 0;
+    }
+#elif 1
+    while (1) {
+    	ret = MODEM_WRITE(data+mark, len-mark, 10);
+		if (ret > 0) {
+			mark += ret;
+			if (mark >= len) {
+				mark = len;
+				ret = mark;
+				break;
+			}
+		}
+		VOSTaskDelay(1);
+    }
+    if (ret != len) {
+    	kprintf("warning!!!\r\n");
+    }
+#else
+    ret = MODEM_WRITE(data, len, 10);
+    if (ret != len) {
+    	kprintf("warning!!!\r\n");
+    }
+#endif
+    if (ret > 0) {
+    	//hex_str_dump ("MODEM SEND: ", data, ret);
+    }
+    return ret;
+}
+
+void TaskPppOutput(void *param)
+{
+	u32 irq_save = 0;
+	s32 ret = 0;
+	u8 *send_buf = 0;
+	s32 readed = 0;
+	struct StPppNetDev *pPppNetDev = &gPppNetDev;
+	s32 cnts = 0;
+	s32 send_mark = 0;
+	s32 send_totals = 1024*6;
+	u32 timemark = 0;
+	send_buf = vmalloc(send_totals);
+	if (send_buf == 0) {
+		kprintf("error: TaskPppInput, send_buf == NULL!\r\n");
+		return;
+	}
+    while (1) {
+    	if (pPppNetDev->status == STATUS_PPP_DATA_MODE) {
+    		irq_save = __vos_irq_save();
+			ret = VOSRingBufGet(pPppNetDev->pSendRing, send_buf+send_mark, send_totals-send_mark);
+			__vos_irq_restore(irq_save);
+			if (ret > 0) {
+				if (send_mark == 0) { //第一次有数据时更新时间
+					timemark = VOSGetTimeMs(); //更新时间
+				}
+				send_mark += ret;
+			}
+			if (send_mark >= send_totals || //如果满
+				(VOSGetTimeMs() - timemark > 100 && send_mark > 0))//10ms 超时， 同时有数据，必须要发出去
+			{
+				kprintf("info: send out now(%d Bytes)!\r\n", send_mark);
+				s32 mark = 0;
+				while (1) {
+					ret = MODEM_WRITE(send_buf+mark, send_mark-mark, 10);
+					if (ret > 0) {
+						mark += ret;
+					}
+					if (mark == send_mark)
+						break;
+					//VOSTaskDelay(1);
+				}
+				send_mark = 0; //清空读取的数据
+				//timemark = VOSGetTimeMs(); //更新时间
+			}
+    	}
+    	else {
+    		VOSTaskDelay(10);
+    	}
+    }
 }
 
 void TaskPppInput(void *param)
 {
-	u32 irq_save = 0;
-	u8 buf[1024] = {0};
+	s32 ret = 0;
+	static u8 buf[1024*2] = {0};
 	s32 readed = 0;
 	struct StPppNetDev *pPppNetDev = &gPppNetDev;
 	s32 cnts = 0;
@@ -372,13 +480,14 @@ void TaskPppInput(void *param)
 			}
 		}
 		else {
+			cnts = 0;
 			VOSTaskDelay(5);
 		}
     }
 }
 
 static long long ppp_input_stack[1024];
-
+static long long ppp_output_stack[1024];
 uint8_t lwip_comm_init(void)
 {
 	struct StPppNetDev *pPppNetDev = &gPppNetDev;
@@ -386,8 +495,8 @@ uint8_t lwip_comm_init(void)
     uint8_t ctx = 0;
 
 	s32 task_id;
-	task_id = VOSTaskCreate(TaskPppInput, 0, ppp_input_stack, sizeof(ppp_input_stack), TASK_PRIO_NORMAL, "task_ppp_input");
-
+	task_id = VOSTaskCreate(TaskPppInput, 0, ppp_input_stack, sizeof(ppp_input_stack), TASK_PRIO_REAL, "task_ppp_input");
+	//task_id = VOSTaskCreate(TaskPppOutput, 0, ppp_output_stack, sizeof(ppp_output_stack), TASK_PRIO_NORMAL, "task_ppp_output");
 	while(1) {
 		PppModemAtProcess(gArrAtOpts_HWMe909, MAX_ITEMS(gArrAtOpts_HWMe909));
 		if (pPppNetDev->status == STATUS_PPP_DATA_MODE) break;

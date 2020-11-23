@@ -77,20 +77,41 @@ void  sock_tcp_test()
     	kprintf("ERROR!\r\n");
     }
     kprintf("send msg to server: \n");
-    s8 send_buf[] = "hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!hello world!";
+
+    static s8 buf[1024*2];
+    s32 i=0;
+    for (i=0; i<sizeof(buf); i++) {
+    	buf[i] = 'a' + i % 26;
+    }
+    u32 totals = 0;
     //s8 send_buf[] = "hello world!";
+    u32 timemark = VOSGetTimeMs();
+    u32 mark_1s = 0;
     while(1)
     {
-		if( send(sockfd, send_buf, strlen(send_buf), 0) < 0)
+#if 0
+    	ret = recv(sockfd, buf, strlen(buf), 0);
+    	if (ret > 0) {
+    		u32 time_span = VOSGetTimeMs()-timemark;
+    		totals += ret;
+    		if (VOSGetTimeMs() - mark_1s > 1000) {
+    			kprintf("=====%dKB, %d(s), %d(KBps)=====!\r\n", totals/1000, time_span/1000, totals/time_span);
+    			mark_1s = VOSGetTimeMs();
+    		}
+    	}
+    	if (ret < 0) {
+    		//kprintf("error: ret=%d!\r\n", ret);
+    		//kprintf(".");
+    		VOSTaskDelay(10);
+    	}
+#endif
+#if 1
+		if( send(sockfd, buf, strlen(buf), 0) < 0)
 		{
 			kprintf("ERROR!\r\n");
 			//break;
 		}
-		//VOSTaskDelay(1*1000);
-//		if ((ret = get_socket_err(sockfd)) < 0) {
-//			kprintf("get_socket_err: %d, \"%s\"!\r\n", ret, lwip_strerr(ret));
-//		}
-		//VOSTaskDelay(1*1000);
+#endif
     }
     close(sockfd);
 }

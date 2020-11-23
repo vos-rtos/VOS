@@ -209,12 +209,10 @@ u32 USBH_Fetch(u8 bPipe, u8 *pBuffer, u32 dwLen)
     pChannel = __FindChannel(bPipe);
     if(!pChannel)
         return (0); // pipe不存在
-
     len = VOSRingBufGet(pChannel->pRing, pBuffer, dwLen);
-
-    if(!VOSRingBufIsEmpty(pChannel->pRing))
+    if(!VOSRingBufIsEmpty(pChannel->pRing)) {
     	VOSSemRelease(pChannel->pSemp);
-
+    }
     return (len);
 }
 
@@ -227,6 +225,6 @@ void USBH_Wait(u8 bPipe, u32 dwTimeout)
     if(!pChannel)
         return ;
 
-    VOSSemRelease(pChannel->pSemp);
+    VOSSemWait(pChannel->pSemp, dwTimeout);
 }
 

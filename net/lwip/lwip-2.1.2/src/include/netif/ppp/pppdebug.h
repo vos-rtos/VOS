@@ -75,7 +75,9 @@ extern "C" {
 #define IPV6CPDEBUG(a)
 #define UPAPDEBUG(a)
 #define CHAPDEBUG(a)
-#define PPPDEBUG(a, b)
+#define PPPDEBUG(a, b) //{ s32 irq_save = __vos_irq_save(); kprintf b; __vos_irq_restore(irq_save); }
+
+//#define PPPDEBUG(...)    printf(__VA_ARGS__);printf("\r\n");
 
 #endif /* PPP_DEBUG */
 

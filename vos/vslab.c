@@ -16,8 +16,6 @@
 #include "vheap.h"
 #include "vmem.h"
 
-#define VSLAB_LOCK() 	pSlabMgr->irq_save = __vos_irq_save()
-#define VSLAB_UNLOCK()   __vos_irq_restore(pSlabMgr->irq_save)
 
 #define VSLAB_MAGIC_NUM  	0x05152535
 
@@ -50,7 +48,7 @@ typedef struct StVSlabClass {
 typedef struct StVSlabMgr {
 	s8 *name;					//slab管理器名字
 	struct StVMemHeap *pheap;	//指向某个固定的堆，目前只允许一个堆指定一个分配器
-	s32 irq_save;			//中断状态存储
+	u32 irq_save;			//中断状态存储
 	s32 page_header_size;	//每页管理区的大小（包括bitmap数组大小），单位字节，创建时可以确定
 	s32 slab_header_size;	//StVSlabMgr自身的大小（包括class_base数组大小），单位字节，创建时可以确定
 	s32 align_bytes;		//多少字节对齐
@@ -65,7 +63,7 @@ typedef struct StVSlabMgr {
 typedef struct StVSlabPage {
 	u32 magic;
 	struct list_head list;
-	s32 status;		//指示在哪个链表: SLAB_BITMAP_FREE, SLAB_BITMAP_PARTIAL, SLAB_BITMAP_FULL
+	volatile s32 status;		//指示在哪个链表: SLAB_BITMAP_FREE, SLAB_BITMAP_PARTIAL, SLAB_BITMAP_FULL
 	u8 *block_base; //指向block数组起始地址，就是buddy分配算法首地址
 	s32 block_size; //每个对象块占用的bytes
 	s32 block_max; 	//每页可以存储对象块的最大的个数
@@ -211,9 +209,9 @@ struct StVSlabMgr *VSlabBuild(u8 *mem, s32 len, s32 page_size,
 	s32 page_header_size = VSlabPageHeaderGetSize(page_size, step_size, align_bytes);
 	if (len < slab_header_size) return 0;
 
-	VSLAB_LOCK();
-
 	pSlabMgr = (struct StVSlabMgr*)mem;
+
+	pSlabMgr->irq_save = __vos_irq_save();
 
 	//计算一页中最大数据块尺寸
 	block_max_bytes = VSlabPageCalcBlockMaxSize(page_size, step_size, align_bytes);
@@ -238,7 +236,7 @@ struct StVSlabMgr *VSlabBuild(u8 *mem, s32 len, s32 page_size,
 		pSlabMgr->class_base[i].page_free_num = 0;
 	}
 
-	VSLAB_UNLOCK();
+	__vos_irq_restore(pSlabMgr->irq_save);
 	return pSlabMgr;
 }
 
@@ -269,7 +267,7 @@ struct StVSlabPage *VSlabPageBuild(u8 *mem, s32 len, s32 block_size, struct StVS
 	if (mem == 0 || len < page_header_size) {
 		return 0;
 	}
-	VSLAB_LOCK();
+	pSlabMgr->irq_save = __vos_irq_save();
 	//页面最高地址存放页管理区信息
 	pSlabPage = (struct StVSlabPage*)(mem+len- page_header_size);
 	//block_space为所有blocks数据区的总大小
@@ -292,7 +290,7 @@ struct StVSlabPage *VSlabPageBuild(u8 *mem, s32 len, s32 block_size, struct StVS
 	pSlabPage->bitmap_max = (nBlocks + 8 - 1) / 8;
 	//bitmap_max计算页管理区位图数组大小（最大值）
 	//pSlabPage->bitmap_max = (page_size / step_size + 8 - 1) / 8;
-	VSLAB_UNLOCK();
+	__vos_irq_restore(pSlabMgr->irq_save);
 
 	return pSlabPage;
 }
@@ -365,7 +363,7 @@ void *VSlabBlockAlloc(struct StVSlabMgr *pSlabMgr, s32 size)
 	if (index >= pSlabMgr->class_max) {
 		return 0;
 	}
-	VSLAB_LOCK();
+	pSlabMgr->irq_save = __vos_irq_save();
 	//找到对应的class后，找到该class的部分链表，因为部分链表如果存在，肯定有至少一个block可分配
 	head_partial = &pSlabMgr->class_base[index].page_partial;
 	if (list_empty(head_partial)) { //如果partial为空，那需要从free链表中取出一个放到partial中
@@ -374,9 +372,9 @@ void *VSlabBlockAlloc(struct StVSlabMgr *pSlabMgr, s32 size)
 
 			slab_page = 0;
 			if (pSlabMgr->pheap) { //从堆里申请一页
-				VSLAB_UNLOCK();
+				__vos_irq_restore(pSlabMgr->irq_save);
 				u8 *tmp_ptr = (u8*)VMemMalloc(pSlabMgr->pheap, pSlabMgr->page_size, 1);//1为标志slab使用，释放时使用
-				VSLAB_LOCK();
+				pSlabMgr->irq_save = __vos_irq_save();
 				slab_page = VSlabPageBuild(tmp_ptr, pSlabMgr->page_size, (index+1)*pSlabMgr->step_size, pSlabMgr);
 			}
 			if (slab_page == 0) {
@@ -414,7 +412,7 @@ void *VSlabBlockAlloc(struct StVSlabMgr *pSlabMgr, s32 size)
 	}
 
 END_SLAB_BLOCK_ALLOC:
-	VSLAB_UNLOCK();
+	__vos_irq_restore(pSlabMgr->irq_save);
 
 	return pnew;
 
@@ -476,7 +474,7 @@ s32 VSlabBlockFree(struct StVSlabMgr *pSlabMgr, void *ptr)
 	struct StVSlabPage *slab_page = 0;
 	struct StVSlabPage *head_partial = 0;
 
-	VSLAB_LOCK();
+	pSlabMgr->irq_save = __vos_irq_save();
 	//查看释放的地址所在的页基址，通过buddy分配器上查找
 	if (pSlabMgr->pheap) {
 		pPageBase = (u8*)VMemGetPageBaseAddr(pSlabMgr->pheap, ptr);
@@ -525,9 +523,9 @@ s32 VSlabBlockFree(struct StVSlabMgr *pSlabMgr, void *ptr)
 			slab_page->magic = 0;
 
 			if (pSlabMgr->pheap) {
-				VSLAB_UNLOCK();
+				__vos_irq_restore(pSlabMgr->irq_save);
 				VMemFree (pSlabMgr->pheap , pPageBase, 1);//指示slab调用释放函数，要buddy释放自己的内存。
-				VSLAB_LOCK();
+				pSlabMgr->irq_save = __vos_irq_save();
 			}
 		}
 		else {
@@ -557,7 +555,7 @@ s32 VSlabBlockFree(struct StVSlabMgr *pSlabMgr, void *ptr)
 
 END_SLAB_BLOCK_FREE:
 
-	VSLAB_UNLOCK();
+	__vos_irq_restore(pSlabMgr->irq_save);
 
 	return ret;
 }
@@ -648,7 +646,7 @@ s32 VSlabInfohow(struct StVSlabMgr *pSlabMgr)
 	struct StVSlabClass *pClass = 0;
 	struct StVSlabPage *pPage = 0;
 
-	VSLAB_LOCK();
+	pSlabMgr->irq_save = __vos_irq_save();
 	kprintf(" slab 管理区信息：\r\n");
 	kprintf(" slab 名字: \"%s\", slab 头总大小: %d, 页管理区总大小: %d\r\n",
 			pSlabMgr->name, pSlabMgr->slab_header_size, pSlabMgr->page_header_size);
@@ -693,7 +691,7 @@ s32 VSlabInfohow(struct StVSlabMgr *pSlabMgr)
 			}
 		}
 	}
-	VSLAB_UNLOCK();
+	__vos_irq_restore(pSlabMgr->irq_save);
 	return 0;
 }
 
@@ -729,7 +727,7 @@ s32 VSlabBoudaryCheck(struct StVSlabMgr *pSlabMgr)
 	s32 counter_free = 0;
 	s32 counter_partial = 0;
 	void *iter = 0; 
-	VSLAB_LOCK();
+	pSlabMgr->irq_save = __vos_irq_save();
 	//判断pSlabMgr内部所有元素是否正常
 	if (pSlabMgr->align_bytes != VSLAB_ALIGN_SIZE) BOUNDARY_ERROR();
 	if (pSlabMgr->page_size != VSLAB_PAGE_SIZE) BOUNDARY_ERROR();
@@ -808,11 +806,11 @@ s32 VSlabBoudaryCheck(struct StVSlabMgr *pSlabMgr)
 			if (pClass->page_free_num > VSLAB_FREE_PAGES_THREHOLD) BOUNDARY_ERROR();
 		}
 	}
-	VSLAB_UNLOCK();
+	__vos_irq_restore(pSlabMgr->irq_save);
 	return 0;
 
 ERROR_RET:
-	VSLAB_UNLOCK();
+	__vos_irq_restore(pSlabMgr->irq_save);
 	kprintf("*************\r\nERROR: %s, please check the code!!!\r\n*************\r\n", __FUNCTION__);
 	while (1);
 	return 0;

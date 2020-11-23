@@ -16,8 +16,6 @@
 
 s32 VBoudaryCheck(struct StVMemHeap *pheap);
 
-#define VMEM_LOCK() 	pheap->irq_save = __vos_irq_save()
-#define VMEM_UNLOCK()   __vos_irq_restore(pheap->irq_save)
 
 /********************************************************************************************************
 * 函数：u8 GetCurTaskId();
@@ -192,7 +190,7 @@ struct StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size, s32 align_bytes,
 			break;
 		}
 
-		VMEM_LOCK();
+		pheap->irq_save = __vos_irq_save();
 		//当cnts > 1, 证明page[MAX_PAGE_CLASS_MAX-1]不能一次性容纳整块，可以增加MAX_PAGE_CLASS_MAX
 		//否则，将会把内存连续的放到page[MAX_PAGE_CLASS_MAX-1]链表中
 		for (i = 0; i<cnts; i++) {
@@ -204,7 +202,7 @@ struct StVMemHeap *VMemBuild(u8 *mem, s32 len, s32 page_size, s32 align_bytes,
 			list_add_tail(&pMCB->list, &pheap->page_class[index]);
 
 		}
-		VMEM_UNLOCK();
+		__vos_irq_restore(pheap->irq_save);
 
 		offset_size += temp;
 	}
@@ -279,7 +277,7 @@ void *VMemMalloc(struct StVMemHeap *pheap, u32 size, s32 is_slab)
 	//往大块找内存
 	index_top = -1;
 
-	VMEM_LOCK();
+	pheap->irq_save = __vos_irq_save();
 	for (i = index; i<MAX_PAGE_CLASS_MAX; i++)
 	{
 
@@ -341,7 +339,7 @@ void *VMemMalloc(struct StVMemHeap *pheap, u32 size, s32 is_slab)
 #endif
 #endif
 	}
-	VMEM_UNLOCK();
+	__vos_irq_restore(pheap->irq_save);
 
 
 END_VMEMMALLOC:
@@ -433,7 +431,7 @@ s32 VMemFree(struct StVMemHeap *pheap, void *p, s32 is_slab)
 //		return ret;
 //	}
 
-	VMEM_LOCK();
+	pheap->irq_save = __vos_irq_save();
 	//释放时也得从已分配链表中删除
 	list_del(&pMCB->list);
 
@@ -525,7 +523,7 @@ s32 VMemFree(struct StVMemHeap *pheap, void *p, s32 is_slab)
 		list_add_tail(&pMCB->list, &pheap->page_class[index]);//添加到空闲链表末尾
 	}
 	ret = 0; //成功在本堆释放
-	VMEM_UNLOCK();
+	__vos_irq_restore(pheap->irq_save);
 #if VOS_RUNTIME_BOUDARY_CHECK
 	VBoudaryCheck(pheap);
 #endif
@@ -554,7 +552,7 @@ void *VMemExpAlloc(struct StVMemHeap *pheap, void *p, u32 size)
 
 	if (BLOCK_OWN_BUDDY == who) {
 		//判断是本堆的malloc
-		VMEM_LOCK();
+		pheap->irq_save = __vos_irq_save();
 		if ((u8*)p >= pheap->page_base &&
 			(u8*)p < pheap->mem_end &&
 			((u8*)p - pheap->page_base) % pheap->page_size == 0) {
@@ -563,11 +561,11 @@ void *VMemExpAlloc(struct StVMemHeap *pheap, void *p, u32 size)
 			if (pMCB->status == VMEM_STATUS_USED && //必须是已经分配出去状态
 				pMCB->page_max * pheap->page_size >= size) { //分配的剩余空间足够多
 				ptr = p;
-				VMEM_UNLOCK();
+				__vos_irq_restore(pheap->irq_save);
 				goto END_VMEMREALLOC;
 			}
 		}
-		VMEM_UNLOCK();
+		__vos_irq_restore(pheap->irq_save);
 	}
 
 END_VMEMREALLOC:
@@ -614,7 +612,7 @@ s32 VMemGetHeapInfo(struct StVMemHeap *pheap, struct StVMemHeapInfo *pheadinfo)
 
 	free_total = 0;
 
-	VMEM_LOCK();
+	pheap->irq_save = __vos_irq_save();
 	for (i = 0; i<MAX_PAGE_CLASS_MAX; i++) {
 		if (!list_empty(&pheap->page_class[i])) {//非空
 			list_for_each(list, &pheap->page_class[i]) {
@@ -632,7 +630,7 @@ s32 VMemGetHeapInfo(struct StVMemHeap *pheap, struct StVMemHeapInfo *pheadinfo)
 		used_total += pMCB->page_max*pheap->page_size;
 	}
 
-	VMEM_UNLOCK();
+	__vos_irq_restore(pheap->irq_save);
 
 	pheadinfo->align_bytes = pheap->align_bytes;
 	pheadinfo->page_counts = pheap->page_counts;
@@ -658,7 +656,7 @@ s32 VMemInfoDump(struct StVMemHeap *pheap)
 	s32 i;
 	struct list_head *list;
 	StVMemCtrlBlock *pMCB = 0;
-	VMEM_LOCK();
+	pheap->irq_save = __vos_irq_save();
 	for (i = 0; i<MAX_PAGE_CLASS_MAX; i++) {
 		if (list_empty(&pheap->page_class[i])) {
 			kprintf("page_class[%02d]: head->NULL\r\n", i);
@@ -688,7 +686,7 @@ s32 VMemInfoDump(struct StVMemHeap *pheap)
 		}
 		kprintf("\r\n");
 	}
-	VMEM_UNLOCK();
+	__vos_irq_restore(pheap->irq_save);
 
 #if VOS_SLAB_ENABLE
 	s32 VSlabInfoDump(struct StVSlabMgr *pSlabMgr);
@@ -718,7 +716,7 @@ s32 VMemTraceDestory(struct StVMemHeap *pheap)
 	StVMemCtrlBlock *pMCB = 0;
 	u8 *pBase = 0;
 
-	VMEM_LOCK();
+	pheap->irq_save = __vos_irq_save();
 	//检查已经分配成的内存是否被篡改
 	list_for_each(list, &pheap->mcb_used) {
 		pMCB = list_entry(list, struct StVMemCtrlBlock, list);
@@ -732,7 +730,7 @@ s32 VMemTraceDestory(struct StVMemHeap *pheap)
 			}
 		}
 	}
-	VMEM_UNLOCK();
+	__vos_irq_restore(pheap->irq_save);
 
 	return ret;
 }
@@ -771,7 +769,7 @@ s32 VBoudaryCheck(struct StVMemHeap *pheap)
 	//页数据区的末尾就是mem_end
 	if ((u8*)ALIGN_DOWN(&pheap->page_base[pheap->page_counts * pheap->page_size], pheap->align_bytes) != pheap->mem_end) BOUNDARY_ERROR();
 
-	VMEM_LOCK();
+	pheap->irq_save = __vos_irq_save();
 	//检查页缓冲区链表头(page_class[n])数据及链表数据是否正常
 	free_total = 0;
 	for (i = 0; i<MAX_PAGE_CLASS_MAX; i++) {
@@ -817,7 +815,7 @@ s32 VBoudaryCheck(struct StVMemHeap *pheap)
 	//所有空闲链表总和+已分配链表总和等于所有内存总和
 	if (used_total + free_total != pheap->page_counts * pheap->page_size) BOUNDARY_ERROR();
 
-	VMEM_UNLOCK();
+	__vos_irq_restore(pheap->irq_save);
 
 #if VOS_SLAB_ENABLE
 	s32 VSlabBoudaryCheck(struct StVSlabMgr *pSlabMgr);
@@ -829,7 +827,7 @@ s32 VBoudaryCheck(struct StVMemHeap *pheap)
 	return 1;
 
 ERROR_RET:
-	VMEM_UNLOCK();
+	__vos_irq_restore(pheap->irq_save);
 
 	VMemInfoDump(pheap);
 	kprintf("*************\r\nERROR: %s, please check the code!!!\r\n*************\r\n", __FUNCTION__);

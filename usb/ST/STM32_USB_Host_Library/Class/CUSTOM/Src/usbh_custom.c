@@ -1,7 +1,7 @@
 #include "vos.h"
 #include "usbh_custom.h"
 
-#define DEFAULT_WAIT_TIME          50
+#define DEFAULT_WAIT_TIME          10//20//50
 #define NOT_SUPPORT                0xFF
 
 
@@ -858,10 +858,12 @@ USBH_StatusTypeDef  USBH_CUSTOM_MODEM_Transmit (USBH_HandleTypeDef *pHost, uint8
             while(1)
             {
                 status = __MODEM_ProcessTransmission(pHost, &pBuff, pLength);
-                if(USBH_OK == status)
+                if(USBH_OK == status) {
                     break; // done
-                if((VOS_WAIT_FOREVER_U32 != dwTimeout) && ((uint32_t)(VOSGetTimeMs() - log) > dwTimeout))
+                }
+                if((VOS_WAIT_FOREVER_U32 != dwTimeout) && ((uint32_t)(VOSGetTimeMs() - log) > dwTimeout)) {
                     break; // timeout
+                }
             }
         }
         __ReleasePipe(chandle->pMODEM_TxPipe);
