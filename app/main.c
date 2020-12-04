@@ -16,15 +16,6 @@ int usb2uart_test();
 
 void usbh_udisk_test();
 
-//#include "lcd_dev/lcd.h"
-//#include "tp_dev/touch.h"
-
-u64 xx_stack[1024];
-
-void task_usbh_test(void *p)
-{
-	usbh_udisk_test();
-}
 int dumphex(const unsigned char *buf, int size);
 
 s32 net_init();
@@ -37,9 +28,20 @@ void emWinTest();
 #include "usb_host.h"
 #include "usbh_udisk.h"
 
+void MX_GPIO_Init()
+{
+
+  GPIO_InitTypeDef GPIO_InitStruct;
+
+  __HAL_RCC_GPIOI_CLK_ENABLE();
+  __HAL_RCC_GPIOH_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+}
+
 //#define DEF_ETH 1
 #define DEF_4G_PPP 1
-//#define DEF_USBH_UDISK 1
 //#define DEF_SD_FATFS 1
 //#define DEF_USB_FATFS 1
 //#define DEF_GUI 1
@@ -51,21 +53,8 @@ void main(void *param)
 	void uart_init(u32 bound);
 	uart_init(115200);
 	kprintf("hello world!\r\n");
-
-#if DEF_USBH_UDISK
-	usb_host_init();
-	usbh_udisk_init();
-
-	while (usbh_udisk_status() != APP_STATUS_READY) {
-		VOSTaskDelay(1000);
-	}
-//	void MSC_Application(void);
-//	MSC_Application();
-	void fatfs_bandmark_test();
-	fatfs_bandmark_test();
-	while (1) {
-		VOSTaskDelay(5*1000);
-	}
+#if !USE_USB_FS
+	MX_GPIO_Init();
 #endif
 
 #if DEF_UART_USB

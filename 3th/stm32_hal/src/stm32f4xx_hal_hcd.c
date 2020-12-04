@@ -937,7 +937,7 @@ static void HCD_HC_IN_IRQHandler(HCD_HandleTypeDef *hhcd, uint8_t chnum)
 
 /**
   * @brief  Handle Host Channel OUT interrupt requests.
-  * @param  hhcd HCD handle
+  * @param  hhcd HCD handle`
   * @param  chnum Channel number.
   *         This parameter can be a value from 1 to 15
   * @retval None
@@ -1119,12 +1119,24 @@ static void HCD_RXQLVL_IRQHandler(HCD_HandleTypeDef *hhcd)
 			}
 	    }
 	    else {
-	        unsigned char buffer[128];
+	        unsigned int rbuf_tmp[64/4];// __attribute__ ((aligned (4)));
+	        int mark = 0;
 	        if(pktcnt > 0)
 	        {
+	        	//kprintf("pkcnt=%d!\r\n", pktcnt);
 	            void USBH_Store(unsigned char bPipe, unsigned char *pData, unsigned int dwLen);
-	            USB_ReadPacket(hhcd->Instance, buffer, pktcnt);
-	            USBH_Store(channelnum, buffer, pktcnt);
+	            while (1) {
+					if (mark + sizeof(rbuf_tmp) >= pktcnt) {
+						USB_ReadPacket(hhcd->Instance, (uint8_t*)rbuf_tmp, pktcnt-mark);
+						USBH_Store(channelnum, (uint8_t*)rbuf_tmp, pktcnt-mark);
+						break;
+					}
+					else {
+						mark += sizeof(rbuf_tmp);
+						USB_ReadPacket(hhcd->Instance, (uint8_t*)rbuf_tmp, sizeof(rbuf_tmp));
+						USBH_Store(channelnum, (uint8_t*)rbuf_tmp, sizeof(rbuf_tmp));
+					}
+	            }
 	        }
 
 	        /*manage multiple Xfer */

@@ -126,9 +126,11 @@ void usb_host_init()
 	s32 task_id;
 
 	SetUSBWorkMode(USB_WORK_AS_HOST);
-
+#if USE_USB_FS
 	USBH_Init(&hUsbHostFS, USBH_UserProcess, HOST_FS);
-
+#else
+	USBH_Init(&hUsbHostFS, USBH_UserProcess, HOST_HS);
+#endif
 	USBH_RegisterClass(&hUsbHostFS, USBH_CUSTOM_CLASS);
 	USBH_RegisterClass(&hUsbHostFS, USBH_HID_CLASS);
 	USBH_RegisterClass(&hUsbHostFS, USBH_MSC_CLASS);

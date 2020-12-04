@@ -271,7 +271,17 @@ void OTG_FS_IRQHandler(void)
   /* USER CODE END OTG_FS_IRQn 1 */
 }
 
+extern HCD_HandleTypeDef hhcd_USB_OTG_HS;
+void OTG_HS_IRQHandler(void)
+{
+  /* USER CODE BEGIN OTG_HS_IRQn 0 */
 
+  /* USER CODE END OTG_HS_IRQn 0 */
+  HAL_HCD_IRQHandler(&hhcd_USB_OTG_HS);
+  /* USER CODE BEGIN OTG_HS_IRQn 1 */
+
+  /* USER CODE END OTG_HS_IRQn 1 */
+}
 
 
 

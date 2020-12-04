@@ -53,7 +53,7 @@ s32 SetNetWorkInfo (s8 *ipAddr, s8 *netMask, s8 *gateWay)
     netif_set_addr(GetNetIfPtr(), &addr, &mask, &gw);
 	return ret;
 }
-
+#include "lwip/api.h"
 
 int get_socket_err(int s);
 void  sock_tcp_test()
@@ -67,7 +67,7 @@ void  sock_tcp_test()
     }
     memset(&servaddr, 0, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
-    servaddr.sin_port = htons(55750);
+    servaddr.sin_port = htons(28424);
     //servaddr.sin_port = htons(5555);
     if( inet_aton("103.46.128.49", &servaddr.sin_addr) <= 0){
     //if( inet_aton("192.168.2.100", &servaddr.sin_addr) <= 0){
@@ -78,7 +78,7 @@ void  sock_tcp_test()
     }
     kprintf("send msg to server: \n");
 
-    static s8 buf[1024*2];
+    static s8 buf[1024*6] __attribute__ ((aligned (4)));
     s32 i=0;
     for (i=0; i<sizeof(buf); i++) {
     	buf[i] = 'a' + i % 26;
@@ -106,7 +106,7 @@ void  sock_tcp_test()
     	}
 #endif
 #if 1
-		if( send(sockfd, buf, strlen(buf), 0) < 0)
+		if( (ret = send(sockfd, buf, sizeof(buf), NETCONN_COPY)) < 0)
 		{
 			kprintf("ERROR!\r\n");
 			//break;

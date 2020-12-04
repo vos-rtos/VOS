@@ -73,10 +73,7 @@ s32 CUSTOM_WriteMODEM(u8 *pBuf, u32 dwLen, u32 dwTimeout)
         printf("\r\n: warn : usb    : modem device(channel) is not register.");
         return (0);
     }
-
-
     USBH_CUSTOM_MODEM_Transmit(host, buf, &len, timeout);
-
     return (dwLen - len);
 }
 

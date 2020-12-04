@@ -2,7 +2,8 @@
 #include "usbh_diskio.h"
 char USBHPath[4];   /* USBH logical drive path */
 FATFS USBDISKFatFs;           /* File system object for USB disk logical drive */
-static u8 buf[512*4] __attribute__ ((aligned (4)));
+
+static u8 buf[512*16] __attribute__ ((aligned (4)));
 void fatfs_udisk_test()
 {
 	s32 i = 0;
@@ -35,7 +36,7 @@ void fatfs_udisk_test()
     		if (FR_OK==fr && num > 0) {
     			totals += num;
     		}
-    		if (totals >= 1*1024*1024) {
+    		if (totals >= 20*1024*1024) {
     			kprintf("info: fatfs write speed: %dK(B)!\r\n", totals / (VOSGetTimeMs()-timemark));
     			break;
     		}
@@ -49,7 +50,7 @@ void fatfs_udisk_test()
     		if (FR_OK==fr && num > 0) {
     			totals += num;
     		}
-    		if (totals >= 1*1024*1024) {
+    		if (totals >= 20*1024*1024) {
     			kprintf("info: fatfs read speed: %dK(B)!\r\n", totals / (VOSGetTimeMs()-timemark));
     			break;
     		}

@@ -33,7 +33,7 @@ enum {
 	STATUS_PPP_AT_MODE = 0,
 	STATUS_PPP_DATA_MODE,
 };
-#define PPP_SEND_MAX	(1024*2)
+#define PPP_SEND_MAX	(1024*8)
 #define PPP_RECV_MAX	1024
 #define MAX_ITEMS(arr) (sizeof(arr)/sizeof(arr[0]))
 typedef struct StPppNetDev {
@@ -47,14 +47,18 @@ struct StPppNetDev gPppNetDev;
 uint8_t lwip_comm_init();
 s32 PppModemInit()
 {
-	void *pRing = 0;
+	void *pRecvRing = 0;
+	void *pSendRing = 0;
 	struct StPppNetDev *pPppNetDev = &gPppNetDev;
 
-	pRing = vmalloc(sizeof(struct StVOSRingBuf) + PPP_RECV_MAX);
-	if(pRing == 0) return -1;
+	pRecvRing = vmalloc(sizeof(struct StVOSRingBuf) + PPP_RECV_MAX);
+	if(pRecvRing == 0) return -1;
+	pPppNetDev->pRecvRing = VOSRingBufBuild(pRecvRing, sizeof(struct StVOSRingBuf) + PPP_RECV_MAX);
 
-	pPppNetDev->pRecvRing = VOSRingBufBuild(pRing, sizeof(struct StVOSRingBuf) + PPP_RECV_MAX);
-	pPppNetDev->pSendRing = VOSRingBufBuild(pRing, sizeof(struct StVOSRingBuf) + PPP_SEND_MAX);
+	pSendRing = vmalloc(sizeof(struct StVOSRingBuf) + PPP_SEND_MAX);
+	if(pSendRing == 0) return -1;
+	pPppNetDev->pSendRing = VOSRingBufBuild(pSendRing, sizeof(struct StVOSRingBuf) + PPP_SEND_MAX);
+
 	pPppNetDev->status = STATUS_PPP_AT_MODE;
 
 	lwip_comm_init();
@@ -154,6 +158,7 @@ StAtOption gArrAtOpts_HWMe909[] = {
 		{"at+cgsn\r\n", 						"OK", 		3, 2000, atd_connect_cb},
 		{"at+cpin?\r\n", 						"OK", 		3, 2000, atd_connect_cb},
 		{"at+cimi\r\n", 						"OK", 		3, 2000, atd_connect_cb},
+		{"at+csq\r\n", 							"OK", 		3, 2000, atd_connect_cb},
 		{"at+cgreg?\r\n", 						"OK", 		3, 2000, atd_connect_cb},
 		{"at+cgdcont=1,\"ip\",\"3gnet\"\r\n", 	"OK", 		3, 2000, atd_connect_cb},
 		{"atd*99#\r\n",							"CONNECT", 	3, 2000, atd_connect_cb},
@@ -357,13 +362,6 @@ uint32_t output_cb(ppp_pcb* pcb, u8_t* data, uint32_t len, void* ctx)
 			if (mark >= len) {
 				__vos_irq_restore(irq_save);
 				ret = mark;
-				kprintf("#");
-				if (last_ppp_pack == 1) {
-					while (VOSRingBufIsEmpty()!=0) {
-						VOSTaskDelay(5);
-					}
-					last_ppp_pack = 0;
-				}
 				break;
 			}
 		}
@@ -428,11 +426,12 @@ void TaskPppOutput(void *param)
 				}
 				send_mark += ret;
 			}
-			if (send_mark >= send_totals || //如果满
-				(VOSGetTimeMs() - timemark > 100 && send_mark > 0))//10ms 超时， 同时有数据，必须要发出去
+			if (send_mark >= send_totals/2 || //如果满
+				(VOSGetTimeMs() - timemark > 50 && send_mark > 0))//10ms 超时， 同时有数据，必须要发出去
 			{
-				kprintf("info: send out now(%d Bytes)!\r\n", send_mark);
+				//kprintf("info: send out now(%d Bytes)!\r\n", send_mark);
 				s32 mark = 0;
+				u32 time_temp = VOSGetTimeMs();
 				while (1) {
 					ret = MODEM_WRITE(send_buf+mark, send_mark-mark, 10);
 					if (ret > 0) {
@@ -442,8 +441,13 @@ void TaskPppOutput(void *param)
 						break;
 					//VOSTaskDelay(1);
 				}
+				u32 span_ms = VOSGetTimeMs() - time_temp;
+				kprintf("===%d(B)/%d(ms)=%d(B/s)===\r\n", send_mark, span_ms, send_mark*1000/span_ms);
 				send_mark = 0; //清空读取的数据
 				//timemark = VOSGetTimeMs(); //更新时间
+			}
+			else {
+				VOSTaskDelay(5);
 			}
     	}
     	else {
@@ -519,8 +523,8 @@ uint8_t lwip_comm_init(void)
     }
     ppp_set_default(ppp);
 
-    ping_init();
-    dns_init();
+//    ping_init();
+//    dns_init();
 //	void lwip_ping(char *ip_str);
 //	while (1) {
 //	lwip_ping("221.122.82.30");

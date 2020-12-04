@@ -113,7 +113,7 @@ void HAL_SD_MspInit(SD_HandleTypeDef *hsd)
     HAL_DMA_Init(&SDTxDMAHandler);              //初始化发送DMA 
   
 
-    HAL_NVIC_SetPriority(DMA2_Stream3_IRQn, 2, 1);  //接收DMA中断优先级
+    HAL_NVIC_SetPriority(DMA2_Stream3_IRQn, 0, 1);  //接收DMA中断优先级
     HAL_NVIC_EnableIRQ(DMA2_Stream3_IRQn);
     HAL_NVIC_SetPriority(DMA2_Stream6_IRQn, 2, 1);  //发送DMA中断优先级
     HAL_NVIC_EnableIRQ(DMA2_Stream6_IRQn);

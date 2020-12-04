@@ -5,7 +5,7 @@
 #include "vos.h"
 
 #define NULL 0
-#define BUFFER_SIZE                128
+#define BUFFER_SIZE                (128*4)
 
 USBH_StatusTypeDef __USBH_LL_EnAsync(USBH_HandleTypeDef *pHost, uint8_t pipe);
 USBH_StatusTypeDef __USBH_LL_DisAsync(USBH_HandleTypeDef *pHost, uint8_t pipe);

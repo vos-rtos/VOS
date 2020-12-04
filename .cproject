@@ -107,12 +107,13 @@
 									<listOptionValue builtIn="false" value="__FPU_PRESENT=1"/>
 									<listOptionValue builtIn="false" value="__FPU_USED=1"/>
 									<listOptionValue builtIn="false" value="ARM_MATH_CM4"/>
-									<listOptionValue builtIn="false" value="USB_OTG_FS=1"/>
-									<listOptionValue builtIn="false" value="USB_OTG_HS=0"/>
+									<listOptionValue builtIn="false" value="USB_OTG_FS=0"/>
+									<listOptionValue builtIn="false" value="USB_OTG_HS=1"/>
 									<listOptionValue builtIn="false" value="USE_USB_FS=1"/>
 									<listOptionValue builtIn="false" value="STM32F4=1"/>
 									<listOptionValue builtIn="false" value="STM32F407xx=1"/>
 									<listOptionValue builtIn="false" value="__Vendor_SysTickConfig=1"/>
+									<listOptionValue builtIn="false" value="USE_FULL_LL_DRIVER"/>
 								</option>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.other.822369380" name="Other compiler flags" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.other" useByScannerDiscovery="true" value="-Wa,-mimplicit-it=thumb" valueType="string"/>
 								<inputType id="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.input.1154890801" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.input"/>
