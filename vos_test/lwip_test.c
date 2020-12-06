@@ -106,7 +106,7 @@ void  sock_tcp_test()
     	}
 #endif
 #if 1
-		if( (ret = send(sockfd, buf, sizeof(buf), NETCONN_COPY)) < 0)
+		if( (ret = send(sockfd, buf, sizeof(buf), 0)) < 0)
 		{
 			kprintf("ERROR!\r\n");
 			//break;

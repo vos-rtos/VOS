@@ -116,9 +116,11 @@ vos_start(void)
 	struct StVMemHeap *pheap2 = VMemBuild((u8*)&_Heap_ccmram_Begin, (u32)&_Heap_ccmram_Limit-(u32)&_Heap_ccmram_Begin,
 			1024, 8, VHEAP_ATTR_SYS, "vos_sys_ccram_heap", 1);//启动slab分配器
 #if USE_USB_FS
+#if !defined(DATA_IN_ExtSRAM)
 	ExSRamInit();
 	struct StVMemHeap *pheap3 = VMemBuild(ExSRamGetBaseAddr(), ExSRamGetTotalSize(),
 			1024, 8, VHEAP_ATTR_SYS, "vos_sys_exsram_heap", 1);//启动slab分配器);
+#endif
 #endif
 	VOSSemInit();
 	VOSMutexInit();

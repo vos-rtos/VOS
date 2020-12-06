@@ -471,7 +471,7 @@ void TaskPppInput(void *param)
 				if (ppp) {
 					pppos_input_tcpip(ppp, buf, readed);  // 0x7e
 				}
-				if (cnts++ > 50) {
+				if (cnts++ > 1000) {
 					VOSTaskDelay(5);
 					cnts = 0;
 				}

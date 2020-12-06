@@ -294,6 +294,11 @@ sys_thread_t sys_thread_new(const char *name, lwip_thread_fn thread, void *arg, 
 		prio = TASK_PRIO_NORMAL;
 	}
 
+	if (((u32)pstack)%8 != 0) {
+		pstack = pstack + 4;
+		stacksize -= 4;
+	}
+
 	task_id = VOSTaskCreate(thread, arg, pstack, stacksize, prio, name);
 
 	return task_id;
