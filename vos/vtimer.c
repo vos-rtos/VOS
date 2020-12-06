@@ -29,7 +29,7 @@ static StVOSMutex *gMutexVosTimer = 0; //互斥锁来保护资源
 
 volatile u32 gVosTimerMarkNearest = TIMEOUT_INFINITY_U32; //记录延时时刻
 
-static long long task_timer_stack[1024];
+//static long long task_timer_stack[1024];
 
 /********************************************************************************************************
 * 函数：void VOSTimerSemPost();
@@ -287,8 +287,9 @@ void VOSTimerInit()
 	gMutexVosTimer = VOSMutexCreate("MutexVosTimer");
 
 	gSemVosTimer = VOSSemCreate(1, 1, "SemVosTimer");//创建一个信号量，做延时和唤醒处理
-
-	s32 task_id = VOSTaskCreate(VOSTaskTimer, 0, task_timer_stack, sizeof(task_timer_stack), VOS_TASK_TIMER_PRIO, "vtimer");
-
+	void *task_timer_stack = vmalloc(1024*8);
+	if (task_timer_stack) {
+		s32 task_id = VOSTaskCreate(VOSTaskTimer, 0, task_timer_stack, 1024*8, VOS_TASK_TIMER_PRIO, "vtimer");
+	}
 }
 

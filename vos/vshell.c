@@ -14,7 +14,7 @@
 
 void RegistUartEvent(s32 event, s32 task_id);
 
-static long long task_vshell_stack[512];
+//static long long task_vshell_stack[512];
 long long stack_shell_bg[512];
 
 typedef void (*VSHELL_FUN)(s8 **parr, s32 cnts);
@@ -182,8 +182,8 @@ void VOSTaskShell(void *param)
 void VOSShellInit()
 {
 	s32 i = 0;
-
-	s32 task_id = VOSTaskCreate(VOSTaskShell, 0, task_vshell_stack, sizeof(task_vshell_stack), VOS_TASK_VSHELL_PRIO, "vshell");
+	void *task_vshell_stack = vmalloc(1024*4);
+	s32 task_id = VOSTaskCreate(VOSTaskShell, 0, task_vshell_stack, 1024*4, VOS_TASK_VSHELL_PRIO, "vshell");
 
 	RegistUartEvent(EVENT_USART1_RECV, task_id);
 

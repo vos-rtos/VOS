@@ -1,11 +1,3 @@
-/**
-	LWIP配置文件,通过此文件可以选择LWIP的功能,
-	此文件基于opt.h文件,opt.h是LWIP"出厂"时原装的文件,由Adam等人编写
-	而lwipopt.h的作者是ST的,它集合了lwip中常常需要改动的地方
-	和针对ST所特有的配置选项添加进来了,这两个文件里边都配置了的
-	选项以后者为准,不是共有的选项以他们各自的配置为准
-*/
-
 #ifndef __LWIPOPTS_H__
 #define __LWIPOPTS_H__
 
@@ -14,12 +6,7 @@ extern void vfree(void *ptr);
 extern void *vrealloc(void *ptr, unsigned int size);
 extern void *vcalloc(unsigned int nitems, unsigned int size);
 
-//#define LWIP_NETIF_TX_SINGLE_PBUF       1
-
-//#define MEMP_MEM_MALLOC  1
-
 #define LWIP_TCPIP_CORE_LOCKING 0
-//#define HAVE_MULTILINK 1
 
 #define LWIP_RAW 1
 
@@ -53,7 +40,6 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
 
 #define LWIP_COMPAT_MUTEX_ALLOWED 1
 
-/*----------------Thread Priority---------------------------------------------*/
 #ifndef TCPIP_THREAD_PRIO
 #define TCPIP_THREAD_PRIO		11	//定义内核任务的优先级为5
 #endif
@@ -92,30 +78,13 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
 //MEMP_NUM_TCP_PCB_LISTEN:能够监听的TCP连接数量
 #define MEMP_NUM_TCP_PCB_LISTEN 6
 
-//MEMP_NUM_TCP_SEG:最多同时在队列中的TCP段数量
-#define MEMP_NUM_TCP_SEG        224//80//15
-
 //MEMP_NUM_SYS_TIMEOUT:能够同时激活的timeout个数
 #define MEMP_NUM_SYS_TIMEOUT    9
 
 
-/* ---------- Pbuf选项---------- */
-//PBUF_POOL_SIZE:pbuf内存池个数. 
-#define PBUF_POOL_SIZE          60//40//40
 
-//PBUF_POOL_BUFSIZE:每个pbuf内存池大小. 
-#define PBUF_POOL_BUFSIZE       256//256
-
-
-/* ---------- TCP选项---------- */
 #define LWIP_TCP                1  //为1是使用TCP
 #define TCP_TTL                 255//生存时间
-
-/* Controls if TCP should queue segments that arrive out of
-   order. Define to 0 if your device is low on memory. */
-//#undef TCP_QUEUE_OOSEQ
-//#define TCP_QUEUE_OOSEQ         1//0
-
 
 #define MAX_QUEUE_ENTRIES 50
 
@@ -155,15 +124,23 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
 //最大TCP分段
 #define TCP_MSS                 (1500 - 40)	  //TCP_MSS = (MTU - IP报头大小 - TCP报头大小
 
+/*****发送缓冲区设定******MAX[270KB/s]***********************/
+//MEMP_NUM_TCP_SEG:最多同时在队列中的TCP段数量
+#define MEMP_NUM_TCP_SEG        224
 //TCP发送缓冲区大小(bytes).
-#define TCP_SND_BUF             (28*TCP_MSS)//(14*TCP_MSS)//(4*TCP_MSS)
-
+#define TCP_SND_BUF             (28*TCP_MSS)
 //TCP_SND_QUEUELEN: TCP发送缓冲区大小(pbuf).这个值最小为(2 * TCP_SND_BUF/TCP_MSS) */
-#define TCP_SND_QUEUELEN        (8* TCP_SND_BUF/TCP_MSS)//(8* TCP_SND_BUF/TCP_MSS)//(2* TCP_SND_BUF/TCP_MSS)
+#define TCP_SND_QUEUELEN        (8* TCP_SND_BUF/TCP_MSS)
+/*************************************************************/
 
-//TCP发送窗口
-#define TCP_WND                 (8*TCP_MSS)//(6*TCP_MSS)//(2*TCP_MSS)
-
+/*****接收窗口设定**********MAX[130KB/s]**********************/
+//PBUF_POOL_SIZE:pbuf内存池个数.
+#define PBUF_POOL_SIZE          100//100//100
+//PBUF_POOL_BUFSIZE:每个pbuf内存池大小.
+#define PBUF_POOL_BUFSIZE       512//512
+//TCP接收窗口
+#define TCP_WND                 (30*TCP_MSS)//(2*TCP_MSS)
+/*************************************************************/
 
 /* ---------- ICMP选项---------- */
 #define LWIP_ICMP                 1 //使用ICMP协议
@@ -183,17 +160,9 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
 #define LWIP_STATS 				1
 #define LWIP_PROVIDE_ERRNO 		1
 
-
-/*
-   --------------------------------------
-   ---------- 帧校验和选项----------
-   --------------------------------------
-*/
-
 //STM32F4x7允许通过硬件识别和计算IP,UDP和ICMP的帧校验和
 
 //#define CHECKSUM_BY_HARDWARE //定义CHECKSUM_BY_HARDWARE,使用硬件帧校验
-
 
 #ifdef CHECKSUM_BY_HARDWARE
   //CHECKSUM_GEN_IP==0: 硬件生成IP数据包的帧校验和
@@ -224,46 +193,23 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
 #endif
 
 
-/*
-   ----------------------------------------------
-   ---------- SequentialAPI选项----------
-   ----------------------------------------------
-*/
-
 //LWIP_NETCONN==1:使能NETCON函数(要求使用api_lib.c)
 #define LWIP_NETCONN                    1
 
-/*
-   ------------------------------------
-   ---------- Socket API选项----------
-   ------------------------------------
-*/
 //LWIP_SOCKET==1:使能Sicket API(要求使用sockets.c)
 #define LWIP_SOCKET                     1
-
 
 #define LWIP_COMPAT_MUTEX               1
 
 #define LWIP_SO_RCVTIMEO                1 //禁止阻塞线程
 
-
-/*   ---------------------------------
-   ---------- OS options ----------
-   ---------------------------------
-*/
-
 #define TCPIP_THREAD_STACKSIZE          (4*1024)//1500	//内核任务堆栈大小
 #define DEFAULT_UDP_RECVMBOX_SIZE       1000
 #define DEFAULT_THREAD_STACKSIZE        512
 
-/*
-   ----------------------------------------
-   ---------- Lwip调试选项----------
-   ----------------------------------------
-*/
+
 #define LWIP_DEBUG                     0
 
 #define ICMP_DEBUG                      LWIP_DBG_OFF
 
-#endif /* __LWIPOPTS_H__ */
-
+#endif

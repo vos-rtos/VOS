@@ -5,7 +5,7 @@
 #include "vos.h"
 
 #define NULL 0
-#define BUFFER_SIZE                (128*4)
+#define BUFFER_SIZE         4096       //(128*4)
 
 USBH_StatusTypeDef __USBH_LL_EnAsync(USBH_HandleTypeDef *pHost, uint8_t pipe);
 USBH_StatusTypeDef __USBH_LL_DisAsync(USBH_HandleTypeDef *pHost, uint8_t pipe);
@@ -193,7 +193,9 @@ void USBH_Store(u8 bPipe, u8 *pData, u32 dwLen)
     pChannel = __FindChannel(bPipe);
     if(!pChannel)
         return; // pipe不存在
+	u32 irq_save = __local_irq_save();
     res = VOSRingBufSet(pChannel->pRing, pData, dwLen);
+    __local_irq_restore(irq_save);
     if(res != dwLen)
     {
         USBH_UsrLog("\r\nUSB Module : error : channel %d buffer overflow.\r\n", bPipe);
@@ -209,9 +211,14 @@ u32 USBH_Fetch(u8 bPipe, u8 *pBuffer, u32 dwLen)
     pChannel = __FindChannel(bPipe);
     if(!pChannel)
         return (0); // pipe不存在
+    u32 irq_save = __local_irq_save();
     len = VOSRingBufGet(pChannel->pRing, pBuffer, dwLen);
     if(!VOSRingBufIsEmpty(pChannel->pRing)) {
+    	__local_irq_restore(irq_save);
     	VOSSemRelease(pChannel->pSemp);
+    }
+    else {
+    	__local_irq_restore(irq_save);
     }
     return (len);
 }

@@ -465,11 +465,16 @@ void TaskPppInput(void *param)
 	s32 cnts = 0;
     while (1) {
 		readed = MODEM_READ(buf, sizeof(buf), 10);
+
 		if (readed > 0) {
 			if (pPppNetDev->status == STATUS_PPP_DATA_MODE) {
+				//kprintf("readed:%d!\r\n", readed);
 				//hex_str_dump ("MODEM RECV: ", buf, readed);
 				if (ppp) {
+					//u32 time_temp = VOSGetTimeMs();
 					pppos_input_tcpip(ppp, buf, readed);  // 0x7e
+					//u32 span_ms = VOSGetTimeMs() - time_temp;
+					//kprintf("===TaskPppInput %d(B)/%d(ms)=%d(B/s)===\r\n", readed, span_ms, readed*1000/span_ms);
 				}
 				if (cnts++ > 1000) {
 					VOSTaskDelay(5);

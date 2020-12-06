@@ -107,7 +107,7 @@ void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 
 }
 
-long long usbh_stack[1024];
+
 
 void task_usbh_server(void *p)
 {
@@ -120,6 +120,7 @@ void task_usbh_server(void *p)
 	}
 }
 
+//long long usbh_stack[1024];
 void usb_host_init()
 {
 	s32 i = 0;
@@ -138,7 +139,9 @@ void usb_host_init()
 	USBH_RegisterClass(&hUsbHostFS, USBH_AUDIO_CLASS);
 	USBH_RegisterClass(&hUsbHostFS, USBH_CDC_CLASS);
 
-	task_id = VOSTaskCreate(task_usbh_server, 0, usbh_stack, sizeof(usbh_stack), TASK_PRIO_NORMAL, "usbh_server");
-
+	void *usbh_stack = vmalloc(1024*2);
+	if (usbh_stack) {
+		task_id = VOSTaskCreate(task_usbh_server, 0, usbh_stack, 1024*2, TASK_PRIO_NORMAL, "usbh_server");
+	}
 }
 

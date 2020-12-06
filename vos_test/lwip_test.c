@@ -89,7 +89,7 @@ void  sock_tcp_test()
     u32 mark_1s = 0;
     while(1)
     {
-#if 0
+#if 1
     	ret = recv(sockfd, buf, strlen(buf), 0);
     	if (ret > 0) {
     		u32 time_span = VOSGetTimeMs()-timemark;
@@ -100,12 +100,10 @@ void  sock_tcp_test()
     		}
     	}
     	if (ret < 0) {
-    		//kprintf("error: ret=%d!\r\n", ret);
-    		//kprintf(".");
     		VOSTaskDelay(10);
     	}
 #endif
-#if 1
+#if 0
 		if( (ret = send(sockfd, buf, sizeof(buf), 0)) < 0)
 		{
 			kprintf("ERROR!\r\n");
