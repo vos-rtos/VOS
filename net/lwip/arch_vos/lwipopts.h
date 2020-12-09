@@ -1,12 +1,21 @@
 #ifndef __LWIPOPTS_H__
 #define __LWIPOPTS_H__
 
+#include "lwip/debug.h"
+
+
 extern void *vmalloc(unsigned int size);
 extern void vfree(void *ptr);
 extern void *vrealloc(void *ptr, unsigned int size);
 extern void *vcalloc(unsigned int nitems, unsigned int size);
 
-#define LWIP_TCPIP_CORE_LOCKING 0
+#define SOCKETS_DEBUG		LWIP_DBG_ON|LWIP_DBG_TYPES_ON
+#define IP_DEBUG 			LWIP_DBG_ON|LWIP_DBG_TYPES_ON
+#define TCP_DEBUG			LWIP_DBG_ON|LWIP_DBG_TYPES_ON
+#define TCP_INPUT_DEBUG 	LWIP_DBG_ON|LWIP_DBG_TYPES_ON
+#define TCP_OUTPUT_DEBUG	LWIP_DBG_ON|LWIP_DBG_TYPES_ON
+
+//#define LWIP_TCPIP_CORE_LOCKING 0
 
 #define LWIP_RAW 1
 
@@ -34,11 +43,11 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
 
 #define ERRNO	1
 
-#define MEMP_MEM_MALLOC 1
+
 
 #define LWIP_PROVIDE_ERRNO 		1
 
-//#define LWIP_TCPIP_CORE_LOCKING 1
+#define LWIP_TCPIP_CORE_LOCKING 1
 
 #define LWIP_COMPAT_MUTEX_ALLOWED 1
 
@@ -47,14 +56,6 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
 #endif
 #undef  DEFAULT_THREAD_PRIO
 #define DEFAULT_THREAD_PRIO		2
-
-#include "lwip/debug.h"
-
-#define SOCKETS_DEBUG		LWIP_DBG_ON|LWIP_DBG_TYPES_ON
-#define IP_DEBUG 			LWIP_DBG_ON|LWIP_DBG_TYPES_ON
-#define TCP_DEBUG			LWIP_DBG_ON|LWIP_DBG_TYPES_ON
-#define TCP_INPUT_DEBUG 	LWIP_DBG_ON|LWIP_DBG_TYPES_ON
-#define TCP_OUTPUT_DEBUG	LWIP_DBG_ON|LWIP_DBG_TYPES_ON
 
 
 #define SYS_LIGHTWEIGHT_PROT    1
@@ -66,7 +67,7 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
 #define MEM_ALIGNMENT           4  
 
 //MEM_SIZE:heap内存的大小,如果在应用中有大量数据发送的话这个值最好设置大一点 
-#define MEM_SIZE                25600 //内存堆大小
+#define MEM_SIZE                500*1024//25600 //内存堆大小
 
 //MEMP_NUM_PBUF:memp结构的pbuf数量,如果应用从ROM或者静态存储区发送大量数据时,这个值应该设置大一点
 #define MEMP_NUM_PBUF           256
@@ -88,7 +89,7 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
 #define LWIP_TCP                1  //为1是使用TCP
 #define TCP_TTL                 255//生存时间
 
-#define MAX_QUEUE_ENTRIES 50
+#define MAX_QUEUE_ENTRIES 		100//20//50
 
 #define PPP_SUPPORT				1
 #define PAP_SUPPORT				1
@@ -101,7 +102,7 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
  * sys_mbox_new() when tcpip_init is called.
  */
 #undef TCPIP_MBOX_SIZE
-#define TCPIP_MBOX_SIZE         MAX_QUEUE_ENTRIES   //每个消息邮箱的大小 20
+#define TCPIP_MBOX_SIZE         MAX_QUEUE_ENTRIES
 
 /**
  * DEFAULT_TCP_RECVMBOX_SIZE: The mailbox size for the incoming packets on a
@@ -109,7 +110,7 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
  * to sys_mbox_new() when the recvmbox is created.
  */
 #undef DEFAULT_TCP_RECVMBOX_SIZE
-#define DEFAULT_TCP_RECVMBOX_SIZE       MAX_QUEUE_ENTRIES  //20
+#define DEFAULT_TCP_RECVMBOX_SIZE       MAX_QUEUE_ENTRIES
 
 
 /**
@@ -118,13 +119,20 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
  * sys_mbox_new() when the acceptmbox is created.
  */
 #undef DEFAULT_ACCEPTMBOX_SIZE
-#define DEFAULT_ACCEPTMBOX_SIZE         MAX_QUEUE_ENTRIES  //20
+#define DEFAULT_ACCEPTMBOX_SIZE         MAX_QUEUE_ENTRIES
 
 /*当TCP的数据段超出队列时的控制位,当设备的内存过小的时候此项应为0*/
 #define TCP_QUEUE_OOSEQ         1//0
 
 //最大TCP分段
 #define TCP_MSS                 (1500 - 40)	  //TCP_MSS = (MTU - IP报头大小 - TCP报头大小
+
+
+/* 说明：
+ * MEMP_MEM_MALLOC==1: vmalloc作为内存池源，发送速度最大200KB/s, MCU 97%
+ * MEMP_MEM_MALLOC==0: 编译器初始化时分配好，发送速度最大 270KB/s MCU 97%
+ */
+#define MEMP_MEM_MALLOC 1
 
 /*****发送缓冲区设定******MAX[270KB/s]***********************/
 //MEMP_NUM_TCP_SEG:最多同时在队列中的TCP段数量
@@ -137,11 +145,11 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
 
 /*****接收窗口设定**********MAX[130KB/s]**********************/
 //PBUF_POOL_SIZE:pbuf内存池个数.
-#define PBUF_POOL_SIZE          200//120//100
+#define PBUF_POOL_SIZE          100//200//120//100
 //PBUF_POOL_BUFSIZE:每个pbuf内存池大小.
-#define PBUF_POOL_BUFSIZE       512//512
+#define PBUF_POOL_BUFSIZE       1024//512//512
 //TCP接收窗口
-#define TCP_WND                 (43*TCP_MSS)//(2*TCP_MSS)
+#define TCP_WND                 (20*TCP_MSS)//(43*TCP_MSS)//(2*TCP_MSS)
 /*************************************************************/
 
 /* ---------- ICMP选项---------- */

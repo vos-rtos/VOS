@@ -45,6 +45,19 @@
 
 #if !NO_SYS
 
+/* tcpip 处理函数要求性能比较高，栈放到高速内存区 */
+static long long tcpip_stack[(TCPIP_THREAD_STACKSIZE)/8] __attribute__ ((section(".bss.CCMRAM")));
+
+void *tcpip_stack_ptr()
+{
+	return tcpip_stack;
+}
+
+s32 tcpip_stack_size()
+{
+	return TCPIP_THREAD_STACKSIZE/8*8;
+}
+
 /** Create a new mbox of specified size
  * @param mbox pointer to the mbox to create
  * @param size (miminum) number of messages in this mbox
@@ -287,7 +300,12 @@ sys_thread_t sys_thread_new(const char *name, lwip_thread_fn thread, void *arg, 
 		pstack = (u8*)vmalloc(stacksize);
 	}
 	else {
-		pstack = (u8*)vmalloc(stacksize);
+		if (arg != 0) { //用户提供内存栈
+			pstack = (u8*)arg;
+		}
+		else {
+			pstack = (u8*)vmalloc(stacksize);
+		}
 	}
 
 	if (prio <= 0) {

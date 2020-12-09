@@ -40,8 +40,8 @@ void MX_GPIO_Init()
   __HAL_RCC_GPIOB_CLK_ENABLE();
 }
 
-//#define DEF_ETH 1
-#define DEF_4G_PPP 1
+#define DEF_ETH 1
+//#define DEF_4G_PPP 1
 //#define DEF_SD_FATFS 1
 //#define DEF_USB_FATFS 1
 //#define DEF_GUI 1

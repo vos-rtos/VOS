@@ -484,13 +484,13 @@ void TaskPppInput(void *param)
 	struct StPppNetDev *pPppNetDev = &gPppNetDev;
 	s32 cnts = 0;
     while (1) {
-    	if (pPppNetDev->status == STATUS_PPP_DATA_MODE) {
-		//readed = MODEM_READ(buf, sizeof(buf), 10);
-    	u32 irq_save = __vos_irq_save();
-    	readed = VOSRingBufGet(pPppNetDev->pRecvRing, buf, sizeof(buf));
-    	__vos_irq_restore(irq_save);
+    	//if (pPppNetDev->status == STATUS_PPP_DATA_MODE) {
+		readed = MODEM_READ(buf, sizeof(buf), 10);
+//    	u32 irq_save = __vos_irq_save();
+//    	readed = VOSRingBufGet(pPppNetDev->pRecvRing, buf, sizeof(buf));
+//    	__vos_irq_restore(irq_save);
 		if (readed > 0) {
-			//if (pPppNetDev->status == STATUS_PPP_DATA_MODE)
+			if (pPppNetDev->status == STATUS_PPP_DATA_MODE)
 			{
 				//kprintf("readed:%d!\r\n", readed);
 				//hex_str_dump ("MODEM RECV: ", buf, readed);
@@ -500,24 +500,21 @@ void TaskPppInput(void *param)
 					u32 span_ms = VOSGetTimeMs() - time_temp;
 					//kprintf("===TaskPppInput %d(B)/%d(ms)=%d(B/s)===\r\n", readed, span_ms, readed*1000/span_ms);
 				}
-//				if (cnts++ > 1000) {
-//					VOSTaskDelay(5);
-//					cnts = 0;
-//				}
+				if (cnts++ > 1000) {
+					VOSTaskDelay(5);
+					cnts = 0;
+				}
 			}
-//			else {
-//				if (pPppNetDev->pRecvRing) {
-//					if (readed != VOSRingBufSet(pPppNetDev->pRecvRing, buf, readed)) {
-//						kprintf("warnning: PPP recv ring buf overflow!\r\n");
-//					}
-//				}
-//			}
+			else {
+				if (pPppNetDev->pRecvRing) {
+					if (readed != VOSRingBufSet(pPppNetDev->pRecvRing, buf, readed)) {
+						kprintf("warnning: PPP recv ring buf overflow!\r\n");
+					}
+				}
+			}
 		}
 		else {
 			cnts = 0;
-			VOSTaskDelay(5);
-		}
-    	} else {
 			VOSTaskDelay(5);
 		}
     }
@@ -536,7 +533,7 @@ uint8_t lwip_comm_init(void)
 
 	s32 task_id;
 	task_id = VOSTaskCreate(TaskPppInput, 0, ppp_input_stack, sizeof(ppp_input_stack), TASK_PRIO_REAL, "task_ppp_input");
-	task_id = VOSTaskCreate(TaskPppModemRecv, 0, modem_recv_stack, sizeof(modem_recv_stack), TASK_PRIO_REAL, "task_modem_recv");
+	//task_id = VOSTaskCreate(TaskPppModemRecv, 0, modem_recv_stack, sizeof(modem_recv_stack), TASK_PRIO_REAL, "task_modem_recv");
 #if PPP_OUTPUT_CACHE
 	task_id = VOSTaskCreate(TaskPppOutput, 0, ppp_output_stack, sizeof(ppp_output_stack), TASK_PRIO_NORMAL, "task_ppp_output");
 #endif

@@ -52,5 +52,8 @@ typedef s32 					sys_thread_t;
 #define SYS_ARCH_PROTECT(lev)
 #define SYS_ARCH_UNPROTECT(lev)
 
+void *tcpip_stack_ptr();
+s32 tcpip_stack_size();
+
 #endif /* LWIP_HDR_TEST_SYS_ARCH_H */
 
