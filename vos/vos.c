@@ -1295,17 +1295,17 @@ s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode)
 				ptask_prio_sub = list_entry(sub_list_prio, struct StVosTask, list);
 				i++;
 				if (i < cnts) {
-					arr[i].id = ptask_prio->id;
-					arr[i].ticks = ptask_prio->ticks_used_cnts;
-					arr[i].prio = ptask_prio->prio_base;
-					arr[i].stack_top = ptask_prio->pstack_top;
-					arr[i].stack_size = ptask_prio->stack_size;
-					arr[i].stack_ptr = ptask_prio->pstack;
-					arr[i].name = ptask_prio->name;
+					arr[i].id = ptask_prio_sub->id;
+					arr[i].ticks = ptask_prio_sub->ticks_used_cnts;
+					arr[i].prio = ptask_prio_sub->prio_base;
+					arr[i].stack_top = ptask_prio_sub->pstack_top;
+					arr[i].stack_size = ptask_prio_sub->stack_size;
+					arr[i].stack_ptr = ptask_prio_sub->pstack;
+					arr[i].name = ptask_prio_sub->name;
 					ticks_totals += arr[i].ticks;
 					if (mode==0) {//½áÊø
-						ptask_prio->ticks_used_start = -1;
-						ptask_prio->ticks_used_cnts = 0;
+						ptask_prio_sub->ticks_used_start = -1;
+						ptask_prio_sub->ticks_used_cnts = 0;
 					}
 				}
 			}
