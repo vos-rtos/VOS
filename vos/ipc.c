@@ -166,16 +166,17 @@ s32 VOSSemWait(StVOSSemaphore *pSem, u32 timeout_ms)
 		VOSTaskBlockListInsert(pRunningTask, &pSem->list_task);
 
 		need_sche = 1;
-
 	}
 	if (VOSIntNesting) {//在中断上下文里,直接返回-1
 		ret = VERROR_INT_CORTEX;
 	}
-	__vos_irq_restore(irq_save);
 
 	if (need_sche) { //没信号量，进入阻塞队列
 
 		VOSTaskSchedule(); //任务调度并进入阻塞队列
+
+		__vos_irq_restore(irq_save);
+
 		switch(pRunningTask->wakeup_from) { //阻塞后是被定时器唤醒或者信号量唤醒
 		case VOS_WAKEUP_FROM_DELAY:
 			ret = VERROR_TIMEOUT;
@@ -190,6 +191,9 @@ s32 VOSSemWait(StVOSSemaphore *pSem, u32 timeout_ms)
 			ret = VERROR_UNKNOWN;
 			break;
 		}
+	}
+	else {
+		__vos_irq_restore(irq_save);
 	}
 	return ret;
 }
@@ -239,12 +243,13 @@ s32 VOSSemRelease(StVOSSemaphore *pSem)
 		pRunningTask->psyn = 0; //清除指向资源的指针。
 		ret = VERROR_NO_ERROR;
 	}
-	__vos_irq_restore(irq_save);
+//	__vos_irq_restore(irq_save);
 	if (VOSIntNesting == 0 && need_sche) { //如果在中断上下文调用(VOSIntNesting!=0),不用主动调度
 		//唤醒后，立即调用任务调度，万一唤醒的任务优先级高于当前任务，则切换,
 		//但不能用VOSTaskSwitch(TASK_SWITCH_USER);这是必须在特权模式下使用。
 		VOSTaskSchedule();
 	}
+	__vos_irq_restore(irq_save);
 	return ret;
 }
 
@@ -384,11 +389,14 @@ s32 VOSMutexWait(StVOSMutex *pMutex, u32 timeout_ms)
 		need_sche = 1;
 	}
 
-	__vos_irq_restore(irq_save);
+//	__vos_irq_restore(irq_save);
 
 	if (need_sche) { //没获取互斥锁，进入阻塞队列
 
 		VOSTaskSchedule(); //任务调度并进入阻塞队列
+
+		__vos_irq_restore(irq_save);
+
 		switch(pRunningTask->wakeup_from) { //阻塞后是被定时器唤醒或者互斥锁唤醒
 		case VOS_WAKEUP_FROM_DELAY:
 			ret = VERROR_TIMEOUT;
@@ -403,6 +411,9 @@ s32 VOSMutexWait(StVOSMutex *pMutex, u32 timeout_ms)
 			ret = VERROR_UNKNOWN;
 			break;
 		}
+	}
+	else {
+		__vos_irq_restore(irq_save);
 	}
 	return ret;
 }
@@ -463,12 +474,13 @@ s32 VOSMutexRelease(StVOSMutex *pMutex)
 		ret = VERROR_NO_ERROR;
 	}
 
-	__vos_irq_restore(irq_save);
+//	__vos_irq_restore(irq_save);
 	if (need_sche) {
 		//唤醒后，立即调用任务调度，万一唤醒的任务优先级高于当前任务，则切换,
 		//但不能用VOSTaskSwitch(TASK_SWITCH_USER);这是必须在特权模式下使用。
 		VOSTaskSchedule();
 	}
+	__vos_irq_restore(irq_save);
 	return ret;
 }
 
@@ -551,11 +563,14 @@ s32 VOSEventWait(u32 event, u32 timeout_ms)
 		need_sche = 1;
 	}
 
-	__vos_irq_restore(irq_save);
+	//__vos_irq_restore(irq_save);
 
 	if (need_sche) { //没获取互斥锁，进入阻塞队列
 
 		VOSTaskSchedule(); //任务调度并进入阻塞队列
+
+		__vos_irq_restore(irq_save);
+
 		switch(pRunningTask->wakeup_from) { //阻塞后是被定时器唤醒或者互斥锁唤醒
 		case VOS_WAKEUP_FROM_DELAY:
 			ret = VERROR_TIMEOUT;
@@ -567,6 +582,9 @@ s32 VOSEventWait(u32 event, u32 timeout_ms)
 			ret = VERROR_UNKNOWN;
 			break;
 		}
+	}
+	else {
+		__vos_irq_restore(irq_save);
 	}
 	return ret;
 }
@@ -610,13 +628,15 @@ s32 VOSEventSet(s32 task_id, u32 event)
 	else {//设置该事件位有效
 		pTask->event_mask |= event;
 	}
-	__vos_irq_restore(irq_save);
+//	__vos_irq_restore(irq_save);
 
 	if (VOSIntNesting == 0 && need_sche) {
 		//唤醒后，立即调用任务调度，万一唤醒的任务优先级高于当前任务，则切换,
 		//但不能用VOSTaskSwitch(TASK_SWITCH_USER);这是必须在特权模式下使用。
 		VOSTaskSchedule();
 	}
+	__vos_irq_restore(irq_save);
+
 	return ret;
 }
 /********************************************************************************************************

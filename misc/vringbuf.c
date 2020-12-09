@@ -186,3 +186,8 @@ s32 VOSRingBufIsEmpty(StVOSRingBuf *ring)
 	return ring->cnts==0;
 }
 
+s32 VOSRingBufGetCurBytes(StVOSRingBuf *ring)
+{
+	return ring->cnts;
+}
+

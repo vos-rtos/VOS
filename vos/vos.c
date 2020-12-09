@@ -45,6 +45,11 @@ u8  gArrPrio2Taskid[MAX_VOS_TASK_PRIO_NUM]; //通过优先级查找第一个相同优先级的链
 volatile u32 flag_cpu_collect = 0; //是否在采集cpu占用率
 
 
+void VOSTaskCheckList();
+
+#define TRACE_TASK_ON	0
+#define TRACE_TASK_ID	6
+
 /********************************************************************************************************
 * 函数：StVosTask *tasks_bitmap_iterate(void **iter);
 * 描述: 遍历就绪任务位图
@@ -430,7 +435,10 @@ void VOSTaskDelayListWakeUp()
 			//断开当前延时队列
 			list_del(&ptask_delay->list_delay);
 			//如果在信号量等阻塞列表中，也要断开
-			list_del(&ptask_delay->list);
+			if (ptask_delay->list.next) {
+				list_del(&ptask_delay->list);
+			}
+
 			//初始化变量
 			ptask_delay->status = VOS_STA_READY;
 			ptask_delay->block_type = 0;
@@ -558,7 +566,7 @@ StVosTask *VOSTaskReadyCutPriorest()
 	if (highest != -1) {
 		pHightask = &gArrVosTask[gArrPrio2Taskid[highest]];
 		if (list_empty(&pHightask->list)) {//为空，证明只有一个节点，则清空位图某个位
-			bitmap_clr(highest, gArrPrioBitMap); //优先级表位图置位
+			bitmap_clr(highest, gArrPrioBitMap); //优先级表位图清除位
 			list_del(&pHightask->list);//从相同优先级任务链表中删除自己
 		}
 		else {//证明相同优先级有多个任务，这时要把后面的任务的id设置到gArrPrio2Taskid表中，同时链表中删除最高优先级的任务
@@ -743,10 +751,12 @@ void task_idle(void *param)
 	mark_time = VOSGetTimeMs();
 	while (1) {
 		//禁止空闲任务阻塞
-//		if ((s32)(VOSGetTimeMs()-mark_time) > 1000) {
-//			mark_time = VOSGetTimeMs();
-//			VOSTaskSchTabDebug();
-//		}
+#if 0
+		if ((s32)(VOSGetTimeMs()-mark_time) > 1000) {
+			mark_time = VOSGetTimeMs();
+			VOSTaskSchTabDebug();
+		}
+#endif
 	}
 }
 
@@ -837,9 +847,11 @@ void VOSTaskSchedule()
 	u32 irq_save = 0;
 	if (VOSRunning == 0) return; //还没开始就切换直接返回
 
-	if (VOSCtxSwtFlag == 1) return; //已经设置了切换标志，就不用再比较
-
 	irq_save = __local_irq_save();
+	if (VOSCtxSwtFlag == 1) {
+		__local_irq_restore(irq_save);
+		return; //已经设置了切换标志，就不用再比较
+	}
 
 	if (pRunningTask->status == VOS_STA_FREE || //任务销毁，必须调度
 			pRunningTask->status == VOS_STA_BLOCK) {//任务阻塞，必须调度
@@ -857,11 +869,12 @@ void VOSTaskSchedule()
 		}
 	}
 
-	__local_irq_restore(irq_save);
+//	__local_irq_restore(irq_save);
 
 	if (VOSCtxSwtFlag) {
 		asm_ctx_switch();//触发PendSV_Handler中断
 	}
+	__local_irq_restore(irq_save);
 }
 
 /********************************************************************************************************
@@ -877,9 +890,12 @@ void VOSTaskScheduleISR()
 	u32 irq_save = 0;
 	if (VOSRunning == 0) return; //还没开始就切换直接返回
 
-	if (VOSCtxSwtFlag == 1) return; //已经设置了切换标志，就不用再比较
-
 	irq_save = __local_irq_save();
+
+	if (VOSCtxSwtFlag == 1) {
+		__local_irq_restore(irq_save);
+		return; //已经设置了切换标志，就不用再比较
+	}
 
 	if (pRunningTask->status == VOS_STA_FREE || //任务销毁，必须调度
 			pRunningTask->status == VOS_STA_BLOCK) {//任务阻塞，必须调度
@@ -900,11 +916,13 @@ void VOSTaskScheduleISR()
 		}
 	}
 
-	__local_irq_restore(irq_save);
+//	__local_irq_restore(irq_save);
 
 	if (VOSCtxSwtFlag) {
 		asm_ctx_switch();//触发PendSV_Handler中断
 	}
+
+	__local_irq_restore(irq_save);
 }
 
 /********************************************************************************************************
@@ -1021,6 +1039,8 @@ void VOSTaskSchTabDebug()
 	u32 mark = 0;
 	StVosTask *ptask_prio = 0;
 	struct list_head *list_prio;
+	StVosTask *ptask_prio_sub = 0;
+	struct list_head *sub_list_prio;
 	struct list_head *phead = 0;
 
 	u32 irq_save;
@@ -1041,7 +1061,13 @@ void VOSTaskSchTabDebug()
 		vvsprintf(temp, sizeof(temp), "%d", ptask_prio->id);
 		strcat(buf, temp);
 		strcat(buf, "->");
-
+		phead = &ptask_prio->list; //相同优先级必须枚举链表
+		list_for_each(sub_list_prio, phead) {
+			ptask_prio_sub = list_entry(sub_list_prio, struct StVosTask, list);
+			vvsprintf(temp, sizeof(temp), "%d", ptask_prio_sub->id);
+			strcat(buf, temp);
+			strcat(buf, "->");
+		}
 	}
 	if (ptask_prio==0) {
 		if (buf[strlen(buf)-1] == '>') {
@@ -1064,6 +1090,57 @@ void VOSTaskSchTabDebug()
 	kprintf("%s", buf);
 	__vos_irq_restore(irq_save);
 }
+
+/********************************************************************************************************
+* 函数：void VOSTaskCheckList();
+* 描述:  检查链表是否有闭环
+* 参数: 无
+* 返回：无
+* 注意：此函数主要是调试时使用
+*********************************************************************************************************/
+#define VOSTaskAlert() while(1)
+void VOSTaskCheckList()
+{
+	StVosTask *ptask_prio = 0;
+	StVosTask *ptask_prio_sub = 0;
+	struct list_head *list_prio;
+	struct list_head *sub_list_prio;
+	struct list_head *phead = 0;
+	struct list_head *list_prev = 0;
+	u32 irq_save;
+	irq_save = __vos_irq_save();
+
+	/* 检查就绪位图里的任务链表 */
+	void *iter = 0; //从头遍历
+	while (ptask_prio = tasks_bitmap_iterate(&iter)) {
+		phead = &ptask_prio->list; //相同优先级必须枚举链表
+		list_prev = phead;
+
+		list_for_each(sub_list_prio, phead) { //双向链表检查子闭环
+			ptask_prio_sub = list_entry(sub_list_prio, struct StVosTask, list);
+			if (sub_list_prio->prev != list_prev || list_prev->next != sub_list_prio) {
+				VOSTaskAlert();
+			}
+
+			list_prev = sub_list_prio;
+		}
+	}
+	/* 检查阻塞延时任务链表里是否有子闭环 */
+	phead = &gListTaskDelay;
+	list_prev = phead;
+	list_for_each(list_prio, phead) {//双向链表检查子闭环
+		ptask_prio = list_entry(list_prio, struct StVosTask, list_delay);
+
+		if (list_prio->prev != list_prev || list_prev->next != list_prio) {
+			VOSTaskAlert();
+		}
+		list_prev = list_prio;
+	}
+	/* 检查阻塞任务链表里是否有子闭环 */
+
+	__vos_irq_restore(irq_save);
+}
+
 
 /********************************************************************************************************
 * 函数：void HookTaskSwitchOut();
@@ -1107,6 +1184,8 @@ void CaluTasksCpuUsedRateStart()
 	u32 irq_save = 0;
 	StVosTask *ptask_prio = 0;
 	struct list_head *list_prio;
+	StVosTask *ptask_prio_sub = 0;
+	struct list_head *sub_list_prio;
 	struct list_head *phead = 0;
 
 	if (VOSRunning==0 || flag_cpu_collect) return;
@@ -1120,6 +1199,12 @@ void CaluTasksCpuUsedRateStart()
 	void *iter = 0; //从头遍历
 	while (ptask_prio = tasks_bitmap_iterate(&iter)) {
 		ptask_prio->ticks_used_start = gVOSTicks;
+
+		phead = &ptask_prio->list; //相同优先级必须枚举链表
+		list_for_each(sub_list_prio, phead) {
+			ptask_prio_sub = list_entry(sub_list_prio, struct StVosTask, list);
+			ptask_prio_sub->ticks_used_start = gVOSTicks;
+		}
 	}
 
 	phead = &gListTaskDelay; //阻塞的任务全部都会在延时链表中
@@ -1152,9 +1237,11 @@ s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode)
 	s32 j = 0;
 	s32 ret = 0;
 	s32 ticks_totals = 0;
-	StVosTask *ptask_prio = 0;
 	s8 stack_status[16];
+	StVosTask *ptask_prio = 0;
 	struct list_head *list_prio;
+	StVosTask *ptask_prio_sub = 0;
+	struct list_head *sub_list_prio;
 	struct list_head *phead = 0;
 	s32 stack_left = 0;
 	//把数组全部元素的id设置为-1
@@ -1201,6 +1288,26 @@ s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode)
 			if (mode==0) {//结束
 				ptask_prio->ticks_used_start = -1;
 				ptask_prio->ticks_used_cnts = 0;
+			}
+			//相同优先级以链表形式把任务链接起来
+			phead = &ptask_prio->list; //相同优先级必须枚举链表
+			list_for_each(sub_list_prio, phead) {
+				ptask_prio_sub = list_entry(sub_list_prio, struct StVosTask, list);
+				i++;
+				if (i < cnts) {
+					arr[i].id = ptask_prio->id;
+					arr[i].ticks = ptask_prio->ticks_used_cnts;
+					arr[i].prio = ptask_prio->prio_base;
+					arr[i].stack_top = ptask_prio->pstack_top;
+					arr[i].stack_size = ptask_prio->stack_size;
+					arr[i].stack_ptr = ptask_prio->pstack;
+					arr[i].name = ptask_prio->name;
+					ticks_totals += arr[i].ticks;
+					if (mode==0) {//结束
+						ptask_prio->ticks_used_start = -1;
+						ptask_prio->ticks_used_cnts = 0;
+					}
+				}
 			}
 		}
 		else {//跳出

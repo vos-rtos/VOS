@@ -11,6 +11,8 @@
 #define false  0
 #define true   1
 
+#define PPP_OUTPUT_CACHE 0
+
 s32 CUSTOM_ReadMODEM(u8 *pBuf, u32 dwLen, u32 dwTimeout);
 s32 CUSTOM_WriteMODEM(u8 *pBuf, u32 dwLen, u32 dwTimeout);
 
@@ -34,7 +36,7 @@ enum {
 	STATUS_PPP_DATA_MODE,
 };
 #define PPP_SEND_MAX	(1024*8)
-#define PPP_RECV_MAX	1024
+#define PPP_RECV_MAX	(1024*8)
 #define MAX_ITEMS(arr) (sizeof(arr)/sizeof(arr[0]))
 typedef struct StPppNetDev {
 	struct StVOSRingBuf *pRecvRing;
@@ -353,7 +355,7 @@ uint32_t output_cb(ppp_pcb* pcb, u8_t* data, uint32_t len, void* ctx)
 	s32 ret = 0;
 	u32 irq_save = 0;
 	s32 mark = 0;
-#if 0
+#if PPP_OUTPUT_CACHE
 	while (1) {
 		irq_save = __vos_irq_save();
 		ret = VOSRingBufSet(pPppNetDev->pSendRing, data+mark, len-mark);
@@ -371,7 +373,7 @@ uint32_t output_cb(ppp_pcb* pcb, u8_t* data, uint32_t len, void* ctx)
     if (ret < 0) {
     	ret = 0;
     }
-#elif 1
+#else
     while (1) {
     	ret = MODEM_WRITE(data+mark, len-mark, 10);
 		if (ret > 0) {
@@ -387,11 +389,6 @@ uint32_t output_cb(ppp_pcb* pcb, u8_t* data, uint32_t len, void* ctx)
     if (ret != len) {
     	kprintf("warning!!!\r\n");
     }
-#else
-    ret = MODEM_WRITE(data, len, 10);
-    if (ret != len) {
-    	kprintf("warning!!!\r\n");
-    }
 #endif
     if (ret > 0) {
     	//hex_str_dump ("MODEM SEND: ", data, ret);
@@ -399,104 +396,138 @@ uint32_t output_cb(ppp_pcb* pcb, u8_t* data, uint32_t len, void* ctx)
     return ret;
 }
 
-void TaskPppOutput(void *param)
+//void TaskPppOutput(void *param)
+//{
+//	u32 irq_save = 0;
+//	s32 ret = 0;
+//	u8 *send_buf = 0;
+//	s32 readed = 0;
+//	struct StPppNetDev *pPppNetDev = &gPppNetDev;
+//	s32 cnts = 0;
+//	s32 send_mark = 0;
+//	s32 send_totals = 1024*6;
+//	u32 timemark = 0;
+//	send_buf = vmalloc(send_totals);
+//	if (send_buf == 0) {
+//		kprintf("error: TaskPppInput, send_buf == NULL!\r\n");
+//		return;
+//	}
+//    while (1) {
+//    	if (pPppNetDev->status == STATUS_PPP_DATA_MODE) {
+//    		irq_save = __vos_irq_save();
+//			ret = VOSRingBufGet(pPppNetDev->pSendRing, send_buf+send_mark, send_totals-send_mark);
+//			__vos_irq_restore(irq_save);
+//			if (ret > 0) {
+//				if (send_mark == 0) { //第一次有数据时更新时间
+//					timemark = VOSGetTimeMs(); //更新时间
+//				}
+//				send_mark += ret;
+//			}
+//			if (send_mark >= send_totals/2 || //如果满
+//				(VOSGetTimeMs() - timemark > 50 && send_mark > 0))//10ms 超时， 同时有数据，必须要发出去
+//			{
+//				//kprintf("info: send out now(%d Bytes)!\r\n", send_mark);
+//				s32 mark = 0;
+//				u32 time_temp = VOSGetTimeMs();
+//				while (1) {
+//					ret = MODEM_WRITE(send_buf+mark, send_mark-mark, 10);
+//					if (ret > 0) {
+//						mark += ret;
+//					}
+//					if (mark == send_mark)
+//						break;
+//					//VOSTaskDelay(1);
+//				}
+//				u32 span_ms = VOSGetTimeMs() - time_temp;
+//				kprintf("===%d(B)/%d(ms)=%d(B/s)===\r\n", send_mark, span_ms, send_mark*1000/span_ms);
+//				send_mark = 0; //清空读取的数据
+//				//timemark = VOSGetTimeMs(); //更新时间
+//			}
+//			else {
+//				VOSTaskDelay(5);
+//			}
+//    	}
+//    	else {
+//    		VOSTaskDelay(10);
+//    	}
+//    }
+//}
+
+void TaskPppModemRecv(void *param)
 {
-	u32 irq_save = 0;
 	s32 ret = 0;
-	u8 *send_buf = 0;
+	u8 buf[1024*5] = {0};
 	s32 readed = 0;
 	struct StPppNetDev *pPppNetDev = &gPppNetDev;
 	s32 cnts = 0;
-	s32 send_mark = 0;
-	s32 send_totals = 1024*6;
-	u32 timemark = 0;
-	send_buf = vmalloc(send_totals);
-	if (send_buf == 0) {
-		kprintf("error: TaskPppInput, send_buf == NULL!\r\n");
-		return;
-	}
     while (1) {
-    	if (pPppNetDev->status == STATUS_PPP_DATA_MODE) {
-    		irq_save = __vos_irq_save();
-			ret = VOSRingBufGet(pPppNetDev->pSendRing, send_buf+send_mark, send_totals-send_mark);
+		readed = MODEM_READ(buf, sizeof(buf), 10);
+		if (readed > 0 && pPppNetDev->pRecvRing) {
+			u32 irq_save = __vos_irq_save();
+			if (readed != VOSRingBufSet(pPppNetDev->pRecvRing, buf, readed)) {
+				kprintf("warnning: PPP recv ring buf overflow!\r\n");
+			}
 			__vos_irq_restore(irq_save);
-			if (ret > 0) {
-				if (send_mark == 0) { //第一次有数据时更新时间
-					timemark = VOSGetTimeMs(); //更新时间
-				}
-				send_mark += ret;
-			}
-			if (send_mark >= send_totals/2 || //如果满
-				(VOSGetTimeMs() - timemark > 50 && send_mark > 0))//10ms 超时， 同时有数据，必须要发出去
-			{
-				//kprintf("info: send out now(%d Bytes)!\r\n", send_mark);
-				s32 mark = 0;
-				u32 time_temp = VOSGetTimeMs();
-				while (1) {
-					ret = MODEM_WRITE(send_buf+mark, send_mark-mark, 10);
-					if (ret > 0) {
-						mark += ret;
-					}
-					if (mark == send_mark)
-						break;
-					//VOSTaskDelay(1);
-				}
-				u32 span_ms = VOSGetTimeMs() - time_temp;
-				kprintf("===%d(B)/%d(ms)=%d(B/s)===\r\n", send_mark, span_ms, send_mark*1000/span_ms);
-				send_mark = 0; //清空读取的数据
-				//timemark = VOSGetTimeMs(); //更新时间
-			}
-			else {
-				VOSTaskDelay(5);
-			}
-    	}
-    	else {
-    		VOSTaskDelay(10);
-    	}
+			//continue;
+		}
+		else {
+			VOSTaskDelay(10);
+		}
     }
 }
 
 void TaskPppInput(void *param)
 {
 	s32 ret = 0;
-	static u8 buf[1024*2] = {0};
+	static u8 buf[1024*5] = {0};
 	s32 readed = 0;
 	struct StPppNetDev *pPppNetDev = &gPppNetDev;
 	s32 cnts = 0;
     while (1) {
-		readed = MODEM_READ(buf, sizeof(buf), 10);
-
+    	if (pPppNetDev->status == STATUS_PPP_DATA_MODE) {
+		//readed = MODEM_READ(buf, sizeof(buf), 10);
+    	u32 irq_save = __vos_irq_save();
+    	readed = VOSRingBufGet(pPppNetDev->pRecvRing, buf, sizeof(buf));
+    	__vos_irq_restore(irq_save);
 		if (readed > 0) {
-			if (pPppNetDev->status == STATUS_PPP_DATA_MODE) {
+			//if (pPppNetDev->status == STATUS_PPP_DATA_MODE)
+			{
 				//kprintf("readed:%d!\r\n", readed);
 				//hex_str_dump ("MODEM RECV: ", buf, readed);
 				if (ppp) {
-					//u32 time_temp = VOSGetTimeMs();
+					u32 time_temp = VOSGetTimeMs();
 					pppos_input_tcpip(ppp, buf, readed);  // 0x7e
-					//u32 span_ms = VOSGetTimeMs() - time_temp;
+					u32 span_ms = VOSGetTimeMs() - time_temp;
 					//kprintf("===TaskPppInput %d(B)/%d(ms)=%d(B/s)===\r\n", readed, span_ms, readed*1000/span_ms);
 				}
-				if (cnts++ > 1000) {
-					VOSTaskDelay(5);
-					cnts = 0;
-				}
-			}else {
-				if (pPppNetDev->pRecvRing) {
-					if (readed != VOSRingBufSet(pPppNetDev->pRecvRing, buf, readed)) {
-						kprintf("warnning: PPP recv ring buf overflow!\r\n");
-					}
-				}
+//				if (cnts++ > 1000) {
+//					VOSTaskDelay(5);
+//					cnts = 0;
+//				}
 			}
+//			else {
+//				if (pPppNetDev->pRecvRing) {
+//					if (readed != VOSRingBufSet(pPppNetDev->pRecvRing, buf, readed)) {
+//						kprintf("warnning: PPP recv ring buf overflow!\r\n");
+//					}
+//				}
+//			}
 		}
 		else {
 			cnts = 0;
+			VOSTaskDelay(5);
+		}
+    	} else {
 			VOSTaskDelay(5);
 		}
     }
 }
 
 static long long ppp_input_stack[1024];
+static long long modem_recv_stack[1024];
+#if PPP_OUTPUT_CACHE
 static long long ppp_output_stack[1024];
+#endif
 uint8_t lwip_comm_init(void)
 {
 	struct StPppNetDev *pPppNetDev = &gPppNetDev;
@@ -505,7 +536,10 @@ uint8_t lwip_comm_init(void)
 
 	s32 task_id;
 	task_id = VOSTaskCreate(TaskPppInput, 0, ppp_input_stack, sizeof(ppp_input_stack), TASK_PRIO_REAL, "task_ppp_input");
-	//task_id = VOSTaskCreate(TaskPppOutput, 0, ppp_output_stack, sizeof(ppp_output_stack), TASK_PRIO_NORMAL, "task_ppp_output");
+	task_id = VOSTaskCreate(TaskPppModemRecv, 0, modem_recv_stack, sizeof(modem_recv_stack), TASK_PRIO_REAL, "task_modem_recv");
+#if PPP_OUTPUT_CACHE
+	task_id = VOSTaskCreate(TaskPppOutput, 0, ppp_output_stack, sizeof(ppp_output_stack), TASK_PRIO_NORMAL, "task_ppp_output");
+#endif
 	while(1) {
 		PppModemAtProcess(gArrAtOpts_HWMe909, MAX_ITEMS(gArrAtOpts_HWMe909));
 		if (pPppNetDev->status == STATUS_PPP_DATA_MODE) break;

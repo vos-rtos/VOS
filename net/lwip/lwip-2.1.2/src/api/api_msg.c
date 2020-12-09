@@ -712,6 +712,8 @@ netconn_alloc(enum netconn_type t, netconn_callback callback)
   if (conn == NULL) {
     return NULL;
   }
+  //所有数据清除，避免没初始化被使用。by vincent @ 2020127
+  memset(conn, 0, sizeof(*conn));
 
   conn->pending_err = ERR_OK;
   conn->type = t;

@@ -34,6 +34,8 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
 
 #define ERRNO	1
 
+#define MEMP_MEM_MALLOC 1
+
 #define LWIP_PROVIDE_ERRNO 		1
 
 //#define LWIP_TCPIP_CORE_LOCKING 1
@@ -135,11 +137,11 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
 
 /*****接收窗口设定**********MAX[130KB/s]**********************/
 //PBUF_POOL_SIZE:pbuf内存池个数.
-#define PBUF_POOL_SIZE          100//100//100
+#define PBUF_POOL_SIZE          200//120//100
 //PBUF_POOL_BUFSIZE:每个pbuf内存池大小.
 #define PBUF_POOL_BUFSIZE       512//512
 //TCP接收窗口
-#define TCP_WND                 (30*TCP_MSS)//(2*TCP_MSS)
+#define TCP_WND                 (43*TCP_MSS)//(2*TCP_MSS)
 /*************************************************************/
 
 /* ---------- ICMP选项---------- */

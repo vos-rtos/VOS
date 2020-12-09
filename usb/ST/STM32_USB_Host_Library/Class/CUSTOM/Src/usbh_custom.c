@@ -1118,7 +1118,6 @@ static USBH_StatusTypeDef __AT_ProcessReception(USBH_HandleTypeDef *pHost, uint8
     switch(*state)
     {
     case CUSTOM_RECEIVE_DATA:
-
         // 先读取异步缓冲中的数据
         rlen = USBH_Fetch(chandle->AT_Interface.InPipe, *pRxData, *pRxDataLength);
         if(0 == (*pRxDataLength -= rlen))
@@ -1134,7 +1133,6 @@ static USBH_StatusTypeDef __AT_ProcessReception(USBH_HandleTypeDef *pHost, uint8
         break;
 
     case CUSTOM_RECEIVE_DATA_WAIT:
-
         if(!chandle->dwMode)
         {
             USBH_Wait(chandle->AT_Interface.InPipe, dwTimeout);
@@ -1151,7 +1149,7 @@ static USBH_StatusTypeDef __AT_ProcessReception(USBH_HandleTypeDef *pHost, uint8
             rlen = USBH_Fetch(chandle->AT_Interface.InPipe, *pRxData, *pRxDataLength);
             if(rlen > length)
             {
-                printf("\r\n : erro : usbsv%d : custom at channel(unknown).");
+                printf("\r\n : erro : usbsv : custom at channel(unknown).");
             }
             // if(((*pRxDataLength - length) > 0) && (length > chandle->AT_Interface.InEpSize)) // TODO，第二个条件不知道什么意思
             if(*pRxDataLength > length)
@@ -1355,7 +1353,6 @@ static USBH_StatusTypeDef __MODEM_ProcessReception(USBH_HandleTypeDef *pHost, ui
         break;
 
     case CUSTOM_RECEIVE_DATA_WAIT:
-
         if(!chandle->dwMode)
         {
             USBH_Wait(chandle->MODEM_Interface.InPipe, dwTimeout);
