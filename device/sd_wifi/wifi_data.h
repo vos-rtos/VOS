@@ -5,7 +5,7 @@
 #define WIFI_PACKETSTATUS_LOCKED _BV(0)
 
 // WiFi模块接收的数据帧
-typedef __packed struct
+typedef struct
 {
   WiFi_SDIOFrameHeader header;
   uint8_t bss_type;
@@ -23,10 +23,10 @@ typedef __packed struct
   uint8_t flags; // TDLS flags
   uint8_t reserved2[43];
   uint8_t payload[1]; // 数据链路层上的帧
-} WiFi_DataRx;
+}__packed WiFi_DataRx;
 
 // WiFi模块发送的数据帧
-typedef __packed struct
+typedef struct
 {
   WiFi_SDIOFrameHeader header;
   uint8_t bss_type;
@@ -42,7 +42,7 @@ typedef __packed struct
   uint8_t tx_token_id;
   uint16_t reserved2;
   uint8_t payload[1]; // 数据链路层上的帧
-} WiFi_DataTx;
+}__packed WiFi_DataTx;
 
 // 数据通道状态
 typedef struct

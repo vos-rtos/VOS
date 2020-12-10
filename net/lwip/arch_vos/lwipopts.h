@@ -145,9 +145,9 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
 
 /*****接收窗口设定**********MAX[130KB/s]**********************/
 //PBUF_POOL_SIZE:pbuf内存池个数.
-#define PBUF_POOL_SIZE          100//200//120//100
+#define PBUF_POOL_SIZE          50//100//200//120//100
 //PBUF_POOL_BUFSIZE:每个pbuf内存池大小.
-#define PBUF_POOL_BUFSIZE       1024//512//512
+#define PBUF_POOL_BUFSIZE       512//512//512
 //TCP接收窗口
 #define TCP_WND                 (20*TCP_MSS)//(43*TCP_MSS)//(2*TCP_MSS)
 /*************************************************************/

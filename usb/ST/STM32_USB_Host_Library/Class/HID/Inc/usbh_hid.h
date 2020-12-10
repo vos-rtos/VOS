@@ -143,7 +143,7 @@ typedef enum
 HID_TypeTypeDef;
 
 
-typedef  struct  _HID_ReportData 
+typedef struct  _HID_ReportData 
 {
     uint8_t   ReportID;    
     uint8_t   ReportType;  
@@ -167,7 +167,7 @@ typedef  struct  _HID_ReportData
 } 
 HID_ReportDataTypeDef;
 
-typedef  struct  _HID_ReportIDTypeDef {
+typedef struct  _HID_ReportIDTypeDef {
     uint8_t  Size;         /* Report size return by the device id            */
     uint8_t  ReportID;     /* Report Id                                      */
     uint8_t  Type;         /* Report Type (INPUT/OUTPUT/FEATURE)             */
@@ -181,7 +181,7 @@ typedef struct  _HID_CollectionTypeDef
 } HID_CollectionTypeDef;
 
                                                                                
-typedef  struct  _HID_AppCollectionTypeDef {
+typedef struct  _HID_AppCollectionTypeDef {
     uint32_t               Usage;                                                
     uint8_t                Type;                                                 
     uint8_t                NbrReportFmt;                                         

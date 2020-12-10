@@ -227,7 +227,7 @@ typedef union _USB_Setup
 } 
 USB_Setup_TypeDef;  
 
-typedef  struct  _DescHeader 
+typedef struct  _DescHeader 
 {
     uint8_t  bLength;       
     uint8_t  bDescriptorType;

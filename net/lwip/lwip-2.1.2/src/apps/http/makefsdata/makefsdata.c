@@ -1,4 +1,4 @@
-#if 0
+#if 1
 /**
  * makefsdata: Converts a directory structure for use with the lwIP httpd.
  *

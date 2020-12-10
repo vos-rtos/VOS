@@ -145,7 +145,7 @@
   * @{
   */
 
-typedef  struct  usb_setup_req 
+typedef struct  usb_setup_req 
 {
     
     uint8_t   bmRequest;                      

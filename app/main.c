@@ -4,6 +4,10 @@
 #include "vtype.h"
 #include "usart.h"
 #include "vos.h"
+#include "lwip/ip_addr.h"
+#include "usb_host.h"
+#include "usbh_udisk.h"
+
 
 int kprintf(char* format, ...);
 #define printf kprintf
@@ -25,8 +29,7 @@ s32 CUSTOM_ReadMODEM(u8 *pBuf, u32 dwLen, u32 dwTimeout);
 void LCD_Init();
 void emWinTest();
 
-#include "usb_host.h"
-#include "usbh_udisk.h"
+
 
 void MX_GPIO_Init()
 {
@@ -40,7 +43,8 @@ void MX_GPIO_Init()
   __HAL_RCC_GPIOB_CLK_ENABLE();
 }
 
-#define DEF_ETH 1
+#define DEF_SD_WIFI 1
+//#define DEF_ETH 1
 //#define DEF_4G_PPP 1
 //#define DEF_SD_FATFS 1
 //#define DEF_USB_FATFS 1
@@ -53,6 +57,12 @@ void main(void *param)
 	void uart_init(u32 bound);
 	uart_init(115200);
 	kprintf("hello world!\r\n");
+
+#if DEF_SD_WIFI
+	int wifi_test();
+	wifi_test();
+#endif
+
 #if !USE_USB_FS
 	MX_GPIO_Init();
 #endif
@@ -96,6 +106,15 @@ void main(void *param)
 #if DEF_ETH
 	SetNetWorkInfo ("192.168.2.101", "255.255.255.0", "192.168.2.100");
 	//if (0 == NetDhcpClient(30*1000))
+	if (1) {
+		ip_addr_t perf_server_ip;
+		IP_ADDR4(&perf_server_ip, 192, 168, 2, 101);
+		while(1) {
+			lwiperf_start_tcp_server(&perf_server_ip, 9527, NULL, NULL);
+			VOSTaskDelay(10);;
+		}
+	}
+	else
 	{
 		sock_tcp_test();
 	}

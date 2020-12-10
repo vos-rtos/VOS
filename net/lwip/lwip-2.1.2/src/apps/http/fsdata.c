@@ -307,6 +307,7 @@ static const unsigned char FSDATA_ALIGN_PRE data__index_html[] FSDATA_ALIGN_POST
 0x6d,0x6c,0x3e,0x0d,0x0a,0x0d,0x0a,};
 
 
+
 const struct fsdata_file file__img_sics_gif[] = { {
 file_NULL,
 data__img_sics_gif,

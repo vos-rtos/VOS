@@ -150,51 +150,51 @@ typedef enum
 } WiFi_WEPKeyType;
 
 /* TLV (Tag Length Value) of IEEE IE Type Format */
-typedef __packed struct
+typedef struct
 {
   IEEEHeader header;
   uint8_t channel;
-} IEEETypes_DsParamSet_t;
+}__packed IEEETypes_DsParamSet_t;
 
-typedef __packed struct
+typedef struct
 {
   IEEEHeader header;
   uint16_t atim_window;
-} IEEETypes_IbssParamSet_t;
+}__packed IEEETypes_IbssParamSet_t;
 
 /* TLV (Tag Length Value) of MrvllEType Format */
-typedef __packed struct
+typedef struct
 {
   MrvlIEHeader header;
   uint16_t auth_type;
-} MrvlIETypes_AuthType_t;
+}__packed MrvlIETypes_AuthType_t;
 
-typedef __packed struct
+typedef struct
 {
   MrvlIEHeader header;
   uint8_t mac_address[1][WIFI_MACADDR_LEN];
-} MrvlIETypes_BSSIDList_t;
+}__packed MrvlIETypes_BSSIDList_t;
 
-typedef __packed struct
+typedef struct
 {
   MrvlIEHeader header;
-  __packed struct
+  struct
   {
     uint8_t band_config_type;
     uint8_t chan_number;
-  } entries[1];
-} MrvlIETypes_ChanBandList_t;
+  }__packed entries[1];
+}__packed MrvlIETypes_ChanBandList_t;
 
-typedef __packed struct
+typedef struct
 {
   MrvlIEHeader header;
   uint8_t count;
   uint8_t period;
   uint16_t max_duration;
   uint16_t duration_remaining;
-} MrvlIETypes_CfParamSet_t;
+}__packed MrvlIETypes_CfParamSet_t;
 
-typedef __packed struct
+typedef struct
 {
   MrvlIEHeader header;
   __packed struct
@@ -205,74 +205,74 @@ typedef __packed struct
     uint16_t min_scan_time;
     uint16_t max_scan_time;
   } channels[1];
-} MrvlIETypes_ChanListParamSet_t;
+}__packed MrvlIETypes_ChanListParamSet_t;
 
-typedef __packed struct
+typedef struct
 {
   MrvlIEHeader header;
   uint16_t key_type_id;
   uint16_t key_info;
   uint16_t key_len;
   uint8_t key[32];
-} MrvlIETypes_KeyParamSet_t;
+}__packed MrvlIETypes_KeyParamSet_t;
 
-typedef __packed struct
+typedef struct
 {
   MrvlIEHeader header;
   uint8_t mac_address[WIFI_MACADDR_LEN];
   uint8_t key_idx;
   uint8_t key_type;
   uint16_t key_info;
-} MrvlIETypes_KeyParamSet_v2_t;
+}__packed MrvlIETypes_KeyParamSet_v2_t;
 
-typedef __packed struct
+typedef struct
 {
   MrvlIEHeader header;
   uint8_t passphrase[64];
-} MrvlIETypes_Passphrase_t;
+}__packed MrvlIETypes_Passphrase_t;
 
-typedef __packed struct
+typedef struct
 {
   MrvlIEHeader header;
   uint8_t channel;
-} MrvlIETypes_PhyParamDSSet_t;
+}__packed MrvlIETypes_PhyParamDSSet_t;
 
-typedef __packed struct
+typedef struct
 {
   MrvlIEHeader header;
   uint8_t rates[14];
-} MrvlIETypes_RatesParamSet_t;
+}__packed MrvlIETypes_RatesParamSet_t;
 
-typedef __packed struct
+typedef struct
 {
   MrvlIEHeader header;
   uint8_t rsn[64];
-} MrvlIETypes_RsnParamSet_t;
+}__packed MrvlIETypes_RsnParamSet_t;
 
-typedef __packed struct
+typedef struct
 {
   MrvlIEHeader header;
   uint8_t ssid[WIFI_MAX_SSIDLEN];
-} MrvlIETypes_SSIDParamSet_t;
+}__packed MrvlIETypes_SSIDParamSet_t;
 
-typedef __packed struct
+typedef struct
 {
   MrvlIEHeader header;
   uint8_t mac_address[WIFI_MACADDR_LEN];
-} MrvlIETypes_StaMacAddr_t;
+}__packed MrvlIETypes_StaMacAddr_t;
 
-typedef __packed struct
+typedef struct
 {
   MrvlIEHeader header;
   uint64_t tsf_table[1];
-} MrvlIETypes_TsfTimestamp_t;
+}__packed MrvlIETypes_TsfTimestamp_t;
 
 // 整个结构体的最大大小为256字节
-typedef __packed struct
+typedef struct
 {
   MrvlIEHeader header;
   uint8_t vendor[64]; // 通常情况下64字节已足够
-} MrvlIETypes_VendorParamSet_t;
+}__packed MrvlIETypes_VendorParamSet_t;
 
 typedef MrvlIETypes_Passphrase_t MrvlIETypes_WPA_Passphrase_t;
 
@@ -283,7 +283,7 @@ typedef struct
   char keys[4][WIFI_MAX_WEPKEYLEN + 1];
 } WiFi_WEPKey;
 
-typedef __packed struct
+typedef struct
 {
   uint16_t ie_length; // Total information element length (不含sizeof(ie_length))
   uint8_t bssid[WIFI_MACADDR_LEN]; // BSSID
@@ -294,7 +294,7 @@ typedef __packed struct
   uint16_t bcn_interval; // Beacon interval
   uint16_t cap_info; // Capabilities information
   IEEEType ie_parameters; // 存放的是一些IEEE类型的数据
-} WiFi_BssDescSet;
+}__packed WiFi_BssDescSet;
 
 typedef struct
 {
@@ -309,18 +309,18 @@ typedef struct
   } password;
 } WiFi_Connection;
 
-typedef __packed struct
+typedef struct
 {
   uint8_t wep_key_index;
   uint8_t is_default_tx_key;
   uint8_t wep_key[13];
-} WiFi_KeyParam_WEP_v1;
+}__packed WiFi_KeyParam_WEP_v1;
 
-typedef __packed struct
+typedef struct
 {
   uint16_t key_len;
   uint8_t wep_key[13];
-} WiFi_KeyParam_WEP_v2;
+}__packed WiFi_KeyParam_WEP_v2;
 
 typedef struct
 {
@@ -351,16 +351,16 @@ typedef struct
   WiFi_SSIDInfo info;
 } WiFi_STAInfo;
 
-typedef __packed struct
+typedef struct
 {
   uint32_t pkt_init_cnt;
   uint32_t pkt_success_cnt;
   uint32_t tx_attempts;
   uint32_t retry_failure;
   uint32_t expiry_failure;
-} WiFi_TxPktStatEntry;
+}__packed WiFi_TxPktStatEntry;
 
-typedef __packed struct
+typedef struct
 {
   uint8_t oui[3];
   uint8_t oui_type;
@@ -370,7 +370,7 @@ typedef __packed struct
   uint8_t unicast_oui[1][4]; // 这里假定unicast_num=1
   uint16_t auth_num; // 只有当unicast_num=1时, 该成员才会在这个位置上
   uint8_t auth_oui[1][4];
-} WiFi_Vendor;
+}__packed WiFi_Vendor;
 
 /* 参数 */
 typedef struct
@@ -400,59 +400,59 @@ typedef struct
 } WiFi_Arg_SetWEP;
 
 /* 命令和命令回应 */
-typedef __packed struct
+typedef struct
 {
   WiFi_CommandHeader header;
   uint8_t peer_sta_addr[WIFI_MACADDR_LEN];
   uint16_t reason_code; // Reason code defined in IEEE 802.11 specification section 7.3.1.7 to indicate de-authentication reason
-} WiFi_Cmd_Deauthenticate;
+}__packed WiFi_Cmd_Deauthenticate;
 
-typedef __packed struct
+typedef struct
 {
   WiFi_CommandHeader header;
   uint16_t action;
   MrvlIETypes_KeyParamSet_t keys;
-} WiFi_Cmd_KeyMaterial;
+}__packed WiFi_Cmd_KeyMaterial;
 
-typedef __packed struct
+typedef struct
 {
   WiFi_CommandHeader header;
   uint16_t action;
   uint8_t mac_addr[WIFI_MACADDR_LEN];
-} WiFi_Cmd_MACAddr;
+}__packed WiFi_Cmd_MACAddr;
 
-typedef __packed struct
+typedef struct
 {
   WiFi_CommandHeader header;
   uint16_t action;
   uint16_t reserved;
-} WiFi_Cmd_MACCtrl;
+}__packed WiFi_Cmd_MACCtrl;
 
-typedef __packed struct
+typedef struct
 {
   WiFi_CommandHeader header;
   uint16_t action;
   uint16_t num_of_adrs;
   uint8_t mac_list[WIFI_MCASTFILTER_COUNT][WIFI_MACADDR_LEN];
-} WiFi_Cmd_MulticastAdr;
+}__packed WiFi_Cmd_MulticastAdr;
 
-typedef __packed struct
+typedef struct
 {
   WiFi_CommandHeader header;
   uint16_t action;
   uint16_t tx_key_index; // Key set being used for transmit (0~3)
   uint8_t wep_types[4]; // use 40 or 104 bits
   uint8_t keys[4][16];
-} WiFi_Cmd_SetWEP;
+}__packed WiFi_Cmd_SetWEP;
 
-typedef __packed struct
+typedef struct
 {
   WiFi_CommandHeader header;
   uint16_t action;
   uint16_t cache_result;
-} WiFi_Cmd_SupplicantPMK;
+}__packed WiFi_Cmd_SupplicantPMK;
 
-typedef __packed struct
+typedef struct
 {
   WiFi_CommandHeader header;
   uint8_t peer_sta_addr[WIFI_MACADDR_LEN]; // Peer MAC address
@@ -460,30 +460,30 @@ typedef __packed struct
   uint16_t listen_interval; // Listen interval
   uint16_t bcn_period; // Beacon period
   uint8_t dtim_period; // DTIM period
-} WiFi_CmdRequest_Associate;
+}__packed WiFi_CmdRequest_Associate;
 
-typedef __packed struct
+typedef struct
 {
   WiFi_CommandHeader header;
   uint8_t bss_type;
   uint8_t bss_id[WIFI_MACADDR_LEN];
-} WiFi_CmdRequest_Scan;
+}__packed WiFi_CmdRequest_Scan;
 
-typedef __packed struct
+typedef struct
 {
   WiFi_CommandHeader header;
   uint16_t capability;
   uint16_t status_code;
   uint16_t association_id;
   IEEEType ie_buffer;
-} WiFi_CmdResponse_Associate;
+}__packed WiFi_CmdResponse_Associate;
 
-typedef __packed struct
+typedef struct
 {
   WiFi_CommandHeader header;
   uint16_t buf_size;
   uint8_t num_of_set;
-} WiFi_CmdResponse_Scan;
+}__packed WiFi_CmdResponse_Scan;
 
 void WiFi_Associate(const WiFi_Connection *conn, int8_t max_retry, WiFi_Callback callback, void *arg);
 int WiFi_CheckWEPKey(uint8_t *dest, const char *src);

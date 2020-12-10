@@ -46,21 +46,21 @@ typedef enum
 } WiFi_EventList;
 
 // WiFi模块事件帧
-typedef __packed struct
+typedef struct
 {
   WiFi_SDIOFrameHeader header;
   uint16_t event_id; // Enumerated identifier for the event
   uint8_t bss_num;
   uint8_t bss_type;
-} WiFi_EventHeader;
+}__packed WiFi_EventHeader;
 
 // 大部分事件都是这个格式
-typedef __packed struct
+typedef struct
 {
   WiFi_EventHeader header;
   uint16_t reason_code; // IEEE Reason Code as described in the 802.11 standard 
   uint8_t mac_address[WIFI_MACADDR_LEN]; // Peer STA Address
-} WiFi_ExtendedEventHeader;
+}__packed WiFi_ExtendedEventHeader;
 
 void WiFi_CheckTimeout(void);
 const WiFi_DataRx *WiFi_GetReceivedPacket(void);

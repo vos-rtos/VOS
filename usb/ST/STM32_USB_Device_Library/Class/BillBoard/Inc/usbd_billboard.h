@@ -62,7 +62,7 @@ extern "C" {
 /** @defgroup USBD_CORE_Exported_TypesDefinitions
   * @{
   */
-typedef  struct  _BB_DescHeader
+typedef struct  _BB_DescHeader
 {
   uint8_t  bLength;
   uint8_t  bDescriptorType;
@@ -86,7 +86,7 @@ typedef struct
   uint32_t  dwAlternateModeVdo;
 } USBD_BB_AltModeCapDescTypeDef;
 
-typedef  struct
+typedef struct
 {
   uint8_t   bLength;
   uint8_t   bDescriptorType;
