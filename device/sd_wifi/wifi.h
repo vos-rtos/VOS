@@ -1,6 +1,8 @@
 #ifndef __WIFI_H
 #define __WIFI_H
 
+#define printf kprintf
+
 #define WIFI_CLOCK_FREQ 25000000 // 时钟频率 (最高25MHz, 不使用DMA传输时请适当降低频率)
 #define WIFI_CMDRESP_TIMEOUT 30000 // WiFi命令帧回应的超时时间(ms)
 #define WIFI_DATAPORTS_RX_NUM 15 // 数据接收通道个数
