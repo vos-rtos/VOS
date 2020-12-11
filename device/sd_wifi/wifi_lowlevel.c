@@ -36,6 +36,9 @@ static uint16_t sdio_rca; // RCA相对地址: 虽然SDIO标准规定SDIO接口上可以接多张SD
 static SDIO_CmdInitTypeDef sdio_cmd;
 static SDIO_DataInitTypeDef sdio_data;
 
+//必须声明kprintf，不然浮点数被当做整形处理
+int kprintf(char* format, ...);
+
 /* 计算SDIO时钟分频系数 */
 static uint8_t WiFi_LowLevel_CalcClockDivider(uint32_t freq, uint32_t *preal)
 {

@@ -1347,7 +1347,7 @@ s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode)
 
 	//打印所有任务信息
 	//按任务号排序，待优化，任务id唯一，直接从0开始找
-	kprintf("任务号\t优先级\tCPU(百分比)\t栈顶地址\t栈当前地址\t栈总尺寸\t栈剩余尺寸\t栈状态\t任务名\r\n");
+	kprintf("任务号\t优先级\tCPU\t栈顶地址\t栈当前地址\t栈总尺寸\t栈剩余尺寸\t栈状态\t任务名\r\n");
 	for (i=0; i<MAX_VOSTASK_NUM; i++) {
 		for (j=0; j<cnts; j++) {
 			if (arr[j].id == i) {
@@ -1365,7 +1365,7 @@ s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode)
 					strcpy(stack_status, "破坏"); //可能是被自己破坏或者被自己下面的变量破坏
 				}
 				if (ticks_totals==0) ticks_totals = 1; //除法分母不能为0
-				kprintf("%04d\t%03d\t\t%03d\t%08x\t%08x\t%08x\t%08x\t%s\t%s\r\n",
+				kprintf("%04d\t%03d\t%3d%%\t%08x\t%08x\t%08x\t%08x\t%s\t%s\r\n",
 						arr[j].id, arr[j].prio, (u32)(arr[j].ticks*100/ticks_totals), arr[j].stack_top,
 						arr[j].stack_ptr, arr[j].stack_size, stack_left, stack_status, arr[j].name);
 				break;

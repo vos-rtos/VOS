@@ -218,6 +218,45 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
 #define DEFAULT_THREAD_STACKSIZE        512
 
 
+#define LWIP_TCP_SACK_OUT 1 // 允许批量确认
+
+// 配置DHCP
+#define LWIP_DHCP 1
+#define LWIP_NETIF_HOSTNAME 1
+
+// 配置DNS
+#define LWIP_DNS 1
+
+// 配置DHCPD
+#define MEMP_NUM_SYS_TIMEOUT (LWIP_NUM_SYS_TIMEOUT_INTERNAL + 1) // DHCPD需要用到1个timeout定时器
+#if !LWIP_DHCP
+// 在不启用DHCP的情况下也能使用DHCPD, 但是需要为IP地址0.0.0.0开放DHCP UDP端口号
+#define LWIP_IP_ACCEPT_UDP_PORT(port) ((port) == LWIP_IANA_PORT_DHCP_CLIENT)
+#endif
+
+// 广播包过滤器
+// 如果打开了这个过滤器, 那么就需要在套接字上设置SOF_BROADCAST选项才能收发广播数据包
+//#define IP_SOF_BROADCAST 1
+//#define IP_SOF_BROADCAST_RECV 1
+
+// 配置IPv6
+#define LWIP_IPV6 0
+#define LWIP_ND6_RDNSS_MAX_DNS_SERVERS LWIP_DNS // 允许SLAAC获取DNS服务器的地址
+#define LWIP_RAW 1 // 允许创建原始套接字
+
+// 允许在网络接口间转发数据包
+// 88W8801的STA和uAP功能可以同时打开, 如果想要手机或电脑连上88W8801创建的热点后能上网, 就需要开启这两个选项
+// 电脑/手机 <---> 88W8801 <---> 能上网的路由器 <---> Internet
+// 选项开启后, 还需要在路由器上配置路由表才行, 因为此时88W8801也相当于一个路由器
+#define IP_FORWARD 1
+#define LWIP_IPV6_FORWARD 0
+
+// 开启调试信息输出
+#define LWIP_DEBUG
+#define DHCPD_DEBUG LWIP_DBG_ON
+#define ND6D_DEBUG LWIP_DBG_ON
+
+
 #define LWIP_DEBUG                     0
 
 #define ICMP_DEBUG                      LWIP_DBG_OFF

@@ -55,7 +55,7 @@ void main(void *param)
 	s32 res;
 	s8 buf[100];
 	void uart_init(u32 bound);
-	uart_init(115200);
+ 	uart_init(115200);
 	kprintf("hello world!\r\n");
 
 #if DEF_SD_WIFI
