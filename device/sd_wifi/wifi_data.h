@@ -23,7 +23,7 @@ typedef struct
   uint8_t flags; // TDLS flags
   uint8_t reserved2[43];
   uint8_t payload[1]; // 数据链路层上的帧
-}__packed WiFi_DataRx;
+} __packed WiFi_DataRx;
 
 // WiFi模块发送的数据帧
 typedef struct

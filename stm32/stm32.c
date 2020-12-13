@@ -83,11 +83,12 @@ void HAL_MspInit(void)
 
 void HAL_Delay(uint32_t Delay)
 {
-#if 0
-	VOSTaskDelay(Delay);
-#else
-	VOSDelayUs(Delay*1000);
-#endif
+	if (Delay > 20) {
+		VOSTaskDelay(Delay);
+	}
+	else {
+		VOSDelayUs(Delay*1000);
+	}
 }
 
 uint32_t HAL_GetTick(void)

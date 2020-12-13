@@ -133,9 +133,9 @@ vos_start(void)
 	VOSTimerInit(); //定时器初始化，依赖信号量，互斥量，不能关中断里执行，因为里面有使用svn中断
 
 	VOSShellInit();
-	void *main_stack = vmalloc(1024*8);
+	void *main_stack = vmalloc(1024*16);
 	if (main_stack) {
-		code = VOSTaskCreate(main, 0, main_stack, 1024*8, TASK_PRIO_NORMAL, "main");
+		code = VOSTaskCreate(main, 0, main_stack, 1024*16, TASK_PRIO_NORMAL, "main");
 	}
 	__vos_irq_restore(irq_save);
 

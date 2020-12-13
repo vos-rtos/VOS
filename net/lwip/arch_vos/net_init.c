@@ -22,6 +22,7 @@ struct netif *GetNetIfPtr()
 }
 
 void lan8720Regs();
+#if !LWIP_IPV6
 s32 net_init()
 {
 	static s32 init_flag = 0;
@@ -54,7 +55,9 @@ s32 net_init()
 #endif
   	return 0;
 }
+#endif
 
+#if !LWIP_IPV6
 s32 DhcpClientCheck(struct netif *pNetIf)
 {
 	return !!pNetIf->ip_addr.addr;
@@ -82,3 +85,4 @@ void NetAddrInfoPrt(struct netif *pNetIf)
 				gateway[0], gateway[1], gateway[2], gateway[3]);
 	}
 }
+#endif

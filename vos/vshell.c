@@ -525,4 +525,14 @@ void VSHELL_FUN_NOTE(modem, "4G modem: AT command")(s8 **parr, s32 cnts)
 	at_test();
 	VOSEventEnable(task_id, event);//恢复接收某些位事件
 }
+void usart_process(char ch);
+void VSHELL_FUN_NOTE(wifi, "sd wifi 8081")(s8 **parr, s32 cnts)
+{
+	s32 i = 0;
+	for (i=0; i<cnts; i++) {
+		kprintf("param[%d]:%s\r\n", i, parr[i]);
+	}
+	usart_process(parr[1][0]);
+}
+
 

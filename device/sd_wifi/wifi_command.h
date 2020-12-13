@@ -1,7 +1,7 @@
 #ifndef __WIFI_COMMAND_H
 #define __WIFI_COMMAND_H
 
-#include "vos.h"
+#define __packed __attribute__((packed))
 
 // 命令通道状态
 #define WIFI_COMMANDSTATUS_LOCKED _BV(0)
@@ -25,7 +25,7 @@
 #define TLV_STRUCTLEN(tlv) (sizeof((tlv).header) + (tlv).header.length)
 
 // 已知本TLV的地址和大小, 求下一个TLV的地址
-#define TLV_NEXT(tlv) ((u8 *)(tlv) + TLV_STRUCTLEN(*(tlv)))
+#define TLV_NEXT(tlv) ((uint8_t *)(tlv) + TLV_STRUCTLEN(*(tlv)))
 
 // 部分WiFi命令的action字段
 typedef enum
@@ -124,61 +124,61 @@ typedef enum
   WIFI_STATUS_UNSUPPORTED = 8 // 不支持该命令
 } WiFi_Status;
 
-typedef u8 bss_t;
+typedef uint8_t bss_t;
 typedef int8_t port_t;
 typedef void (*WiFi_Callback)(void *arg, void *data, WiFi_Status status);
 
 typedef struct
 {
-  u8 type;
-  u8 length; // 数据域的大小
-}__packed IEEEHeader;
+  uint8_t type;
+  uint8_t length; // 数据域的大小
+} __packed IEEEHeader;
 
 // information element parameter
 // 所有IEEETypes_*类型的基类型
 typedef struct
 {
   IEEEHeader header;
-  u8 data[1];
-}__packed IEEEType;
+  uint8_t data[1];
+} __packed IEEEType;
 
 typedef struct
 {
-  u16 type;
-  u16 length;
-}__packed MrvlIEHeader;
+  uint16_t type;
+  uint16_t length;
+} __packed MrvlIEHeader;
 
 // 所有MrvlIETypes_*类型的基类型
 typedef struct
 {
   MrvlIEHeader header;
-  u8 data[1];
-}__packed MrvlIEType;
+  uint8_t data[1];
+} __packed MrvlIEType;
 
 // WiFi模块所有类型的帧的头部
 typedef struct
 {
-  u16 length; // 大小包括此成员本身
-  u16 type;
-}__packed WiFi_SDIOFrameHeader;
+  uint16_t length; // 大小包括此成员本身
+  uint16_t type;
+} __packed WiFi_SDIOFrameHeader;
 
 // WiFi模块命令帧的头部
 typedef struct
 {
   WiFi_SDIOFrameHeader header;
-  u16 cmd_code;
-  u16 size;
-  u8 seq_num;
-  u8 bss;
-  u16 result;
-}__packed WiFi_CommandHeader;
+  uint16_t cmd_code;
+  uint16_t size;
+  uint8_t seq_num;
+  uint8_t bss;
+  uint16_t result;
+} __packed WiFi_CommandHeader;
 
 typedef struct
 {
   WiFi_Callback callback;
   void *arg;
-  u8 busy;
-  u32 timestamp;
+  uint8_t busy;
+  uint32_t timestamp;
 } WiFi_CommandStatus;
 
 // WiFi回调函数间传递的参数
@@ -192,7 +192,7 @@ typedef struct
 #define WiFi_GetCommandCode(data) (((data) == NULL) ? 0 : (((const WiFi_CommandHeader *)(data))->cmd_code & 0x7fff))
 #define WiFi_IsCommandResponse(data) ((data) != NULL && ((const WiFi_CommandHeader *)(data))->cmd_code & 0x8000)
 
-WiFi_ArgBase *WiFi_AllocateArgument(u16 size, const char *func_name, bss_t bss, WiFi_Callback saved_callback, void *saved_arg);
+WiFi_ArgBase *WiFi_AllocateArgument(uint16_t size, const char *func_name, bss_t bss, WiFi_Callback saved_callback, void *saved_arg);
 void WiFi_CheckCommandTimeout(void);
 void WiFi_CommandResponseProcess(WiFi_CommandHeader *resp);
 void WiFi_DiscardData(void);
@@ -203,7 +203,7 @@ int WiFi_IsCommandBusy(void);
 int WiFi_IsCommandLocked(void);
 int WiFi_ReleaseCommandBuffer(void);
 int WiFi_SendCommand(WiFi_Callback callback, void *arg);
-void WiFi_SetCommandHeader(WiFi_CommandHeader *cmd, bss_t bss, u16 code, u16 size, int inc_seqnum);
-int WiFi_TranslateTLV(MrvlIEType *mrvlie_tlv, const IEEEType *ieee_tlv, u16 mrvlie_payload_size);
+void WiFi_SetCommandHeader(WiFi_CommandHeader *cmd, bss_t bss, uint16_t code, uint16_t size, int inc_seqnum);
+int WiFi_TranslateTLV(MrvlIEType *mrvlie_tlv, const IEEEType *ieee_tlv, uint16_t mrvlie_payload_size);
 
 #endif

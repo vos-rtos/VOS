@@ -1,10 +1,12 @@
-#if 1
+
 #include "stm32f4xx_hal.h"
 #include "ethernetif.h"
 #include "lan8720.h"
 
 #include "netif/etharp.h"  
 #include "string.h"  
+
+#if !LWIP_IPV6
 
 extern ETH_HandleTypeDef ETH_Handler;
 
@@ -179,4 +181,5 @@ err_t ethernetif_init(struct netif *netif)
 	low_level_init(netif);
 	return ERR_OK;
 }
+
 #endif

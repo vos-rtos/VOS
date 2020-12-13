@@ -489,7 +489,7 @@ void WiFi_Scan(WiFi_Callback callback, void *arg)
   WiFi_ArgBase *p;
   WiFi_CmdRequest_Scan *cmd; // Òª·¢ËÍµÄÃüÁî
   MrvlIETypes_ChanListParamSet_t *chanlist;
-  
+
   p = WiFi_AllocateArgument(sizeof(WiFi_ArgBase), __FUNCTION__, 0, callback, arg);
   if (p == NULL)
     return;
@@ -513,7 +513,7 @@ void WiFi_Scan(WiFi_Callback callback, void *arg)
     chanlist->channels[i].min_scan_time = 0;
     chanlist->channels[i].max_scan_time = 100;
   }
-  
+
   WiFi_SetCommandHeader(&cmd->header, p->bss, CMD_802_11_SCAN, sizeof(WiFi_CmdRequest_Scan) + TLV_STRUCTLEN(*chanlist), 1);
   WiFi_SendCommand(WiFi_Scan_Callback, p);
 }

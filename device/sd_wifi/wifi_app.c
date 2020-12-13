@@ -382,72 +382,62 @@ static void ap_sysinfo_callback(void *arg, void *data, WiFi_Status status)
   WiFi_ShowAPClientList(BSS_UAP, NULL, NULL);
 }
 
-//static void usart_process(void)
-//{
-//  u8 ch;
-//
-//  HAL_UART_Receive(&huart1, &ch, 1, HAL_MAX_DELAY);
-//  switch (ch)
-//  {
-//    case 'a':
-//      ap_example();
-//      break;
-//    case 'A':
-//      WiFi_StopMicroAP(BSS_UAP, stop_callback, "AP is stopped!\0Failed to stop AP!");
-//      break;
-//    case 'b':
-//      WiFi_ShowAPClientList(BSS_UAP, ap_deauth_first_callback, NULL);
-//      break;
-//    case 'c':
-//      printf("Connecting...\n");
-//      associate_example();
-//      break;
-//    case 'C':
-//      WiFi_Deauthenticate(BSS_STA, LEAVING_NETWORK_DISASSOC, stop_callback, "Disconnected from the network!\0Failed to disconnect from the network!");
-//      break;
-//    case 'd':
-//      WiFi_DiscardData();
-//      break;
-//    case 'I':
-//      WiFi_ShowAPSysInfo(BSS_UAP, ap_sysinfo_callback, NULL);
-//      break;
-//    case 'k':
-//      WiFi_ShowKeyMaterials(BSS_STA);
-//      break;
-//#if LWIP_DNS
-//    case 'n':
-//      dns_test(4);
-//      break;
-//    case 'N':
-//      dns_test(6);
-//      break;
-//#endif
-//    case 's':
-//      printf("SDIO->STA=0x%08x, DMA2->LISR=0x%08x\n", SDIO->STA, DMA2->LISR);
-//      printf("CARDSTATUS=%d, INTSTATUS=%d, ", WiFi_LowLevel_ReadReg(1, WIFI_CARDSTATUS), WiFi_LowLevel_ReadReg(1, WIFI_INTSTATUS));
-//      printf("RDBITMAP=0x%04x, WRBITMAP=0x%04x\n", WiFi_GetReadPortStatus(), WiFi_GetWritePortStatus());
-//      break;
-//    case 'S':
-//      WiFi_Scan(NULL, NULL);
-//      break;
-//    case 't':
-//      printf("sys_now()=%d\n", sys_now());
-//      break;
-//    case 'T':
-//      WiFi_PrintTxPacketStatus(BSS_STA);
-//      break;
-//  }
-//}
+void usart_process(char ch)
+{
+  switch (ch)
+  {
+    case 'a':
+      ap_example();
+      break;
+    case 'A':
+      WiFi_StopMicroAP(BSS_UAP, stop_callback, "AP is stopped!\0Failed to stop AP!");
+      break;
+    case 'b':
+      WiFi_ShowAPClientList(BSS_UAP, ap_deauth_first_callback, NULL);
+      break;
+    case 'c':
+      printf("Connecting...\n");
+      associate_example();
+      break;
+    case 'C':
+      WiFi_Deauthenticate(BSS_STA, LEAVING_NETWORK_DISASSOC, stop_callback, "Disconnected from the network!\0Failed to disconnect from the network!");
+      break;
+    case 'd':
+      WiFi_DiscardData();
+      break;
+    case 'I':
+      WiFi_ShowAPSysInfo(BSS_UAP, ap_sysinfo_callback, NULL);
+      break;
+    case 'k':
+      WiFi_ShowKeyMaterials(BSS_STA);
+      break;
+#if LWIP_DNS
+    case 'n':
+      dns_test(4);
+      break;
+    case 'N':
+      dns_test(6);
+      break;
+#endif
+    case 's':
+      printf("SDIO->STA=0x%08x, DMA2->LISR=0x%08x\n", SDIO->STA, DMA2->LISR);
+      printf("CARDSTATUS=%d, INTSTATUS=%d, ", WiFi_LowLevel_ReadReg(1, WIFI_CARDSTATUS), WiFi_LowLevel_ReadReg(1, WIFI_INTSTATUS));
+      printf("RDBITMAP=0x%04x, WRBITMAP=0x%04x\n", WiFi_GetReadPortStatus(), WiFi_GetWritePortStatus());
+      break;
+    case 'S':
+      WiFi_Scan(NULL, NULL);
+      break;
+    case 't':
+      printf("sys_now()=%d\n", sys_now());
+      break;
+    case 'T':
+      WiFi_PrintTxPacketStatus(BSS_STA);
+      break;
+  }
+}
 
 int wifi_test()
 {
-//  HAL_Init();
-//
-//  clock_init();
-//  usart_init(115200);
-//  printf("STM32F407VE SDIO 88W8801\n");
-//  printf("SystemCoreClock=%u\n", SystemCoreClock);
-
   WiFi_Init();
   WiFi_MACAddr(BSS_STA, wifi_88w8801_sta.hwaddr, WIFI_ACT_GET, mac_address_callback, NULL);
   lwip_init();
@@ -456,25 +446,25 @@ int wifi_test()
   netbiosns_init();
   netbiosns_set_name("STM32F407VE");
 
-  httpd_init();
+//  httpd_init();
 //  tcp_tester_init();
 //  udp_tester_init();
   while (1)
   {
 
-    if (WiFi_LowLevel_GetITStatus(1))
+    if (WiFi_LowLevel_GetITStatus(1)) {
       WiFi_Input();
-    else
+    }
+    else {
       WiFi_CheckTimeout();
-
+      VOSTaskDelay(10);
+    }
 
     sys_check_timeouts();
 
 
     display_ip();
-
-//    if (__HAL_UART_GET_FLAG(&huart1, USART_FLAG_RXNE) != RESET)
-//      usart_process();
+    VOSTaskDelay(100);
   }
 }
 

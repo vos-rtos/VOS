@@ -43,6 +43,7 @@ void MX_GPIO_Init()
   __HAL_RCC_GPIOB_CLK_ENABLE();
 }
 
+
 #define DEF_SD_WIFI 1
 //#define DEF_ETH 1
 //#define DEF_4G_PPP 1
@@ -51,7 +52,6 @@ void MX_GPIO_Init()
 //#define DEF_GUI 1
 void main(void *param)
 {
-
 	s32 res;
 	s8 buf[100];
 	void uart_init(u32 bound);

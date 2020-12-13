@@ -33,8 +33,8 @@ typedef	int s32;
 typedef	unsigned long long u64;
 typedef	long long s64;
 
-#ifndef   __packed
+//#ifndef   __packed
   #define __packed __attribute__((packed))
-#endif
+//#endif
 
 #endif

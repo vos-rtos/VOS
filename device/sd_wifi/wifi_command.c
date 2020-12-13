@@ -234,6 +234,7 @@ int WiFi_SendCommand(WiFi_Callback callback, void *arg)
   addr = WiFi_GetPortAddress(0);
   do
   {
+	//dumphex(wifi_buffer_command, sizeof(wifi_buffer_command));
     ret = WiFi_LowLevel_WriteData(1, addr, wifi_buffer_command, cmd->header.length, sizeof(wifi_buffer_command), 0);
     i++;
   } while (ret == -1 && i < WIFI_LOWLEVEL_MAXRETRY);

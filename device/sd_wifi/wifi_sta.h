@@ -1,6 +1,8 @@
 #ifndef __WIFI_STA_H
 #define __WIFI_STA_H
 
+#define __packed __attribute__((packed))
+
 // Capability information
 #define WIFI_CAPABILITY_ESS _BV(0)
 #define WIFI_CAPABILITY_IBSS _BV(1)
@@ -197,14 +199,14 @@ typedef struct
 typedef struct
 {
   MrvlIEHeader header;
-  __packed struct
+  struct
   {
     uint8_t band_config_type;
     uint8_t chan_number;
     uint8_t scan_type;
     uint16_t min_scan_time;
     uint16_t max_scan_time;
-  } channels[1];
+  }__packed channels[1];
 }__packed MrvlIETypes_ChanListParamSet_t;
 
 typedef struct

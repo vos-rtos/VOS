@@ -1,6 +1,8 @@
 #ifndef __WIFI_UAP_H
 #define __WIFI_UAP_H
 
+#define __packed __attribute__((packed))
+
 #define WIFI_ENCRYPTIONPROTOCOL_NORSN _BV(0)
 #define WIFI_ENCRYPTIONPROTOCOL_WEPSTATIC _BV(1)
 #define WIFI_ENCRYPTIONPROTOCOL_WEPDYNAMIC _BV(2)

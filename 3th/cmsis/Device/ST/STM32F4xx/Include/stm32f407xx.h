@@ -679,7 +679,6 @@ typedef struct
 /** 
   * @brief SD host Interface
   */
-
 typedef struct
 {
   __IO uint32_t POWER;                 /*!< SDIO power control register,    Address offset: 0x00 */

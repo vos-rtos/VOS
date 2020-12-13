@@ -217,9 +217,9 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
 #define DEFAULT_UDP_RECVMBOX_SIZE       1000
 #define DEFAULT_THREAD_STACKSIZE        512
 
-
 #define LWIP_TCP_SACK_OUT 1 // 允许批量确认
 
+#if 1
 // 配置DHCP
 #define LWIP_DHCP 1
 #define LWIP_NETIF_HOSTNAME 1
@@ -240,16 +240,15 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
 //#define IP_SOF_BROADCAST_RECV 1
 
 // 配置IPv6
-#define LWIP_IPV6 0
+#define LWIP_IPV6 1
 #define LWIP_ND6_RDNSS_MAX_DNS_SERVERS LWIP_DNS // 允许SLAAC获取DNS服务器的地址
-#define LWIP_RAW 1 // 允许创建原始套接字
 
 // 允许在网络接口间转发数据包
 // 88W8801的STA和uAP功能可以同时打开, 如果想要手机或电脑连上88W8801创建的热点后能上网, 就需要开启这两个选项
 // 电脑/手机 <---> 88W8801 <---> 能上网的路由器 <---> Internet
 // 选项开启后, 还需要在路由器上配置路由表才行, 因为此时88W8801也相当于一个路由器
 #define IP_FORWARD 1
-#define LWIP_IPV6_FORWARD 0
+#define LWIP_IPV6_FORWARD 1
 
 // 开启调试信息输出
 #define LWIP_DEBUG
@@ -260,5 +259,5 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
 #define LWIP_DEBUG                     0
 
 #define ICMP_DEBUG                      LWIP_DBG_OFF
-
+#endif
 #endif

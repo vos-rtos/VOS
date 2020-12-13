@@ -208,6 +208,8 @@ static void WiFi_LowLevel_GPIOInit(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
   
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+#if 0
   // 使Wi-Fi模块复位信号(PDN)有效
   gpio.Mode = GPIO_MODE_OUTPUT_PP; // PD14设为推挽输出, 并立即输出低电平
   gpio.Pin = GPIO_PIN_14;
@@ -217,7 +219,17 @@ static void WiFi_LowLevel_GPIOInit(void)
   // 撤销Wi-Fi模块的复位信号
   WiFi_LowLevel_Delay(100); // 延时一段时间, 使WiFi模块能够正确复位
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_14, GPIO_PIN_SET);
+#else
+  // 使Wi-Fi模块复位信号(PDN)有效
+  gpio.Mode = GPIO_MODE_OUTPUT_PP; // PD14设为推挽输出, 并立即输出低电平
+  gpio.Pin = GPIO_PIN_3;
+  gpio.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  HAL_GPIO_Init(GPIOA, &gpio);
   
+  // 撤销Wi-Fi模块的复位信号
+  WiFi_LowLevel_Delay(100); // 延时一段时间, 使WiFi模块能够正确复位
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_3, GPIO_PIN_SET);
+#endif
   // SDIO相关引脚
   // PC8~11: SDIO_D0~3, PC12: SDIO_CK, 设为复用推挽输出
   gpio.Alternate = GPIO_AF12_SDIO;

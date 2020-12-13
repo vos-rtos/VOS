@@ -1,6 +1,6 @@
 #ifndef __WIFI_INTERRUPT_H
 #define __WIFI_INTERRUPT_H
-
+#define __packed __attribute__((packed))
 // WiFi事件列表
 typedef enum
 {
@@ -52,7 +52,7 @@ typedef struct
   uint16_t event_id; // Enumerated identifier for the event
   uint8_t bss_num;
   uint8_t bss_type;
-}__packed WiFi_EventHeader;
+} __packed WiFi_EventHeader;
 
 // 大部分事件都是这个格式
 typedef struct
