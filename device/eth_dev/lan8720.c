@@ -8,8 +8,6 @@ ETH_HandleTypeDef ETH_Handler;
 
 u32  ETH_GetRxPktSize(ETH_DMADescTypeDef *DMARxDesc);
 
-
-
 void Lan8720ResetPinInit()
 {
    GPIO_InitTypeDef GPIO_Initure;
