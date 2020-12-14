@@ -61,6 +61,8 @@ void main(void *param)
 #if DEF_SD_WIFI
 	int wifi_test();
 	wifi_test();
+	VOSTaskDelay(20*1000);
+	sock_tcp_test();
 #endif
 
 #if !USE_USB_FS

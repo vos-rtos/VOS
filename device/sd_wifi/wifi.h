@@ -14,7 +14,7 @@
 #define WIFI_DATAPORTS_TX_NUM 11 // 数据发送通道个数
 #define WIFI_DISPLAY_ASSOCIATE_RESULT 1 // 显示关联热点的结果值
 #define WIFI_DISPLAY_FIRMWARE_DNLD 0 // 显示固件下载过程
-#define WIFI_DISPLAY_RESPTIME 1 // 显示命令帧和数据帧从发送到收到确认和回应所经过的时间
+#define WIFI_DISPLAY_RESPTIME 0 // 显示命令帧和数据帧从发送到收到确认和回应所经过的时间
 #define WIFI_DISPLAY_SCAN_DETAILS 1 // 扫描热点时显示其他详细信息
 #define WIFI_LOWLEVEL_MAXRETRY 3 // 读写数据最大尝试次数
 #define WIFI_LOWLEVEL_NOINTPIN 0 // SDIO中断引脚是否不可用

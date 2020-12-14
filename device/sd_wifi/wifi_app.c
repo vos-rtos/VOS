@@ -436,18 +436,18 @@ void usart_process(char ch)
   }
 }
 
-int wifi_test()
+void task_wifi(void *param)
 {
   WiFi_Init();
   WiFi_MACAddr(BSS_STA, wifi_88w8801_sta.hwaddr, WIFI_ACT_GET, mac_address_callback, NULL);
-  lwip_init();
-  //tcpip_init(NULL, NULL);
+  //lwip_init();
+  tcpip_init(NULL, NULL);
 
   netbiosns_init();
   netbiosns_set_name("STM32F407VE");
 
 //  httpd_init();
-//  tcp_tester_init();
+  //tcp_tester_init();
 //  udp_tester_init();
   while (1)
   {
@@ -457,15 +457,23 @@ int wifi_test()
     }
     else {
       WiFi_CheckTimeout();
-      VOSTaskDelay(10);
+      VOSTaskDelay(2);
     }
 
     sys_check_timeouts();
 
 
     display_ip();
-    VOSTaskDelay(100);
+    //VOSTaskDelay(10);
   }
 }
+
+static long long task_wifi_stack[1024];
+void wifi_test()
+{
+	s32 task_id;
+	task_id = VOSTaskCreate(task_wifi, 0, task_wifi_stack, sizeof(task_wifi_stack), TASK_PRIO_NORMAL, "task_wifi");
+}
+
 
 
