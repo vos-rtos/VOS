@@ -44,25 +44,25 @@ void MX_GPIO_Init()
 }
 
 
-#define DEF_SD_WIFI 1
-//#define DEF_ETH 1
+//#define DEF_SD_WIFI 1
+#define DEF_ETH 1
 //#define DEF_4G_PPP 1
 //#define DEF_SD_FATFS 1
 //#define DEF_USB_FATFS 1
 //#define DEF_GUI 1
+#undef printf
 void main(void *param)
 {
 	s32 res;
 	s8 buf[100];
 	void uart_init(u32 bound);
  	uart_init(115200);
-	kprintf("hello world!\r\n");
 
 #if DEF_SD_WIFI
 	int wifi_test();
 	wifi_test();
 	VOSTaskDelay(20*1000);
-	sock_tcp_test();
+	//sock_tcp_test();
 #endif
 
 #if !USE_USB_FS
@@ -108,7 +108,7 @@ void main(void *param)
 #if DEF_ETH
 	SetNetWorkInfo ("192.168.2.101", "255.255.255.0", "192.168.2.100");
 	//if (0 == NetDhcpClient(30*1000))
-	if (1) {
+	if (0) {
 		ip_addr_t perf_server_ip;
 		IP_ADDR4(&perf_server_ip, 192, 168, 2, 101);
 		while(1) {

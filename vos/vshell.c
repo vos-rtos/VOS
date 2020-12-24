@@ -15,7 +15,7 @@
 void RegistUartEvent(s32 event, s32 task_id);
 
 //static long long task_vshell_stack[512];
-long long stack_shell_bg[512];
+long long stack_shell_bg[1024];//[512];
 
 typedef void (*VSHELL_FUN)(s8 **parr, s32 cnts);
 extern unsigned int vshell_name_start;

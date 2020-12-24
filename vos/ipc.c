@@ -789,6 +789,7 @@ s32 VOSMsgQuePut(StVOSMsgQueue *pMQ, void *pmsg, s32 len)
 
 	if (pMQ->psem == 0) return VERROR_PARAMETER;
 
+	u32 irq_save = __vos_irq_save();
 	if (pMQ->pos_tail != pMQ->pos_head || //头不等于尾，可以添加新消息
 		pMQ->msg_cnts == 0) { //队列为空，可以添加新消息
 		ptail = pMQ->pdata + pMQ->pos_tail * pMQ->msg_size;
@@ -803,6 +804,7 @@ s32 VOSMsgQuePut(StVOSMsgQueue *pMQ, void *pmsg, s32 len)
 	else {
 		ret = VERROR_FULL_RESOURCES;
 	}
+	__vos_irq_restore(irq_save);
 	return ret;
 }
 
@@ -821,17 +823,59 @@ s32 VOSMsgQueGet(StVOSMsgQueue *pMQ, void *pmsg, s32 len, u32 timeout_ms)
 {
 	s32 ret = VERROR_UNKNOWN;
 	u8 *phead = 0;
-
+	u32 irq_save;
 	if (pMQ->psem == 0) return VERROR_PARAMETER;
 
 	if (VERROR_NO_ERROR == (ret = VOSSemWait(pMQ->psem, timeout_ms))) {
+		irq_save = __vos_irq_save();
 		phead = pMQ->pdata + pMQ->pos_head * pMQ->msg_size;
 		len = (len <= pMQ->msg_size) ? len : pMQ->msg_size;
 		memcpy(pmsg, phead, len);
 		pMQ->pos_head++;
 		pMQ->pos_head = pMQ->pos_head % pMQ->msg_maxs;
 		pMQ->msg_cnts--;
+		__vos_irq_restore(irq_save);
 	}
+
+	return ret;
+}
+/********************************************************************************************************
+* 函数：s32 VOSMsgQueGetCnts(StVOSMsgQueue *pMQ);
+* 描述: 获取消息队列里有效消息数目。
+* 参数:
+* [1] pMQ：消息队列指针
+* 返回：返回负数表示错误，返回>0，则为有效消息条目数
+* 注意：无
+*********************************************************************************************************/
+
+s32 VOSMsgQueGetCnts(StVOSMsgQueue *pMQ)
+{
+	s32 ret = 0;
+	u32 irq_save;
+	if (pMQ->psem == 0) return VERROR_PARAMETER;
+	irq_save = __vos_irq_save();
+	ret = pMQ->msg_cnts;
+	__vos_irq_restore(irq_save);
+	return ret;
+}
+
+/********************************************************************************************************
+* 函数：s32 VOSMsgQueGetNums(StVOSMsgQueue *pMQ);
+* 描述: 获取消息队列里总大小。
+* 参数:
+* [1] pMQ：消息队列指针
+* 返回：返回负数表示错误，返回>0，则为有效消息条目数
+* 注意：无
+*********************************************************************************************************/
+
+s32 VOSMsgQueGetMax(StVOSMsgQueue *pMQ)
+{
+	s32 ret = 0;
+	u32 irq_save;
+	if (pMQ->psem == 0) return VERROR_PARAMETER;
+	irq_save = __vos_irq_save();
+	ret = pMQ->msg_maxs;
+	__vos_irq_restore(irq_save);
 	return ret;
 }
 /********************************************************************************************************

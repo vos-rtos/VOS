@@ -4,14 +4,18 @@
 
 #include "vos.h"
 #include "stdint.h"
+#include <sys/stat.h>
 int z_verbose = 0;
 
 void z_error(char *m)
 {
-
+	while(1) ;
+	return 0;
 }
 int _fstat(int filedes, struct stat *buf)
 {
+//	  buf->st_mode = S_IFCHR;
+//	  return 0;
 	while(1) ;
 	return 0;
 }
@@ -22,6 +26,7 @@ int _close(int fd)
 }
 short _isatty(int fd)
 {
+//	return fd == 0 || fd == 1 || fd == 2;
 	while(1) ;
 	return 0;
 }

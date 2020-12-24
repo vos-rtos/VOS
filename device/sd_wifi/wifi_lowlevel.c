@@ -8,6 +8,7 @@
 #include "wifi.h"
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_ll_dma.h"
+#include "vos.h"
 
 #define CMD52_WRITE _BV(31)
 #define CMD52_READAFTERWRITE _BV(27)
@@ -369,19 +370,30 @@ int WiFi_LowLevel_ReadData(uint8_t func, uint32_t addr, void *data, uint32_t siz
   
   // 等待数据接收完毕
   i = 0;
+  u32 timemark = VOSGetTimeMs();
   while (__SDIO_GET_FLAG(SDIO, SDIO_FLAG_CMDACT) != RESET || __SDIO_GET_FLAG(SDIO, SDIO_FLAG_DATAEND) == RESET)
   {
     err += WiFi_LowLevel_CheckError(__FUNCTION__);
     if (err)
       break;
-    
+
     i++;
-    if (i == CMD53_TIMEOUT)
-    {
-      printf("%s: timeout!\n", __FUNCTION__);
-      err++;
-      break;
+
+    if ( VOSGetTimeMs()-timemark > (u32)10000) {
+    	printf("%s: timeout!\n", __FUNCTION__);
+        err++;
+    	break;
     }
+    if (i > 10000) {
+    	VOSTaskDelay(1);
+    	i = 0;
+    }
+//    if (i == CMD53_TIMEOUT)
+//    {
+//      printf("%s: timeout!\n", __FUNCTION__);
+//      err++;
+//      break;
+//    }
   }
   sdio_data.DPSM = SDIO_DPSM_DISABLE;
   SDIO_ConfigData(SDIO, &sdio_data);
@@ -701,6 +713,7 @@ int WiFi_LowLevel_WriteData(uint8_t func, uint32_t addr, const void *data, uint3
   
   // 等待发送完毕
   i = 0;
+  u32 timemark = VOSGetTimeMs();
   while (__SDIO_GET_FLAG(SDIO, SDIO_FLAG_DATAEND) == RESET)
   {
     err += WiFi_LowLevel_CheckError(__FUNCTION__);
@@ -708,12 +721,22 @@ int WiFi_LowLevel_WriteData(uint8_t func, uint32_t addr, const void *data, uint3
       break;
     
     i++;
-    if (i == CMD53_TIMEOUT)
-    {
-      printf("%s: timeout!\n", __FUNCTION__); // 用于跳出TXACT始终不清零, 也没有错误标志位置位的情况
-      err++;
-      break;
+
+    if ( VOSGetTimeMs()-timemark > (u32)5000) {
+    	printf("%s: timeout!\n", __FUNCTION__);
+        err++;
+    	break;
     }
+    if (i > 10000) {
+    	VOSTaskDelay(1);
+    	i = 0;
+    }
+//    if (i == CMD53_TIMEOUT)
+//    {
+//      printf("%s: timeout!\n", __FUNCTION__); // 用于跳出TXACT始终不清零, 也没有错误标志位置位的情况
+//      err++;
+//      break;
+//    }
   }
   sdio_data.DPSM = SDIO_DPSM_DISABLE;
   SDIO_ConfigData(SDIO, &sdio_data);

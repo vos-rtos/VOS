@@ -191,6 +191,8 @@ void associate_example(void)
   conn.sec_type = WIFI_SECURITYTYPE_WPA;
   strcpy(conn.ssid, "visa");
   strcpy(conn.password.wpa, "120503Aa");
+//    strcpy(conn.ssid, "DJYOS");
+//    strcpy(conn.password.wpa, "1234567980");
   WiFi_Associate(&conn, -1, associate_callback, NULL);
 #endif
 }
@@ -254,7 +256,7 @@ static void mac_address_callback(void *arg, void *data, WiFi_Status status)
     printf("Failed to get MAC address!\n");
     return;
   }
-  WiFi_Scan(scan_callback, NULL);
+  //WiFi_Scan(scan_callback, NULL);
 
   printf("MAC Addr: %02X:%02X:%02X:%02X:%02X:%02X\n", wifi_88w8801_sta.hwaddr[0], wifi_88w8801_sta.hwaddr[1],
     wifi_88w8801_sta.hwaddr[2], wifi_88w8801_sta.hwaddr[3], wifi_88w8801_sta.hwaddr[4], wifi_88w8801_sta.hwaddr[5]);
@@ -292,6 +294,7 @@ static void mac_address_callback(void *arg, void *data, WiFi_Status status)
   dhcp_start(&wifi_88w8801_sta);
 #endif
 
+#if 0
 #if LWIP_IPV6
   netif_create_ip6_linklocal_address(&wifi_88w8801_sta, 1);
   printf("IPv6 link-local address: %s\n", ipaddr_ntoa(netif_ip_addr6(&wifi_88w8801_sta, 0)));
@@ -324,6 +327,8 @@ static void mac_address_callback(void *arg, void *data, WiFi_Status status)
   netif_add_ip6_address(&wifi_88w8801_uap, &ip6addr, NULL);
 
   nd6d_start(&wifi_88w8801_uap, NULL);
+#endif
+
 #endif
 }
 
@@ -433,6 +438,9 @@ void usart_process(char ch)
     case 'T':
       WiFi_PrintTxPacketStatus(BSS_STA);
       break;
+    case 'X':
+      sock_tcp_test();
+      break;
   }
 }
 
@@ -443,8 +451,8 @@ void task_wifi(void *param)
   //lwip_init();
   tcpip_init(NULL, NULL);
 
-  netbiosns_init();
-  netbiosns_set_name("STM32F407VE");
+  //netbiosns_init();
+  //netbiosns_set_name("STM32F407VE");
 
 //  httpd_init();
   //tcp_tester_init();
@@ -457,10 +465,10 @@ void task_wifi(void *param)
     }
     else {
       WiFi_CheckTimeout();
-      VOSTaskDelay(2);
+      //VOSTaskDelay(2);
     }
 
-    sys_check_timeouts();
+    //sys_check_timeouts();
 
 
     display_ip();
@@ -472,7 +480,8 @@ static long long task_wifi_stack[1024];
 void wifi_test()
 {
 	s32 task_id;
-	task_id = VOSTaskCreate(task_wifi, 0, task_wifi_stack, sizeof(task_wifi_stack), TASK_PRIO_NORMAL, "task_wifi");
+	//优先级必须低比应用层的任务低，不然发送导致tcpip进入assert, 具体原因还没找到。
+	task_id = VOSTaskCreate(task_wifi, 0, task_wifi_stack, sizeof(task_wifi_stack), TASK_PRIO_LOW, "wifi_int_process");
 }
 
 

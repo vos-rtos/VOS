@@ -161,7 +161,10 @@ u32_t sys_arch_mbox_tryfetch(sys_mbox_t *mbox, void **msg)
 	u32_t ret = 0;
 	if (mbox == 0) return SYS_MBOX_EMPTY;
 	if (mbox->MsgQuePtr == NULL) return SYS_MBOX_EMPTY;
-	if (mbox->MsgQuePtr->msg_cnts == 0) return SYS_MBOX_EMPTY;
+
+	if (VOSMsgQueGetCnts(mbox->MsgQuePtr) <= 0) {
+		return SYS_MBOX_EMPTY;
+	}
 	if (SYS_ARCH_TIMEOUT == (ret=sys_arch_mbox_fetch(mbox, msg, 0))){
 		return SYS_MBOX_EMPTY;
 	}
@@ -194,12 +197,16 @@ void sys_mbox_free(sys_mbox_t *mbox)
 int sys_mbox_valid(sys_mbox_t *mbox)
 {
 	int ret = 0;
+	int cnts, maxs;
 	if (mbox == 0) return 0;
 	if (mbox->MsgQuePtr == NULL) return 0;
-	if (mbox->MsgQuePtr->msg_cnts == mbox->MsgQuePtr->msg_maxs) {
+
+	cnts = VOSMsgQueGetCnts(mbox->MsgQuePtr);
+	maxs = VOSMsgQueGetMax(mbox->MsgQuePtr);
+	if (cnts > 0 && cnts == maxs) {
 		kprintf("warning: sys_mbox_valid overflow!\r\n");
 	}
-	if (mbox->MsgQuePtr->msg_cnts < mbox->MsgQuePtr->msg_maxs) {
+	if (cnts < maxs) {
 		ret = 1;
 	}
 	return ret;

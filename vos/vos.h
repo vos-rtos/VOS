@@ -260,6 +260,8 @@ StVOSMsgQueue *VOSMsgQueCreate(s8 *pRingBuf, s32 length, s32 msg_size, s8 *name)
 s32 VOSMsgQuePut(StVOSMsgQueue *pMQ, void *pmsg, s32 len);
 s32 VOSMsgQueGet(StVOSMsgQueue *pMQ, void *pmsg, s32 len, u32 timeout_ms);
 s32 VOSMsgQueFree(StVOSMsgQueue *pMQ);
+s32 VOSMsgQueGetCnts(StVOSMsgQueue *pMQ);
+s32 VOSMsgQueGetMax(StVOSMsgQueue *pMQ);
 
 void VOSTaskDelay(u32 ms);
 

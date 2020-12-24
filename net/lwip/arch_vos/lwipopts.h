@@ -47,9 +47,11 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
 
 #define LWIP_PROVIDE_ERRNO 		1
 
-#define LWIP_TCPIP_CORE_LOCKING 1
+#define LWIP_TCPIP_CORE_LOCKING  0//1
 
 #define LWIP_COMPAT_MUTEX_ALLOWED 1
+
+
 
 #ifndef TCPIP_THREAD_PRIO
 #define TCPIP_THREAD_PRIO		11	//定义内核任务的优先级为5
@@ -240,7 +242,7 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
 //#define IP_SOF_BROADCAST_RECV 1
 
 // 配置IPv6
-#define LWIP_IPV6 1
+#define LWIP_IPV6 0
 #define LWIP_ND6_RDNSS_MAX_DNS_SERVERS LWIP_DNS // 允许SLAAC获取DNS服务器的地址
 
 // 允许在网络接口间转发数据包
