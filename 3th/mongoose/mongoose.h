@@ -76,8 +76,6 @@
 #define MG_ARCH MG_ARCH_STM32
 #elif defined(VOS)
 #define MG_ARCH MG_ARCH_VOS
-//#include <sys/_timeval.h>
-//#define _SYS_SELECT_H //¹Ø±Õsys/select.h, ³åÍ»
 #endif
 
 

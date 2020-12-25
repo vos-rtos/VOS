@@ -31,17 +31,26 @@ int usb_printf(char* format, ...)
 
 int kprintf(char* format, ...)
 {
-	char temp[200];
-	int i=0;
+	char temp[64];
+	char *pnew;
+	int num;
+
 	va_list lst;
 	va_start (lst, format);
-//	i=c_vsnprintf(temp, sizeof(temp), format, lst);
-	i = rpl_vsnprintf(temp, sizeof(temp), format, lst);
-	if (i > 0) {
-		vputs(temp, i);
+	num = rpl_vsnprintf(temp, sizeof(temp), format, lst);
+	if (num > sizeof(temp)) {
+		pnew = vmalloc(num);
+		if (pnew) {
+			num = rpl_vsnprintf(pnew, num, format, lst);
+			vputs(pnew, num);
+			vfree(pnew);
+		}
+	}
+	else {
+		vputs(temp, num);
 	}
 	va_end(lst);
-	return i;
+	return num;
 }
 
 int vvsprintf(char *buf, int len, char* format, ...)

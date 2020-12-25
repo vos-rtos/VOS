@@ -2769,7 +2769,11 @@ void mg_connect_resolved(struct mg_connection *c) {
     } else {
       setsockopts(c);
     }
+#if MG_ARCH == MG_ARCH_VOS
+    if (rc <= 0) c->is_connecting = 1;//lwip可能立即返回，所以rc==0, 也要设置is_connecting消息，不然没法收到connnected消息。
+#else
     if (rc < 0) c->is_connecting = 1;
+#endif
   }
 }
 
