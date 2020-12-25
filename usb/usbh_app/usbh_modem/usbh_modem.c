@@ -73,10 +73,10 @@ s32 CUSTOM_WriteMODEM(u8 *pBuf, u32 dwLen, u32 dwTimeout)
         printf("\r\n: warn : usb    : modem device(channel) is not register.");
         return (0);
     }
-    if (dwLen > 0) {
-		kprintf("write 4G:\r\n");
-		dumphex(pBuf, dwLen);
-    }
+//    if (dwLen > 0) {
+//		kprintf("write 4G:\r\n");
+//		dumphex(pBuf, dwLen);
+//    }
     USBH_CUSTOM_MODEM_Transmit(host, buf, &len, timeout);
     return (dwLen - len);
 }
@@ -91,10 +91,10 @@ s32 CUSTOM_ReadMODEM(u8 *pBuf, u32 dwLen, u32 dwTimeout)
     }
 	USBH_CUSTOM_MODEM_Receive(host, pBuf, &len, dwTimeout);
 
-    if (dwLen - len > 0) {
-    	kprintf("read 4G:\r\n");
-    	dumphex(pBuf, dwLen - len);
-    }
+//    if (dwLen - len > 0) {
+//    	kprintf("read 4G:\r\n");
+//    	dumphex(pBuf, dwLen - len);
+//    }
 
     return dwLen - len;
 }

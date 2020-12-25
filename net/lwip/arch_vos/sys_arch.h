@@ -48,9 +48,9 @@ typedef struct StVOSSemaphore* 	sys_mutex_t;
 typedef StVosMsgQueLwip 		sys_mbox_t;
 typedef s32 					sys_thread_t;
 
-#define SYS_ARCH_DECL_PROTECT(lev)
-#define SYS_ARCH_PROTECT(lev)
-#define SYS_ARCH_UNPROTECT(lev)
+#define SYS_ARCH_DECL_PROTECT(lev) u32 lev
+#define SYS_ARCH_PROTECT(lev) lev = __local_irq_save()
+#define SYS_ARCH_UNPROTECT(lev) __local_irq_restore(lev)
 
 void *tcpip_stack_ptr();
 s32 tcpip_stack_size();

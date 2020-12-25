@@ -4,6 +4,7 @@
 #include "vtype.h"
 #include "vos.h"
 #include "stm32f4xx_hal.h"
+#include "random_hw.h"
 
 void SystemInit(void);
 void HAL_IncTick(void);
@@ -72,6 +73,7 @@ void misc_init()
 	//NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
 	//uart_init(115200);
  	//TIM3_Int_Init(5000-1,8400-1);
+	HwRandomInit();
 }
 
 

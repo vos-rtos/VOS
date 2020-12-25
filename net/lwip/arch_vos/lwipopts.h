@@ -15,7 +15,7 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
 #define TCP_INPUT_DEBUG 	LWIP_DBG_ON|LWIP_DBG_TYPES_ON
 #define TCP_OUTPUT_DEBUG	LWIP_DBG_ON|LWIP_DBG_TYPES_ON
 
-//#define LWIP_TCPIP_CORE_LOCKING 0
+#define LWIP_TCPIP_CORE_LOCKING 1//0
 
 #define LWIP_RAW 1
 
@@ -23,7 +23,7 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
 
 #define PING_USE_SOCKETS 0
 
-#define LWIP_RAND() rand()
+#define LWIP_RAND() HwRandomBuild()
 
 #define LWIP_TIMEVAL_PRIVATE	0
 

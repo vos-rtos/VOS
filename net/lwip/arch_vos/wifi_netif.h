@@ -3,7 +3,7 @@
 #ifndef ETHERNETIF_H
 #define ETHERNETIF_H
 
-#define WIFI_DISPLAY_PACKET_SIZE 1 // 显示收发的数据包的大小
+#define WIFI_DISPLAY_PACKET_SIZE 0 // 显示收发的数据包的大小
 #define WIFI_DISPLAY_PACKET_RX 0 // 显示收到的数据包内容
 #define WIFI_DISPLAY_PACKET_RXRATES 0 // 显示数据包的接收速率
 #define WIFI_DISPLAY_PACKET_TX 0 // 显示发送的数据包内容
