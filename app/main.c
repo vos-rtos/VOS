@@ -44,7 +44,7 @@ void MX_GPIO_Init()
 }
 
 void test_mg_download();
-
+void test_mg_http();
 //#define DEF_SD_WIFI 1
 //#define DEF_ETH 1
 #define DEF_4G_PPP 1
@@ -139,7 +139,8 @@ void main(void *param)
 			kprintf("PppCheck OK!\r\n");
 //			void  sock_tcp_test();
 //			sock_tcp_test();
-			test_mg_download();
+			//test_mg_download();
+			test_mg_http();
 		}
 		else {
 			kprintf("PppCheck running!\r\n");
