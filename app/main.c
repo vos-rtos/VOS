@@ -42,7 +42,7 @@ void MX_GPIO_Init()
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 }
-
+int test_ttp229();
 void test_mg_download();
 void test_mg_http();
 //#define DEF_SD_WIFI 1
@@ -58,6 +58,8 @@ void main(void *param)
 	s8 buf[100];
 	void uart_init(u32 bound);
  	uart_init(115200);
+
+ 	test_ttp229();
 
 #if DEF_SD_WIFI
 	int wifi_test();

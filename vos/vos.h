@@ -265,6 +265,8 @@ s32 VOSMsgQueGetMax(StVOSMsgQueue *pMQ);
 
 void VOSTaskDelay(u32 ms);
 
+void VOSDelayUs(u32 us);
+
 u32 VOSGetTicks();
 u32 VOSGetTimeMs();
 
