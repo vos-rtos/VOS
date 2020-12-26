@@ -33,15 +33,17 @@ int kprintf(char* format, ...)
 {
 	char temp[64];
 	char *pnew;
+	int new_len;
 	int num;
 
 	va_list lst;
 	va_start (lst, format);
 	num = rpl_vsnprintf(temp, sizeof(temp), format, lst);
 	if (num > sizeof(temp)) {
-		pnew = vmalloc(num);
+		new_len = num+1;
+		pnew = vmalloc(new_len);
 		if (pnew) {
-			num = rpl_vsnprintf(pnew, num, format, lst);
+			num = rpl_vsnprintf(pnew, new_len, format, lst);
 			vputs(pnew, num);
 			vfree(pnew);
 		}
