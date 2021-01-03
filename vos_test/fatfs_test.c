@@ -109,6 +109,22 @@ void fatfs_sddisk_test()
 	{
 		return;
 	}
+
+#if 1
+ 	char *arg[3] = {
+ 			"test",
+ 			"0:/abc.bmp",
+ 			"0:/bbb.bmp",
+ 	};
+
+ 	minutia_main(3, arg);
+ 	//binary_main(3, arg);
+ 	//thinner_main(3, arg);
+ 	//create_main(3, arg);
+ 	//direction_main(3, arg);
+ 	//enhancer_main(3, arg);
+ 	//mask_main(3, arg);
+#else
     for (i=0; i<sizeof(buf); i++) {
     	buf[i] = 'a'+i%26;
     }
@@ -144,6 +160,7 @@ void fatfs_sddisk_test()
     }
     /* Close the file */
     f_close(&fil);
+#endif
 }
 
 

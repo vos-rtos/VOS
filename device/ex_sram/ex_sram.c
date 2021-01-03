@@ -11,7 +11,7 @@
 
 SRAM_HandleTypeDef ghsram;
 
-#define FONT_SIZE  859464 //矢量字库很大，直接划分到exsram里
+#define FONT_SIZE  0//859464 //矢量字库很大，直接划分到exsram里
 //#define FONT_SIZE  0// 859464 //矢量字库很大，直接划分到exsram里
 /* Exported constants --------------------------------------------------------*/
 
@@ -160,7 +160,8 @@ void ExSRamInit()
 	if(HAL_SRAM_Init(&ghsram, &SRAM_Timing, &SRAM_Timing) != HAL_OK)
 	{
 		/* Initialization Error */
-		Error_Handler();
+		kprintf("error!\r\n");
+		while(1);
 	}
 }
 

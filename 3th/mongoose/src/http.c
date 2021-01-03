@@ -466,7 +466,7 @@ static int to_wchar(const char *path, wchar_t *wbuf, size_t wbuf_len) {
 DIR *opendir(const char *name) {
   DIR *d = NULL;
   wchar_t wpath[MAX_PATH];
-  DWORD attrs;
+  typedef struct attrs;
 
   if (name == NULL) {
     SetLastError(ERROR_BAD_ARGUMENTS);

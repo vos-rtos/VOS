@@ -20,7 +20,7 @@ typedef struct StVOSRingBuf {
 	volatile s32 idx_rd;
 }StVOSRingBuf;
 
-StVOSRingBuf *VOSRingBufCreate(u8 *buf, s32 len);
+StVOSRingBuf *VOSRingBufCreate(s32 len);
 void VOSRingBufDelete(StVOSRingBuf *pnew);
 StVOSRingBuf *VOSRingBufBuild(u8 *buf, s32 len);
 s32 VOSRingBufSet(StVOSRingBuf *ring, u8 *buf, s32 len);

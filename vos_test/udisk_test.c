@@ -23,6 +23,7 @@ void fatfs_udisk_test()
 	{
 		return;
 	}
+
     for (i=0; i<sizeof(buf); i++) {
     	buf[i] = 'a'+i%26;
     }
@@ -58,4 +59,5 @@ void fatfs_udisk_test()
     }
     /* Close the file */
     f_close(&fil);
+
 }

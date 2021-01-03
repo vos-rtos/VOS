@@ -193,7 +193,7 @@ $(document).ready(function(){initNavTree('group__DAP__TI__Info.html','');});
 <div class="line">MaxVal[1] = 20.0;          <span class="comment">// A/D result = 0xFFF in range 0 represents 20.0mA</span></div>
 </div><!-- fragment --><p>For a channel that reports <b>MinVal = MaxVal = 0</b> the formula needs to be provided by the debugger as the debug unit is using perhaps an external shunt resistor.</p>
 <p><b>DAP_TI_Info Response for <b>ID=0x02</b>: Get possible data capturing frequencies for recording of a specific channel</b> </p>
-<div class="fragment"><div class="line">| BYTE | BYTE ***| BYTE ********|DWORD ++++|</div>
+<div class="fragment"><div class="line">| BYTE | BYTE ***| BYTE ********|typedef struct ++++|</div>
 <div class="line">&lt; 0x1D | Channel | NoSelections |Frequency |</div>
 <div class="line">|******|*********|**************|++++++++++| </div>
 </div><!-- fragment --><ul>

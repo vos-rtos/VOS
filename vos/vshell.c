@@ -11,9 +11,10 @@
 #include "vconf.h"
 #include "vos.h"
 #include "vlist.h"
+#include "usart.h"
 
-void RegistUartEvent(s32 event, s32 task_id);
-
+void RegistUartEvent(s32 port, s32 event, s32 task_id);
+//void RegistUartEvent(s32 event, s32 task_id);
 //static long long task_vshell_stack[512];
 long long stack_shell_bg[1024];//[512];
 
@@ -185,8 +186,8 @@ void VOSShellInit()
 	void *task_vshell_stack = vmalloc(1024*4);
 	s32 task_id = VOSTaskCreate(VOSTaskShell, 0, task_vshell_stack, 1024*4, VOS_TASK_VSHELL_PRIO, "vshell");
 
-	RegistUartEvent(EVENT_USART1_RECV, task_id);
-
+	RegistUartEvent(STD_OUT, EVENT_USART1_RECV, task_id);
+	//RegistUartEvent(EVENT_USART1_RECV, task_id);//uart1
 }
 
 
@@ -340,7 +341,7 @@ void VSHELL_FUN(schedule_t)(s8 **parr, s32 cnts)
 	TestExitFlagSet(0);
 	schedule_test();
 }
-
+#endif
 /********************************************************************************************************
 * 函数：void VSHELL_FUN(uart_t)(s8 **parr, s32 cnts);
 * 描述: uart_t 命令
@@ -362,7 +363,7 @@ void VSHELL_FUN(uart_t)(s8 **parr, s32 cnts)
 	uart_test();
 	VOSEventEnable(task_id, event);//恢复接收某些位事件
 }
-
+#if 0
 /********************************************************************************************************
 * 函数：void VSHELL_FUN(timer_t)(s8 **parr, s32 cnts);
 * 描述: timer_t 命令

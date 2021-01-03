@@ -10,25 +10,19 @@
 #include "vringbuf.h"
 
 /********************************************************************************************************
-* 函数：StVOSRingBuf *VOSRingBufCreate(u8 *buf, s32 len);
-* 描述: 创建RingBuf, 这里需要malloc管理头
+* 函数：StVOSRingBuf *VOSRingBufCreate(s32 len);
+* 描述: 创建RingBuf, 这里需要malloc管理头+len大小
 * 参数:
 * [1] buf: 用户提供的buf
 * [2] len: 用户提供的buf的大小
 * 返回：返回RingBuf的对象指针，否则返回NULL
 * 注意：无
 *********************************************************************************************************/
-StVOSRingBuf *VOSRingBufCreate(u8 *buf, s32 len)
+StVOSRingBuf *VOSRingBufCreate(s32 len)
 {
-	StVOSRingBuf *pnew = (StVOSRingBuf *)vmalloc(sizeof(StVOSRingBuf));
-	if (pnew) {
-		pnew->buf = buf;
-		pnew->max = len;
-		pnew->cnts = 0;
-		pnew->idx_wr = 0;
-		pnew->idx_rd = 0;
-	}
-	return pnew;
+	StVOSRingBuf *pnew = (StVOSRingBuf *)vmalloc(sizeof(StVOSRingBuf)+len);
+	if (pnew == 0) return 0;
+	return VOSRingBufBuild(pnew, sizeof(StVOSRingBuf)+len);
 }
 
 /********************************************************************************************************

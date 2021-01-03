@@ -45,7 +45,8 @@ void SystemClock_Config(void)
 	  RCC_OscInitStruct.PLL.PLLQ = 7;
 	  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
 	  {
-	    Error_Handler();
+	    kprintf("error!\r\n");
+	    while(1);
 	  }
 	  /**Initializes the CPU, AHB and APB busses clocks
 	  */
@@ -58,7 +59,8 @@ void SystemClock_Config(void)
 
 	  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK)
 	  {
-	    Error_Handler();
+		    kprintf("error!\r\n");
+		    while(1);
 	  }
 	//STM32F405x/407x/415x/417x Ê¹ÄÜflashÔ¤È¡
 		if (HAL_GetREVID() == 0x1001)
