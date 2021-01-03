@@ -11,6 +11,8 @@
 #include "vtype.h"
 #include "vos.h"
 
+int kprintf(char* format, ...);
+
 s32 usbd_uart_app_gets(u8* buf, s32 size);
 int usb_printf(char* format, ...);
 //#define vgets usbd_uart_app_gets

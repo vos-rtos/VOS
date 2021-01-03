@@ -70,8 +70,8 @@ void main(void *param)
  	uart_open(0, 115200, 8, "none", 1);
  	uart_open(2, 115200, 8, "none", 1);
 
- 	uart_sends(0, "uart1 send out\r\n", strlen("uart1 send out\r\n"), 100);
- 	uart_sends(2, "uart3 send out\r\n", strlen("uart3 send out\r\n"), 100);
+ 	//uart_sends(0, "uart1 send out\r\n", strlen("uart1 send out\r\n"), 100);
+ 	//uart_sends(2, "uart3 send out\r\n", strlen("uart3 send out\r\n"), 100);
 	kprintf("ABCD!\r\n");
  	//test_ttp229();
 	//void uart_test();

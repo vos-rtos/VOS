@@ -36,8 +36,6 @@ typedef struct StUartComm {
 
 struct StUartComm gUartComm[6];
 
-
-
 /********************************************************************************************************
 * 函数：void RegistUartEvent(s32 event, s32 task_id);
 * 描述:   注册串口事件，vshell需要这个事件来处理用户输入命令
@@ -125,7 +123,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
 		HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
 
 		__HAL_UART_ENABLE_IT(huart, UART_IT_IDLE);
-		HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
+		HAL_NVIC_SetPriority(USART1_IRQn, 0, 2);
 		HAL_NVIC_EnableIRQ(USART1_IRQn);
 	}
 	else if (huart->Instance == USART3) {
@@ -192,7 +190,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
 
 		__HAL_UART_ENABLE_IT(huart, UART_IT_IDLE);
 
-		HAL_NVIC_SetPriority(USART3_IRQn, 0, 0);
+		HAL_NVIC_SetPriority(USART3_IRQn, 0, 2);
 		HAL_NVIC_EnableIRQ(USART3_IRQn);
 	}
 }
@@ -208,8 +206,8 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef *huart)
 		HAL_GPIO_DeInit(GPIOA, GPIO_PIN_9);
 		HAL_GPIO_DeInit(GPIOA, GPIO_PIN_10);
 
-		HAL_DMA_DeInit(&(pUart->hdma_tx));
-		HAL_DMA_DeInit(&(pUart->hdma_rx));
+		HAL_DMA_DeInit(&pUart->hdma_tx);
+		HAL_DMA_DeInit(&pUart->hdma_rx);
 
 		HAL_NVIC_DisableIRQ(DMA2_Stream7_IRQn);
 		HAL_NVIC_DisableIRQ(DMA2_Stream2_IRQn);
@@ -222,8 +220,8 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef *huart)
 
 		HAL_GPIO_DeInit(GPIOB, GPIO_PIN_11);
 
-		HAL_DMA_DeInit(&(pUart->hdma_tx));
-		HAL_DMA_DeInit(&(pUart->hdma_rx));
+		HAL_DMA_DeInit(&pUart->hdma_tx);
+		HAL_DMA_DeInit(&pUart->hdma_rx);
 		
 		HAL_NVIC_DisableIRQ(DMA1_Stream3_IRQn);
 		HAL_NVIC_DisableIRQ(DMA1_Stream1_IRQn);
@@ -240,16 +238,7 @@ int UartxRecvStartup(struct StUartComm *pUart)
 	return 0;
 }
 
-void HAL_UART1_RxCpltCallback(UART_HandleTypeDef *huart);
-void HAL_UART1_RxHalfCpltCallback(UART_HandleTypeDef *huart);
 
-/********************************************************************************************************
-* 函数：s32 USART1_DMA_Send(u8 *data, s32 len);
-* 描述:   MA 发送
-* 参数:   无
-* 返回：无
-* 注意：无
-*********************************************************************************************************/
 //s32 USART1_DMA_Send(u8 *data, s32 len)
 //{
 //	s32 ret = 0;
@@ -260,7 +249,7 @@ void HAL_UART1_RxHalfCpltCallback(UART_HandleTypeDef *huart);
 //	}
 //	return ret;
 //}
-
+//
 
 
 
@@ -340,7 +329,7 @@ void vputs(s8 *str, s32 len)
 	s32 i;
 	struct StUartComm *pUart = &gUartComm[STD_OUT];
 	for (i=0; i<len; i++) {
-		HAL_UART_Transmit(&(pUart->handle), (uint8_t *)&str[i], 1, 100);
+		HAL_UART_Transmit(&pUart->handle, (uint8_t *)&str[i], 1, 100);
 	}
 }
 
@@ -351,14 +340,19 @@ void vputs(s8 *str, s32 len)
 * 返回：无
 * 注意：无
 *********************************************************************************************************/
-void dma_vputs(s8 *str, s32 len)
+s32 dma_vputs(s32 port, u8 *data, s32 len)
 {
+	s32 ret = 0;
 	u32 irq_save;
-	s32 i;
-	//USART_GetFlagStatus(USART1, USART_FLAG_TC);
-	irq_save = __vos_irq_save();
-	USART1_DMA_Send(str, len);
-	__vos_irq_restore(irq_save);
+	struct StUartComm *pUart = &gUartComm[port];
+	if (pUart) {
+		irq_save = __vos_irq_save();
+		if(HAL_UART_Transmit_DMA(pUart->handle.Instance, data, len)!= HAL_OK)
+		{
+			//error
+		}
+		__vos_irq_restore(irq_save);
+	}
 }
 
 
@@ -369,11 +363,12 @@ void dma_vputs(s8 *str, s32 len)
 * 返回：无
 * 注意：无
 *********************************************************************************************************/
-int fputc(int ch, FILE *f)
+int vfputc(s32 port, int ch, FILE *f)
 {
-	USART1->SR = (uint16_t)~0x0040; //解决第一个字节发不出来问题
-	while((USART1->SR&0X40)==0);
-	USART1->DR = (u8) ch;
+	struct StUartComm *pUart = &gUartComm[port];
+	pUart->handle.Instance->SR = (uint16_t)~0x0040; //解决第一个字节发不出来问题
+	while((pUart->handle.Instance->SR&0X40)==0);
+	pUart->handle.Instance->DR = (u8) ch;
 	return ch;
 }
 
@@ -401,9 +396,9 @@ void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart)
 	pUart->RecvIdx = len;
 	if (pUart && pUart->ring_rx && pUart->dma_buf && len > 0) {
 		ret = VOSRingBufSet(pUart->ring_rx, pUart->dma_buf, len);
-		if (ret != len) {
-			kprintf("warning: %s->VOSRingBufSet overflow!\r\n", __FUNCTION__);
-		}
+//		if (ret != len) {
+//			kprintf("warning: %s->VOSRingBufSet overflow!\r\n", __FUNCTION__);
+//		}
 	}
 }
 
@@ -417,28 +412,28 @@ void DMA2_Stream2_IRQHandler(void)
 {
 	struct StUartComm *pUart = UartCommPtr(USART1);
 	VOSIntEnter();
-	if (pUart) {
-		HAL_DMA_IRQHandler(&pUart->handle.hdmarx);
-	}
-	VOSIntExit ();
-}
-void USART1_IRQHandler(void)
-{
-	struct StUartComm *pUart = UartCommPtr(USART1);
-	VOSIntEnter();
-	if (pUart) {
-		UART_IDLE_Callback(pUart);
-		HAL_UART_IRQHandler(&pUart->handle);
-	}
+
+	HAL_DMA_IRQHandler(pUart->handle.hdmarx);
+
 	VOSIntExit ();
 }
 void DMA2_Stream7_IRQHandler(void)
 {
 	struct StUartComm *pUart = UartCommPtr(USART1);
 	VOSIntEnter();
-	if (pUart) {
-		HAL_DMA_IRQHandler(&pUart->handle.hdmatx);
-	}
+
+	HAL_DMA_IRQHandler(pUart->handle.hdmatx);
+
+	VOSIntExit ();
+}
+void USART1_IRQHandler(void)
+{
+	struct StUartComm *pUart = UartCommPtr(USART1);
+	VOSIntEnter();
+
+	UART_IDLE_Callback(pUart);
+	HAL_UART_IRQHandler(&pUart->handle);
+
 	VOSIntExit ();
 }
 
@@ -452,7 +447,7 @@ void DMA1_Stream1_IRQHandler(void)
 	struct StUartComm *pUart = UartCommPtr(USART3);
 	VOSIntEnter();
 	if (pUart) {
-		HAL_DMA_IRQHandler(&pUart->handle.hdmarx);
+		HAL_DMA_IRQHandler(pUart->handle.hdmarx);
 	}
 	VOSIntExit ();
 }
@@ -461,7 +456,7 @@ void DMA1_Stream3_IRQHandler(void)
 	struct StUartComm *pUart = UartCommPtr(USART3);
 	VOSIntEnter();
 	if (pUart) {
-		HAL_DMA_IRQHandler(&pUart->handle.hdmatx);
+		HAL_DMA_IRQHandler(pUart->handle.hdmatx);
 	}
 	VOSIntExit ();
 }
@@ -497,6 +492,8 @@ void UART_IDLE_Callback(struct StUartComm *pUart)
 		__HAL_DMA_DISABLE(huart->hdmarx);
 		/*Clear the DMA Stream pending flags.*/
 		__HAL_DMA_CLEAR_FLAG(huart->hdmarx,__HAL_DMA_GET_TC_FLAG_INDEX(huart->hdmarx));
+
+		__HAL_DMA_CLEAR_FLAG(huart->hdmarx,__HAL_DMA_GET_HT_FLAG_INDEX(huart->hdmarx));
 
 		/* Process Unlocked */
 		__HAL_UNLOCK(huart->hdmarx);
@@ -597,7 +594,7 @@ int uart_open(int port, int baudrate, int wordlength, char *parity, int stopbits
 		goto END;
 	}
 
-	pUart->ring_rx = VOSRingBufCreate(pUart->ring_len = (pUart->ring_len?pUart->ring_len:1024));
+	pUart->ring_rx = VOSRingBufCreate(pUart->ring_len = (pUart->ring_len?pUart->ring_len:(1024+20)));
 	if (pUart->ring_rx == 0) {
 		err = -5;
 		goto END;

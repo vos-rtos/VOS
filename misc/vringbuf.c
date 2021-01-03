@@ -63,6 +63,13 @@ StVOSRingBuf *VOSRingBufBuild(u8 *buf, s32 len)
 	return phead;
 }
 
+s32 VOSRingBufGetMaxSize(StVOSRingBuf *pRingBuf)
+{
+	if (pRingBuf == 0) return -1;
+	return pRingBuf->max;
+}
+
+
 /********************************************************************************************************
 * 函数：s32 VOSRingBufSet(StVOSRingBuf *ring, u8 *buf, s32 len);
 * 描述: 添加数据到环形缓冲。

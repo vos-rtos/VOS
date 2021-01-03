@@ -26,4 +26,5 @@ StVOSRingBuf *VOSRingBufBuild(u8 *buf, s32 len);
 s32 VOSRingBufSet(StVOSRingBuf *ring, u8 *buf, s32 len);
 s32 VOSRingBufGet(StVOSRingBuf *ring, u8 *buf, s32 len);
 s32 VOSRingBufPeekGet(StVOSRingBuf *ring, u8 *buf, s32 len);
+s32 VOSRingBufGetMaxSize(StVOSRingBuf *pRingBuf);
 #endif

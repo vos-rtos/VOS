@@ -6,7 +6,7 @@
 
 void uart_init(u32 bound);
 int fputc(int ch, FILE *f);
-void dma_vputs(s8 *str, s32 len);
+s32 dma_vputs(s32 port, u8 *data, s32 len);
 void vputs(s8 *str, s32 len);
 s32 peek_vgets(u8 *buf, s32 len);
 s32 vgets(u8 *buf, s32 len);
