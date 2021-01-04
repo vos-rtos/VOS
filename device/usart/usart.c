@@ -32,6 +32,7 @@ typedef struct StUartComm {
 	DMA_HandleTypeDef hdma_tx;
 	DMA_HandleTypeDef hdma_rx;
 	StMapEvtTask notify;
+	s32 is_inited; //是否已经初始化
 }StUartComm;
 
 struct StUartComm gUartComm[6];
@@ -239,21 +240,6 @@ int UartxRecvStartup(struct StUartComm *pUart)
 }
 
 
-//s32 USART1_DMA_Send(u8 *data, s32 len)
-//{
-//	s32 ret = 0;
-//	s32 min = len < SEND_BUF_SIZE ? len : SEND_BUF_SIZE;
-//
-//	if(HAL_UART_Transmit_DMA(&USART1, (uint8_t*)data, len)!= HAL_OK)
-//	{
-//	}
-//	return ret;
-//}
-//
-
-
-
-
 /********************************************************************************************************
 * 函数：s32 vgetc(u8 *ch);
 * 描述:   任务通过vgetc获取一个字符
@@ -412,28 +398,28 @@ void DMA2_Stream2_IRQHandler(void)
 {
 	struct StUartComm *pUart = UartCommPtr(USART1);
 	VOSIntEnter();
-
-	HAL_DMA_IRQHandler(pUart->handle.hdmarx);
-
+	if (pUart) {
+		HAL_DMA_IRQHandler(pUart->handle.hdmarx);
+	}
 	VOSIntExit ();
 }
 void DMA2_Stream7_IRQHandler(void)
 {
 	struct StUartComm *pUart = UartCommPtr(USART1);
 	VOSIntEnter();
-
-	HAL_DMA_IRQHandler(pUart->handle.hdmatx);
-
+	if (pUart) {
+		HAL_DMA_IRQHandler(pUart->handle.hdmatx);
+	}
 	VOSIntExit ();
 }
 void USART1_IRQHandler(void)
 {
 	struct StUartComm *pUart = UartCommPtr(USART1);
 	VOSIntEnter();
-
-	UART_IDLE_Callback(pUart);
-	HAL_UART_IRQHandler(&pUart->handle);
-
+	if (pUart) {
+		UART_IDLE_Callback(pUart);
+		HAL_UART_IRQHandler(&pUart->handle);
+	}
 	VOSIntExit ();
 }
 
@@ -492,7 +478,7 @@ void UART_IDLE_Callback(struct StUartComm *pUart)
 		__HAL_DMA_DISABLE(huart->hdmarx);
 		/*Clear the DMA Stream pending flags.*/
 		__HAL_DMA_CLEAR_FLAG(huart->hdmarx,__HAL_DMA_GET_TC_FLAG_INDEX(huart->hdmarx));
-
+		/* 同时要清除过半中断 */
 		__HAL_DMA_CLEAR_FLAG(huart->hdmarx,__HAL_DMA_GET_HT_FLAG_INDEX(huart->hdmarx));
 
 		/* Process Unlocked */
@@ -525,6 +511,7 @@ int uart_open(int port, int baudrate, int wordlength, char *parity, int stopbits
 	USART_TypeDef *pUartInst = 0;
 
 	struct StUartComm *pUart = &gUartComm[port];
+	//注册某个串口上的事件不可以删除。所以不能memset 0清除所有
 	//memset(pUart, 0, sizeof(struct StUartComm));
 
 	switch (port) {
@@ -594,24 +581,28 @@ int uart_open(int port, int baudrate, int wordlength, char *parity, int stopbits
 		goto END;
 	}
 
-	pUart->ring_rx = VOSRingBufCreate(pUart->ring_len = (pUart->ring_len?pUart->ring_len:(1024+20)));
-	if (pUart->ring_rx == 0) {
-		err = -5;
-		goto END;
-	}
+	if (pUart->is_inited == 0) {
+		pUart->ring_rx = VOSRingBufCreate(pUart->ring_len = (pUart->ring_len?pUart->ring_len:(1024+20)));
+		if (pUart->ring_rx == 0) {
+			err = -5;
+			goto END;
+		}
 
-	pUart->dma_buf = vmalloc(pUart->dma_len = (pUart->dma_len ? pUart->dma_len : 512));
-	if (pUart->dma_buf == 0) {
-		err = -6;
-		goto END;
+		pUart->dma_buf = vmalloc(pUart->dma_len = (pUart->dma_len ? pUart->dma_len : 512));
+		if (pUart->dma_buf == 0) {
+			err = -6;
+			goto END;
+		}
 	}
-
 	err = UartxRecvStartup(pUart);
 	if (err < 0) {
 		err = -7;
 		goto END;
 	}
 
+	if (pUart->is_inited==0) {
+		pUart->is_inited = 1;
+	}
 END:
 	return err;
 }
@@ -648,14 +639,45 @@ int uart_sends(int port, unsigned char *buf, int len, unsigned int timeout_ms)
 {
 	s32 i = 0;
 	struct StUartComm *pUart = &gUartComm[port];
-	if (pUart == 0) return -1;
-	HAL_UART_Transmit(&pUart->handle,  buf, len, timeout_ms);
+	if (pUart && pUart->is_inited) {
+		HAL_UART_Transmit(&pUart->handle,  buf, len, timeout_ms);
+	}
 	return 0;
 }
 
+s32 uart_sends_dma(s32 port, u8 *data, s32 len)
+{
+	s32 ret = 0;
+	struct StUartComm *pUart = &gUartComm[port];
+	if (pUart && pUart->is_inited) {
+		ret = HAL_UART_Transmit_DMA(&pUart->handle, (uint8_t*)data, len);
+	}
+	return ret;
+}
+
+
 void uart_close(int port)
 {
-
+	struct StUartComm *pUart = &gUartComm[port];
+	if (HAL_OK != HAL_UART_DeInit(&pUart->handle)) {
+		kprintf("error: uart_close failed!\r\n");
+	}
+	if (pUart->ring_rx) {
+		VOSRingBufDelete(pUart->ring_rx);
+		pUart->ring_rx = 0;
+		pUart->ring_len = 0;
+	}
+	if (pUart->dma_buf) {
+		vfree(pUart->dma_buf);
+		pUart->dma_buf = 0;
+		pUart->dma_len = 0;
+	}
+	//注册某个串口上的事件不可以删除。
+	s32 event = pUart->notify.event;
+	s32 task_id = pUart->notify.task_id;
+	memset(pUart, 0, sizeof(struct StUartComm));
+	pUart->notify.event = event;
+	pUart->notify.task_id = task_id;
 }
 
 
