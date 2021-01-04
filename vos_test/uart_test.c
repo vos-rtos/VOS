@@ -61,13 +61,13 @@ void task_uartin(void *param)
 {
 	s32 ret = 0;
 	u8 buf[512];
-	u32 counts = 0;
-	u32 mark_cnts = 0;
-	u32 mark_ms = 0;
 	int i = 0;
+	u32 totals = 0;
+	u32 bytes_1s = 0;
 
-	s32 time_spend = 0;
-	mark_ms = VOSGetTimeMs();
+	u32 timemark = VOSGetTimeMs();
+	u32 mark_1s = 0;
+
 	kprintf("statistics:\r\n");
 	while(1) {
 		ret = vgets(buf, sizeof(buf)-1);
@@ -79,14 +79,18 @@ void task_uartin(void *param)
 			}
 			data_check(buf, ret);
 			buf[ret] = 0;
-			counts += ret;
-			if (counts > mark_cnts+5000){
-				mark_cnts = counts;
-				time_spend = (s32)(VOSGetTimeMs()-mark_ms);
-				kprintf("speed[%08d(ms):%08d(B):%05d(KBps)]\r\n", time_spend, counts, (s32)((u32)(counts)/time_spend));
-			}
+	  		u32 time_span = VOSGetTimeMs()-timemark;
+	  		totals += ret;
+	  		bytes_1s += ret;
+	  		if (VOSGetTimeMs() - timemark > 1000) {
+	  			kprintf("=====%d(KBps), totals=%d(KB) =====!\r\n", bytes_1s/1000, totals/1000);
+	  			timemark = VOSGetTimeMs();
+	  			bytes_1s = 0;
+	  		}
 		}
-		VOSTaskDelay(1);
+		if (ret <= 0) {
+			VOSTaskDelay(5);
+		}
 	}
 END_UARTIN:
 	TestExitFlagSet(1);

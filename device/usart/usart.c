@@ -17,6 +17,9 @@ enum {
 	EVENT_UART_RECV = 0,
 };
 
+#define DMA_RX_BUF_MAX 512
+#define RING_DATA_SIZE 1024
+
 typedef struct StMapEvtTask{
 	s32 event;
 	s32 task_id;
@@ -582,13 +585,13 @@ int uart_open(int port, int baudrate, int wordlength, char *parity, int stopbits
 	}
 
 	if (pUart->is_inited == 0) {
-		pUart->ring_rx = VOSRingBufCreate(pUart->ring_len = (pUart->ring_len?pUart->ring_len:(1024+20)));
+		pUart->ring_rx = VOSRingBufCreate(pUart->ring_len = (pUart->ring_len?pUart->ring_len:(RING_DATA_SIZE+sizeof(StVOSRingBuf))));
 		if (pUart->ring_rx == 0) {
 			err = -5;
 			goto END;
 		}
 
-		pUart->dma_buf = vmalloc(pUart->dma_len = (pUart->dma_len ? pUart->dma_len : 512));
+		pUart->dma_buf = vmalloc(pUart->dma_len = (pUart->dma_len ? pUart->dma_len : DMA_RX_BUF_MAX));
 		if (pUart->dma_buf == 0) {
 			err = -6;
 			goto END;
