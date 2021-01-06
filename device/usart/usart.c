@@ -275,13 +275,14 @@ s32 vgetc(u8 *ch)
 s32 vgets(u8 *buf, s32 len)
 {
 	s32 ret = 0;
-	s32 irq_save;
-	struct StUartComm *pUart = &gUartComm[STD_OUT];
-	irq_save = __vos_irq_save();
-	if (pUart && pUart->ring_rx) {
-		ret = VOSRingBufGet(pUart->ring_rx, buf, len);
-	}
-	__vos_irq_restore(irq_save);
+//	s32 irq_save;
+//	struct StUartComm *pUart = &gUartComm[STD_OUT];
+//	irq_save = __vos_irq_save();
+//	if (pUart && pUart->ring_rx) {
+//		ret = VOSRingBufGet(pUart->ring_rx, buf, len);
+//	}
+//	__vos_irq_restore(irq_save);
+	ret = uart_recvs(STD_OUT, buf, len, 0);
 	return ret;
 }
 
@@ -312,14 +313,15 @@ s32 peek_vgets(u8 *buf, s32 len)
 * 返回：无
 * 注意：无
 *********************************************************************************************************/
-void vputs(s8 *str, s32 len)
+void vputs(s8 *buf, s32 len)
 {
-	u32 irq_save;
-	s32 i;
-	struct StUartComm *pUart = &gUartComm[STD_OUT];
-	for (i=0; i<len; i++) {
-		HAL_UART_Transmit(&pUart->handle, (uint8_t *)&str[i], 1, 100);
-	}
+//	u32 irq_save;
+//	s32 i;
+//	struct StUartComm *pUart = &gUartComm[STD_OUT];
+//	for (i=0; i<len; i++) {
+//		HAL_UART_Transmit(&pUart->handle, (uint8_t *)&str[i], 1, 100);
+//	}
+	uart_sends(STD_OUT, buf, len, 100);
 }
 
 /********************************************************************************************************
@@ -616,10 +618,7 @@ int uart_recvs(int port, unsigned char *buf, int len, unsigned int timeout_ms)
 	s32 irq_save;
 	u32 mark_time=0;
 	struct StUartComm *pUart = &gUartComm[port];
-	if (pUart == 0) {
-		return -1;
-	}
-
+	if (pUart == 0) return -1;
 	mark_time = VOSGetTimeMs();
 	while (1) {
 		irq_save = __vos_irq_save();
@@ -630,10 +629,10 @@ int uart_recvs(int port, unsigned char *buf, int len, unsigned int timeout_ms)
 		if (ret > 0) { //有数据立即跳出
 			break;
 		}
-		if (VOSGetTimeMs() - mark_time > timeout_ms) {
+		if (VOSGetTimeMs() - mark_time >= timeout_ms) {
 			break;
 		}
-		VOSTaskDelay(20);
+		VOSTaskDelay(5);
 	}
 	return ret;
 }
@@ -643,9 +642,10 @@ int uart_sends(int port, unsigned char *buf, int len, unsigned int timeout_ms)
 	s32 i = 0;
 	struct StUartComm *pUart = &gUartComm[port];
 	if (pUart && pUart->is_inited) {
+		//dumphex(buf, len);
 		HAL_UART_Transmit(&pUart->handle,  buf, len, timeout_ms);
 	}
-	return 0;
+	return len;
 }
 
 s32 uart_sends_dma(s32 port, u8 *data, s32 len)

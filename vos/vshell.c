@@ -151,24 +151,36 @@ void VOSTaskShell(void *param)
 	s32 mark = 0;
 
 	while(VERROR_NO_ERROR == VOSEventWait(EVENT_USART1_RECV, TIMEOUT_INFINITY_U32)) {
-		ret = peek_vgets(echo, sizeof(echo)-1);
-		if (ret > 0) { //echo
-			echo[ret] = 0;
-			kprintf("%s", &echo[mark]);
-			mark = ret;
-		}
-		if (ret > 0 && (echo[ret-1]=='\r'||echo[ret-1]=='\n')) {
-			ret = vgets(cmd, sizeof(cmd)-1);
-			if (strlen(cmd)) kprintf("\r\n");
-			is_bg = 0;
-			cnts = VOSShellPaserLine(cmd, parr, sizeof(parr)/sizeof(parr[0]), &is_bg);
-			//执行命令行
-			vshell_do(parr, cnts, is_bg); //直接shell任务执行
+		while (1) {
+			ret = peek_vgets(echo, sizeof(echo)-1);
+			if (ret == sizeof(echo)-1) {
+				/* 命令行太长，直接丢弃，通常这是因为串口忘记关闭发送测试数据导致 */
+				kprintf("warning: command too long, more than %d bytes, discard!\r\n", ret);
+				vgets(cmd, sizeof(cmd)-1); //直接吃掉，不处理
+			}
+			if (ret > 0) { //回显字符
+				echo[ret] = 0;
+				if (mark < ret) {
+					kprintf("%s", &echo[mark]);
+					mark = ret;
+				}
+			}
+			if (ret > 0 && (echo[ret-1]=='\r'||echo[ret-1]=='\n')) {
+				ret = vgets(cmd, sizeof(cmd)-1);
+				if (strlen(cmd)) kprintf("\r\n");
+				is_bg = 0;
+				cnts = VOSShellPaserLine(cmd, parr, sizeof(parr)/sizeof(parr[0]), &is_bg);
+				//执行命令行
+				vshell_do(parr, cnts, is_bg); //直接shell任务执行
 
-			mark = 0;
-			ret = 0;
+				mark = 0;
+				ret = 0;
 
-			kprintf("\r\n%s", VSHELL_PROMPT);
+				kprintf("\r\n%s", VSHELL_PROMPT);
+			}
+			if (ret < sizeof(echo)-1) { //吃光了数据，才跳出while循环等待事件
+				break;
+			}
 		}
 	}
 }

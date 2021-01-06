@@ -67,8 +67,21 @@ void main(void *param)
 	s8 buf[100];
 	void uart_init(u32 bound);
 
- 	uart_open(0, 921600, 8, "none", 1);
- 	uart_open(2, 921600, 8, "none", 1);
+	u8 *bufaaa = "\x55\xaa\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01";
+ 	uart_open(0, 115200, 8, "none", 1);
+// 	uart_open(2, 115200, 8, "none", 1);
+// 	unsigned char ch[64];
+//
+// 	while (1)  {
+// 		//kprintf("send:\r\n");
+// 		//dumphex(bufaaa, 26);
+// 		//uart_sends(2, bufaaa, 26, 100);
+// 		if ((res = uart_recvs(2, &ch, 64, 100)) > 0) {
+// 			kprintf("recv:\r\n");
+// 			dumphex(ch, res);
+// 		}
+// 		//VOSTaskDelay(500);
+// 	}
 
  	//uart_sends(0, "uart1 send out\r\n", strlen("uart1 send out\r\n"), 100);
  	//uart_sends(2, "uart3 send out\r\n", strlen("uart3 send out\r\n"), 100);
@@ -76,6 +89,10 @@ void main(void *param)
  	//test_ttp229();
 	//void uart_test();
 	//uart_test();
+
+
+	void xxxx();
+	xxxx();
 
 #if DEF_SD_WIFI
 	int wifi_test();

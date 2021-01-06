@@ -19,7 +19,7 @@ void uart_close(int port);
 int uart_open(int port, int baudrate, int wordlength, char *parity, int stopbits);
 s32 uart_sends_dma(s32 port, u8 *data, s32 len);
 
-#define STD_OUT	2 //port 0 (uart1) print out
+#define STD_OUT	0 //port 0 (uart1) print out
 
 #endif
 
