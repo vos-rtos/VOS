@@ -38,9 +38,9 @@ void xxxx()
 	kprintf("%s\r\n", buf);
 
 	while (1) {
-		Run_GetDeviceInfo(buf);
-		kprintf("%s\r\n", buf);
-		//DetectFinger();
+//		Run_GetDeviceInfo(buf);
+//		kprintf("%s\r\n", buf);
+		DetectFinger();
 		VOSTaskDelay(1000);
 	}
 }

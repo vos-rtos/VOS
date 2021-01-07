@@ -3,7 +3,7 @@
 #include "stdio.h"
 #include "vos.h"
 
-void uart_init(u32 bound);
+
 int fputc(int ch, FILE *f);
 s32 dma_vputs(s32 port, u8 *data, s32 len);
 void vputs(s8 *str, s32 len);

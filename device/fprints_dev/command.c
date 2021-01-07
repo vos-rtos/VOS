@@ -143,8 +143,8 @@ BOOL SendCommand(WORD p_wCMDCode, BYTE p_bySrcDeviceID, BYTE p_byDstDeviceID)
 	LONG	w_nResult = 0;
 	struct StFpCmdMgr *pFpCmdMgr = &gFpCmdMgr;
 
-	kprintf("send:\r\n");
-	dumphex((s8*)(pFpCmdMgr->pack), pFpCmdMgr->pack_size);
+//	kprintf("send:\r\n");
+//	dumphex((s8*)(pFpCmdMgr->pack), pFpCmdMgr->pack_size);
 
 	w_nResult = uart_sends(pFpCmdMgr->port, pFpCmdMgr->pack, pFpCmdMgr->pack_size, COMM_TIMEOUT);
 

@@ -29,8 +29,9 @@ void W25QXX_Init(void)
     HAL_GPIO_Init(GPIOB,&GPIO_Initure);     //初始化
 
 	W25QXX_CS=1;			                //SPI FLASH不选中
-	SPI1_Init();		   			        //初始化SPI
-	SPI1_SetSpeed(SPI_BAUDRATEPRESCALER_2); //设置为45M时钟,高速模式
+	//SPI1_Init();		   			        //初始化SPI
+	//SPI1_SetSpeed(SPI_BAUDRATEPRESCALER_2); //设置为45M时钟,高速模式
+	spi_open(0, SPI_BAUDRATEPRESCALER_2); //设置为45M时钟,高速模式
 	W25QXX_TYPE=W25QXX_ReadID();	        //读取FLASH ID.
     if(W25QXX_TYPE==W25Q256)                //SPI FLASH为W25Q256
     {
@@ -38,7 +39,7 @@ void W25QXX_Init(void)
         if((temp&0X01)==0)			        //如果不是4字节地址模式,则进入4字节地址模式
 		{
 			W25QXX_CS=0; 			        //选中
-			SPI1_ReadWriteByte(W25X_Enable4ByteAddr);//发送进入4字节地址模式指令
+			spi_read_write(0, W25X_Enable4ByteAddr, 1000);//发送进入4字节地址模式指令
 			W25QXX_CS=1;       		        //取消片选
 		}
     }
@@ -80,8 +81,8 @@ u8 W25QXX_ReadSR(u8 regno)
             break;
     }
 	W25QXX_CS=0;                            //使能器件
-	SPI1_ReadWriteByte(command);            //发送读取状态寄存器命令
-	byte=SPI1_ReadWriteByte(0Xff);          //读取一个字节
+	spi_read_write(0, command, 1000);            //发送读取状态寄存器命令
+	byte=spi_read_write(0, 0Xff, 1000);          //读取一个字节
 	W25QXX_CS=1;                            //取消片选
 	return byte;
 }
@@ -105,8 +106,8 @@ void W25QXX_Write_SR(u8 regno,u8 sr)
             break;
     }
 	W25QXX_CS=0;                            //使能器件
-	SPI1_ReadWriteByte(command);            //发送写取状态寄存器命令
-	SPI1_ReadWriteByte(sr);                 //写入一个字节
+	spi_read_write(0, command, 1000);            //发送写取状态寄存器命令
+	spi_read_write(0, sr, 1000);                 //写入一个字节
 	W25QXX_CS=1;                            //取消片选
 }
 //W25QXX写使能
@@ -114,7 +115,7 @@ void W25QXX_Write_SR(u8 regno,u8 sr)
 void W25QXX_Write_Enable(void)
 {
 	W25QXX_CS=0;                            //使能器件
-    SPI1_ReadWriteByte(W25X_WriteEnable);   //发送写使能
+    spi_read_write(0, W25X_WriteEnable, 1000);   //发送写使能
 	W25QXX_CS=1;                            //取消片选
 }
 //W25QXX写禁止
@@ -122,7 +123,7 @@ void W25QXX_Write_Enable(void)
 void W25QXX_Write_Disable(void)
 {
 	W25QXX_CS=0;                            //使能器件
-    SPI1_ReadWriteByte(W25X_WriteDisable);  //发送写禁止指令
+    spi_read_write(0, W25X_WriteDisable, 1000);  //发送写禁止指令
 	W25QXX_CS=1;                            //取消片选
 }
 
@@ -138,12 +139,12 @@ u16 W25QXX_ReadID(void)
 {
 	u16 Temp = 0;
 	W25QXX_CS=0;
-	SPI1_ReadWriteByte(0x90);//发送读取ID命令
-	SPI1_ReadWriteByte(0x00);
-	SPI1_ReadWriteByte(0x00);
-	SPI1_ReadWriteByte(0x00);
-	Temp|=SPI1_ReadWriteByte(0xFF)<<8;
-	Temp|=SPI1_ReadWriteByte(0xFF);
+	spi_read_write(0, 0x90, 1000);//发送读取ID命令
+	spi_read_write(0, 0x00, 1000);
+	spi_read_write(0, 0x00, 1000);
+	spi_read_write(0, 0x00, 1000);
+	Temp|=spi_read_write(0, 0xFF, 1000)<<8;
+	Temp|=spi_read_write(0, 0xFF, 1000);
 	W25QXX_CS=1;
 	return Temp;
 }
@@ -156,17 +157,17 @@ void W25QXX_Read(u8* pBuffer,u32 ReadAddr,u16 NumByteToRead)
 {
  	u16 i;
 	W25QXX_CS=0;                            //使能器件
-    SPI1_ReadWriteByte(W25X_ReadData);      //发送读取命令
+    spi_read_write(0, W25X_ReadData, 1000);      //发送读取命令
     if(W25QXX_TYPE==W25Q256)                //如果是W25Q256的话地址为4字节的，要发送最高8位
     {
-        SPI1_ReadWriteByte((u8)((ReadAddr)>>24));
+        spi_read_write(0, (u8)((ReadAddr)>>24), 1000);
     }
-    SPI1_ReadWriteByte((u8)((ReadAddr)>>16));   //发送24bit地址
-    SPI1_ReadWriteByte((u8)((ReadAddr)>>8));
-    SPI1_ReadWriteByte((u8)ReadAddr);
+    spi_read_write(0, (u8)((ReadAddr)>>16), 1000);   //发送24bit地址
+    spi_read_write(0, (u8)((ReadAddr)>>8), 1000);
+    spi_read_write(0, (u8)ReadAddr, 1000);
     for(i=0;i<NumByteToRead;i++)
 	{
-        pBuffer[i]=SPI1_ReadWriteByte(0XFF);    //循环读数
+        pBuffer[i]=spi_read_write(0, 0XFF, 1000);    //循环读数
     }
 	W25QXX_CS=1;
 }
@@ -180,15 +181,15 @@ void W25QXX_Write_Page(u8* pBuffer,u32 WriteAddr,u16 NumByteToWrite)
  	u16 i;
     W25QXX_Write_Enable();                  //SET WEL
 	W25QXX_CS=0;                            //使能器件
-    SPI1_ReadWriteByte(W25X_PageProgram);   //发送写页命令
+    spi_read_write(0, W25X_PageProgram, 1000);   //发送写页命令
     if(W25QXX_TYPE==W25Q256)                //如果是W25Q256的话地址为4字节的，要发送最高8位
     {
-        SPI1_ReadWriteByte((u8)((WriteAddr)>>24));
+        spi_read_write(0, (u8)((WriteAddr)>>24), 1000);
     }
-    SPI1_ReadWriteByte((u8)((WriteAddr)>>16)); //发送24bit地址
-    SPI1_ReadWriteByte((u8)((WriteAddr)>>8));
-    SPI1_ReadWriteByte((u8)WriteAddr);
-    for(i=0;i<NumByteToWrite;i++)SPI1_ReadWriteByte(pBuffer[i]);//循环写数
+    spi_read_write(0, (u8)((WriteAddr)>>16), 1000); //发送24bit地址
+    spi_read_write(0, (u8)((WriteAddr)>>8), 1000);
+    spi_read_write(0, (u8)WriteAddr, 1000);
+    for(i=0;i<NumByteToWrite;i++)spi_read_write(0, pBuffer[i], 1000);//循环写数
 	W25QXX_CS=1;                            //取消片选
 	W25QXX_Wait_Busy();					   //等待写入结束
 }
@@ -278,7 +279,7 @@ void W25QXX_Erase_Chip(void)
     W25QXX_Write_Enable();                  //SET WEL
     W25QXX_Wait_Busy();
   	W25QXX_CS=0;                            //使能器件
-    SPI1_ReadWriteByte(W25X_ChipErase);        //发送片擦除命令
+    spi_read_write(0, W25X_ChipErase, 1000);        //发送片擦除命令
 	W25QXX_CS=1;                            //取消片选
 	W25QXX_Wait_Busy();   				   //等待芯片擦除结束
 }
@@ -293,14 +294,14 @@ void W25QXX_Erase_Sector(u32 Dst_Addr)
     W25QXX_Write_Enable();                  //SET WEL
     W25QXX_Wait_Busy();
   	W25QXX_CS=0;                            //使能器件
-    SPI1_ReadWriteByte(W25X_SectorErase);   //发送扇区擦除指令
+    spi_read_write(0, W25X_SectorErase, 1000);   //发送扇区擦除指令
     if(W25QXX_TYPE==W25Q256)                //如果是W25Q256的话地址为4字节的，要发送最高8位
     {
-        SPI1_ReadWriteByte((u8)((Dst_Addr)>>24));
+        spi_read_write(0, (u8)((Dst_Addr)>>24), 1000);
     }
-    SPI1_ReadWriteByte((u8)((Dst_Addr)>>16));  //发送24bit地址
-    SPI1_ReadWriteByte((u8)((Dst_Addr)>>8));
-    SPI1_ReadWriteByte((u8)Dst_Addr);
+    spi_read_write(0, (u8)((Dst_Addr)>>16), 1000);  //发送24bit地址
+    spi_read_write(0, (u8)((Dst_Addr)>>8), 1000);
+    spi_read_write(0, (u8)Dst_Addr, 1000);
 	W25QXX_CS=1;                            //取消片选
     W25QXX_Wait_Busy();   				    //等待擦除完成
 }
@@ -313,7 +314,7 @@ void W25QXX_Wait_Busy(void)
 void W25QXX_PowerDown(void)
 {
   	W25QXX_CS=0;                            //使能器件
-    SPI1_ReadWriteByte(W25X_PowerDown);     //发送掉电命令
+    spi_read_write(0, W25X_PowerDown, 1000);     //发送掉电命令
 	W25QXX_CS=1;                            //取消片选
     delay_us(3);                            //等待TPD
 }
@@ -321,7 +322,7 @@ void W25QXX_PowerDown(void)
 void W25QXX_WAKEUP(void)
 {
   	W25QXX_CS=0;                                //使能器件
-    SPI1_ReadWriteByte(W25X_ReleasePowerDown);  //  send W25X_PowerDown command 0xAB
+    spi_read_write(0, W25X_ReleasePowerDown, 1000);  //  send W25X_PowerDown command 0xAB
 	W25QXX_CS=1;                                //取消片选
     delay_us(3);                                //等待TRES1
 }
