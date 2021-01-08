@@ -110,6 +110,8 @@ void fatfs_sddisk_test()
 		return;
 	}
 
+	wm8978_test();
+
 #if 1
  	char *arg[3] = {
  			"test",
@@ -117,7 +119,7 @@ void fatfs_sddisk_test()
  			"0:/bbb.bmp",
  	};
 
- 	minutia_main(3, arg);
+ 	//minutia_main(3, arg);
  	//binary_main(3, arg);
  	//thinner_main(3, arg);
  	//create_main(3, arg);

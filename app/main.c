@@ -48,7 +48,7 @@ void test_mg_http();
 //#define DEF_SD_WIFI 1
 //#define DEF_ETH 1
 //#define DEF_4G_PPP 1
-//#define DEF_SD_FATFS 1
+#define DEF_SD_FATFS 1
 //#define DEF_USB_FATFS 1
 //#define DEF_GUI 1
 #undef printf
@@ -65,18 +65,12 @@ void main(void *param)
 {
 	s32 res;
 	s8 buf[100];
-	void uart_init(u32 bound);
-
-	u8 *bufaaa = "\x55\xaa\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01";
- 	uart_open(0, 115200, 8, "none", 1);
+	uart_open(0, 115200, 8, "none", 1);
 // 	uart_open(2, 115200, 8, "none", 1);
 
- 	//uart_sends(0, "uart1 send out\r\n", strlen("uart1 send out\r\n"), 100);
- 	//uart_sends(2, "uart3 send out\r\n", strlen("uart3 send out\r\n"), 100);
-	kprintf("ABCD!\r\n");
+	kprintf("VOS startup!\r\n");
  	//test_ttp229();
-	//void uart_test();
-	//uart_test();
+
 
 #if DEF_SD_WIFI
 	int wifi_test();

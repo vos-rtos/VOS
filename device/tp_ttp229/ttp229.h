@@ -3,12 +3,12 @@
 #include "stm32f4xx_hal.h"
 #include "common.h"
 
-#define	KEY_SDA_IN()	{GPIOC->MODER &= ~(3 << (3*2)); GPIOC->MODER |= (0 << (3*2));}
-#define	KEY_SDA_OUT()	{GPIOC->MODER &= ~(3 << (3*2)); GPIOC->MODER |= (1 << (3*2));}
+#define	KEY_SDA_IN()	GPIOx_IN(GPIOD,6)
+#define	KEY_SDA_OUT()	GPIOx_OUT(GPIOD,6)
 
 #define	TTP_SCL		PCout(2)
-#define	TTP_SDO		PCout(3)
-#define	TTP_SDI		PCin(3)
+#define	TTP_SDO		PDout(6)
+#define	TTP_SDI		PDin(6)
 
 void ttp229_init();
 u8 ttp229_scan();

@@ -3,6 +3,9 @@
 
 #include "stm32f4xx.h"
 #include "vos.h"
+
+
+
 //typedef int32_t  s32;
 //typedef int16_t s16;
 //typedef int8_t  s8;
@@ -97,4 +100,9 @@
 
 #define PKout(n)   BIT_ADDR(GPIOK_ODR_Addr,n)
 #define PKin(n)    BIT_ADDR(GPIOK_IDR_Addr,n)
+
+
+#define	GPIOx_IN(GPIOx, PINx) {(GPIOx)->MODER &= ~(3 << ((PINx)*2)); (GPIOx)->MODER |= (0 << ((PINx)*2));}
+#define	GPIOx_OUT(GPIOx, PINx) {(GPIOx)->MODER &= ~(3 << ((PINx)*2)); (GPIOx)->MODER |= (1 << ((PINx)*2));}
+
 #endif

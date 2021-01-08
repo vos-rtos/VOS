@@ -4,6 +4,15 @@
 #define delay_ms(x) VOSDelayUs((x)*1000)
 #define delay_us(x) VOSDelayUs(x)
 
+#define IIC_Init() i2c_init(1)
+#define IIC_Start() i2c_start(1)
+#define IIC_Stop() i2c_stop(1)
+#define IIC_Send_Byte(x) i2c_send(1,x)
+#define IIC_Read_Byte(x) i2c_read(1,x)
+#define IIC_Wait_Ack() i2c_wait_ack(1)
+#define IIC_Ack() i2c_ack(1)
+#define IIC_NAck() i2c_nack(1)
+
 //初始化IIC接口
 void AT24CXX_Init(void)
 {
@@ -15,7 +24,7 @@ void AT24CXX_Init(void)
 u8 AT24CXX_ReadOneByte(u16 ReadAddr)
 {				  
 	u8 temp=0;		  	    																 
-    IIC_Start();  
+    IIC_Start();
 	if(EE_TYPE>AT24C16)
 	{
 		IIC_Send_Byte(0XA0);	   //发送写命令
@@ -25,11 +34,11 @@ u8 AT24CXX_ReadOneByte(u16 ReadAddr)
 	IIC_Wait_Ack(); 
     IIC_Send_Byte(ReadAddr%256);   //发送低地址
 	IIC_Wait_Ack();	    
-	IIC_Start();  	 	   
+	IIC_Start();
 	IIC_Send_Byte(0XA1);           //进入接收模式			   
 	IIC_Wait_Ack();	 
     temp=IIC_Read_Byte(0);		   
-    IIC_Stop();//产生一个停止条件	    
+    IIC_Stop();//产生一个停止条件
 	return temp;
 }
 //在AT24CXX指定地址写入一个数据
@@ -37,7 +46,7 @@ u8 AT24CXX_ReadOneByte(u16 ReadAddr)
 //DataToWrite:要写入的数据
 void AT24CXX_WriteOneByte(u16 WriteAddr,u8 DataToWrite)
 {				   	  	    																 
-    IIC_Start();  
+    IIC_Start();
 	if(EE_TYPE>AT24C16)
 	{
 		IIC_Send_Byte(0XA0);	    //发送写命令
@@ -49,7 +58,7 @@ void AT24CXX_WriteOneByte(u16 WriteAddr,u8 DataToWrite)
 	IIC_Wait_Ack(); 	 										  		   
 	IIC_Send_Byte(DataToWrite);     //发送字节							   
 	IIC_Wait_Ack();  		    	   
-    IIC_Stop();//产生一个停止条件 
+    IIC_Stop();//产生一个停止条件
 	delay_ms(10);	 
 }
 //在AT24CXX里面的指定地址开始写入长度为Len的数据
