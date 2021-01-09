@@ -25,15 +25,15 @@ void i2c_init(s32 port)
 
     if (port == 0) {//for wm8987
 
-    	pI2cBus->pin_scl = GPIO_PIN_8;
-    	pI2cBus->pin_sda = GPIO_PIN_9;
+    	pI2cBus->pin_scl = 8;;
+    	pI2cBus->pin_sda = 9;;
     	pI2cBus->GPIOx = GPIOB;
     	pI2cBus->odr_addr = GPIOB_ODR_Addr;
     	pI2cBus->idr_addr = GPIOB_IDR_Addr;
 
 		__HAL_RCC_GPIOB_CLK_ENABLE();   //使能GPIOB时钟
 		//PH4,5初始化设置
-		GPIO_Initure.Pin	= pI2cBus->pin_scl|pI2cBus->pin_sda;
+		GPIO_Initure.Pin	= GPIO_PIN_8|GPIO_PIN_9;
 		GPIO_Initure.Mode	= GPIO_MODE_OUTPUT_PP;  //推挽输出
 		GPIO_Initure.Pull	= GPIO_PULLUP;          //上拉
 		GPIO_Initure.Speed	= GPIO_SPEED_FAST;     //快速
@@ -43,15 +43,15 @@ void i2c_init(s32 port)
     }
     if (port == 1) {//for touch screen
 
-    	pI2cBus->pin_scl = GPIO_PIN_8;
-    	pI2cBus->pin_sda = GPIO_PIN_9;
+    	pI2cBus->pin_scl = 8;
+    	pI2cBus->pin_sda = 9;
     	pI2cBus->GPIOx = GPIOB;
     	pI2cBus->odr_addr = GPIOB_ODR_Addr;
     	pI2cBus->idr_addr = GPIOB_IDR_Addr;
 
 		__HAL_RCC_GPIOB_CLK_ENABLE();   //使能GPIOB时钟
 		//PH4,5初始化设置
-		GPIO_Initure.Pin	= pI2cBus->pin_scl|pI2cBus->pin_sda;
+		GPIO_Initure.Pin	= GPIO_PIN_8|GPIO_PIN_9;;
 		GPIO_Initure.Mode	= GPIO_MODE_OUTPUT_PP;  //推挽输出
 		GPIO_Initure.Pull	= GPIO_PULLUP;          //上拉
 		GPIO_Initure.Speed	= GPIO_SPEED_FAST;     //快速

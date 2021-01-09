@@ -1,18 +1,13 @@
 #ifndef __I2C_H__
 #define __I2C_H__
 
-#endif
-
-#ifndef _MYIIC_H
-#define _MYIIC_H
-
 #include "common.h"
 #include "vos.h"
 
 
 //IO方向设置
 #define SDA_IN()  GPIOx_IN(pI2cBus->GPIOx, pI2cBus->pin_sda) //PB9输入模式
-#define SDA_OUT() GPIOx_IN(pI2cBus->GPIOx, pI2cBus->pin_sda) //PB9输出模式
+#define SDA_OUT() GPIOx_OUT(pI2cBus->GPIOx, pI2cBus->pin_sda) //PB9输出模式
 
 //IO操作
 #define IIC_SCL   BIT_ADDR(pI2cBus->odr_addr, pI2cBus->pin_scl) //SCL
