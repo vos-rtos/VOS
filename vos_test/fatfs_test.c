@@ -110,8 +110,9 @@ void fatfs_sddisk_test()
 		return;
 	}
 
-	wm8978_test();
-
+	//wm8978_test();
+	void wav_recorder();
+	wav_recorder();
 #if 1
  	char *arg[3] = {
  			"test",

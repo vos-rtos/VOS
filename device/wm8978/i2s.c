@@ -3,8 +3,9 @@
 
 I2S_HandleTypeDef I2S2_Handler;			//I2S2句柄
 DMA_HandleTypeDef I2S2_TXDMA_Handler;   //I2S2发送DMA句柄
+DMA_HandleTypeDef I2S2_RXDMA_Handler;   //I2S2接收DMA句柄
 
-//I2S2初始化
+//I2S2以及I2SExt同时初始化！！当I2S模式为I2S_MODE_MASTER_TX的时候I2SExt的模式自动设置为I2S_MODE_SLAVE_RX
 //I2S_Standard:I2S标准,可以设置：I2S_STANDARD_PHILIPS/I2S_STANDARD_MSB/
 //				       I2S_STANDARD_LSB/I2S_STANDARD_PCM_SHORT/I2S_STANDARD_PCM_LONG
 //I2S_Mode:I2S工作模式,可以设置：I2S_MODE_SLAVE_TX/I2S_MODE_SLAVE_RX/I2S_MODE_MASTER_TX/I2S_MODE_MASTER_RX
@@ -20,10 +21,13 @@ void I2S2_Init(u32 I2S_Standard,u32 I2S_Mode,u32 I2S_Clock_Polarity,u32 I2S_Data
 	I2S2_Handler.Init.AudioFreq=I2S_AUDIOFREQ_DEFAULT;	//IIS频率设置
 	I2S2_Handler.Init.CPOL=I2S_Clock_Polarity;			//空闲状态时钟电平
 	I2S2_Handler.Init.ClockSource=I2S_CLOCK_PLL;		//IIS时钟源为PLL
-	HAL_I2S_Init(&I2S2_Handler);
-
+	I2S2_Handler.Init.FullDuplexMode=I2S_FULLDUPLEXMODE_ENABLE;	//IIS全双工
+	HAL_I2S_Init(&I2S2_Handler); 
+	
 	SPI2->CR2|=1<<1;									//SPI2 TX DMA请求使能.
-	__HAL_I2S_ENABLE(&I2S2_Handler);					//使能I2S2
+	I2S2ext->CR2|=1<<0;									//I2S2ext RX DMA请求使能.
+	__HAL_I2S_ENABLE(&I2S2_Handler);					//使能I2S2	
+	__HAL_I2SEXT_ENABLE(&I2S2_Handler);					//使能I2S2ext
 }
 
 //I2S底层驱动，时钟使能，引脚配置，DMA配置
@@ -32,11 +36,11 @@ void I2S2_Init(u32 I2S_Standard,u32 I2S_Mode,u32 I2S_Clock_Polarity,u32 I2S_Data
 void HAL_I2S_MspInit(I2S_HandleTypeDef *hi2s)
 {
 	GPIO_InitTypeDef GPIO_Initure;
-
+    
 	__HAL_RCC_SPI2_CLK_ENABLE();        		//使能SPI2/I2S2时钟
 	__HAL_RCC_GPIOB_CLK_ENABLE();               //使能GPIOB时钟
 	__HAL_RCC_GPIOC_CLK_ENABLE();               //使能GPIOC时钟
-
+	
     //初始化PB12/13
     GPIO_Initure.Pin=GPIO_PIN_12|GPIO_PIN_13;
     GPIO_Initure.Mode=GPIO_MODE_AF_PP;          //推挽复用
@@ -44,11 +48,16 @@ void HAL_I2S_MspInit(I2S_HandleTypeDef *hi2s)
     GPIO_Initure.Speed=GPIO_SPEED_HIGH;         //高速
     GPIO_Initure.Alternate=GPIO_AF5_SPI2;       //复用为SPI/I2S
     HAL_GPIO_Init(GPIOB,&GPIO_Initure);         //初始化
-
-	//初始化PC2/PC3/PC6
-	GPIO_Initure.Pin=GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_6;
-	HAL_GPIO_Init(GPIOC,&GPIO_Initure);         //初始化
-}
+	
+	//初始化PC3/PC6
+	GPIO_Initure.Pin=GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_6; 
+	HAL_GPIO_Init(GPIOC,&GPIO_Initure);         //初始化	
+	
+	//初始化PC2
+	GPIO_Initure.Pin=GPIO_PIN_2; 
+	GPIO_Initure.Alternate=GPIO_AF6_I2S2ext;  	//复用为I2Sext  
+	HAL_GPIO_Init(GPIOC,&GPIO_Initure);         //初始化	
+} 
 
 //采样率计算公式:Fs=I2SxCLK/[256*(2*I2SDIV+ODD)]
 //I2SxCLK=(HSE/pllm)*PLLI2SN/PLLI2SR
@@ -148,17 +157,90 @@ void I2S2_TX_DMA_Init(u8* buf0,u8 *buf1,u16 num)
     HAL_NVIC_EnableIRQ(DMA1_Stream4_IRQn);
 }
 
+//I2S2ext RX DMA配置
+//设置为双缓冲模式,并开启DMA传输完成中断
+//buf0:M0AR地址.
+//buf1:M1AR地址.
+//num:每次传输数据量
+void I2S2ext_RX_DMA_Init(u8* buf0,u8 *buf1,u16 num)
+{  
+	__HAL_RCC_DMA1_CLK_ENABLE();                                    		//使能DMA1时钟
+    __HAL_LINKDMA(&I2S2_Handler,hdmarx,I2S2_RXDMA_Handler);         		//将DMA与I2S联系起来
+	
+    I2S2_RXDMA_Handler.Instance=DMA1_Stream3;                       		//DMA1数据流3                    
+    I2S2_RXDMA_Handler.Init.Channel=DMA_CHANNEL_3;                  		//通道3
+    I2S2_RXDMA_Handler.Init.Direction=DMA_PERIPH_TO_MEMORY;         		//外设到存储器模式
+    I2S2_RXDMA_Handler.Init.PeriphInc=DMA_PINC_DISABLE;             		//外设非增量模式
+    I2S2_RXDMA_Handler.Init.MemInc=DMA_MINC_ENABLE;                 		//存储器增量模式
+    I2S2_RXDMA_Handler.Init.PeriphDataAlignment=DMA_PDATAALIGN_HALFWORD;   	//外设数据长度:16位
+    I2S2_RXDMA_Handler.Init.MemDataAlignment=DMA_MDATAALIGN_HALFWORD;    	//存储器数据长度:16位
+    I2S2_RXDMA_Handler.Init.Mode=DMA_CIRCULAR;                      		//使用循环模式 
+    I2S2_RXDMA_Handler.Init.Priority=DMA_PRIORITY_MEDIUM;             		//中等优先级
+    I2S2_RXDMA_Handler.Init.FIFOMode=DMA_FIFOMODE_DISABLE;          		//不使用FIFO
+    I2S2_RXDMA_Handler.Init.MemBurst=DMA_MBURST_SINGLE;             		//存储器单次突发传输
+    I2S2_RXDMA_Handler.Init.PeriphBurst=DMA_PBURST_SINGLE;          		//外设突发单次传输 
+    HAL_DMA_DeInit(&I2S2_RXDMA_Handler);                            		//先清除以前的设置
+    HAL_DMA_Init(&I2S2_RXDMA_Handler);	                            		//初始化DMA
+
+    HAL_DMAEx_MultiBufferStart(&I2S2_RXDMA_Handler,(u32)&I2S2ext->DR,(u32)buf0,(u32)buf1,num);//开启双缓冲
+    __HAL_DMA_DISABLE(&I2S2_RXDMA_Handler);                         		//先关闭DMA 
+    VOSDelayUs(10);                                                   		//10us延时，防止-O2优化出问题 	
+    __HAL_DMA_ENABLE_IT(&I2S2_RXDMA_Handler,DMA_IT_TC);             		//开启传输完成中断
+    __HAL_DMA_CLEAR_FLAG(&I2S2_RXDMA_Handler,DMA_FLAG_TCIF3_7);     		//清除DMA传输完成中断标志位
+	
+	HAL_NVIC_SetPriority(DMA1_Stream3_IRQn,0,1);  //抢占1，子优先级1，组2 
+    HAL_NVIC_EnableIRQ(DMA1_Stream3_IRQn);	
+} 
+
 //I2S DMA回调函数指针
-void (*i2s_tx_callback)(void);	//TX回调函数
+void (*i2s_tx_callback)(void);	//TX回调函数 
+void (*i2s_rx_callback)(void);	//RX回调函数
+
 //DMA1_Stream4中断服务函数
 void DMA1_Stream4_IRQHandler(void)
 {
     if(__HAL_DMA_GET_FLAG(&I2S2_TXDMA_Handler,DMA_FLAG_TCIF0_4)!=RESET) //DMA传输完成
     {
         __HAL_DMA_CLEAR_FLAG(&I2S2_TXDMA_Handler,DMA_FLAG_TCIF0_4);     //清除DMA传输完成中断标志位
-        i2s_tx_callback();	//执行回调函数,读取数据等操作在这里面处理
-    }
-}
+		if(i2s_tx_callback!=NULL) i2s_tx_callback();	//执行回调函数,读取数据等操作在这里面处理  
+    } 
+} 
+
+//双缓冲
+//void i2s_dma_rx_int()
+//{
+//	u16 bw;
+//	u8 res;
+//	if(rec_sta==0X80)//录音模式
+//	{
+//		if(DMA1_Stream3->CR&(1<<19))
+//		{
+//			res=f_write(f_rec,i2srecbuf1,I2S_RX_DMA_BUF_SIZE,(UINT*)&bw);//写入文件
+//			if(res)
+//			{
+//				printf("write error:%d\r\n",res);
+//			}
+//		}else
+//		{
+//			res=f_write(f_rec,i2srecbuf2,I2S_RX_DMA_BUF_SIZE,(UINT*)&bw);//写入文件
+//			if(res)
+//			{
+//				printf("write error:%d\r\n",res);
+//			}
+//		}
+//		wavsize+=I2S_RX_DMA_BUF_SIZE;
+//	}
+//}
+
+//DMA1_Stream3中断服务函数
+void DMA1_Stream3_IRQHandler(void)
+{ 
+    if(__HAL_DMA_GET_FLAG(&I2S2_RXDMA_Handler,DMA_FLAG_TCIF3_7)!=RESET) //DMA传输完成
+    {
+        __HAL_DMA_CLEAR_FLAG(&I2S2_RXDMA_Handler,DMA_FLAG_TCIF3_7);     //清除DMA传输完成中断标志位
+		if(i2s_rx_callback!=NULL) i2s_rx_callback();	//执行回调函数,读取数据等操作在这里面处理  
+    } 											 
+} 
 
 //I2S开始播放
 void I2S_Play_Start(void)
@@ -172,7 +254,17 @@ void I2S_Play_Stop(void)
 	__HAL_DMA_DISABLE(&I2S2_TXDMA_Handler);//结束播放;
 }
 
+//I2S开始录音
+void I2S_Rec_Start(void)
+{ 
+	__HAL_DMA_ENABLE(&I2S2_RXDMA_Handler); //开启DMA RX传输  				
+}
 
+//关闭I2S录音
+void I2S_Rec_Stop(void)
+{   
+	__HAL_DMA_DISABLE(&I2S2_RXDMA_Handler); //结束录音				 
+}
 
 
 

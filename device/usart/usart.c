@@ -17,6 +17,8 @@ enum {
 	EVENT_UART_RECV = 0,
 };
 
+#define UART_DMA_SEND	0
+
 #define DMA_RX_BUF_MAX 512
 #define RING_DATA_SIZE 1024
 
@@ -83,7 +85,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
 		GPIO_InitStruct.Pin = GPIO_PIN_10;
 		GPIO_InitStruct.Alternate = GPIO_AF7_USART1;
 		HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
+#if UART_DMA_SEND
 		pUart->hdma_tx.Instance                 = DMA2_Stream7;
 		pUart->hdma_tx.Init.Channel             = DMA_CHANNEL_4;
 		pUart->hdma_tx.Init.Direction           = DMA_MEMORY_TO_PERIPH;
@@ -100,7 +102,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
 
 		HAL_DMA_Init(&pUart->hdma_tx);
 		__HAL_LINKDMA(huart, hdmatx, pUart->hdma_tx);
-
+#endif
 		pUart->hdma_rx.Instance                 = DMA2_Stream2;
 
 		pUart->hdma_rx.Init.Channel             = DMA_CHANNEL_4;
@@ -117,12 +119,11 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
 		pUart->hdma_rx.Init.PeriphBurst         = DMA_PBURST_SINGLE;
 
 		HAL_DMA_Init(&pUart->hdma_rx);
-
 		__HAL_LINKDMA(huart, hdmarx, pUart->hdma_rx);
-
+#if UART_DMA_SEND
 		HAL_NVIC_SetPriority(DMA2_Stream7_IRQn, 0, 1);
 		HAL_NVIC_EnableIRQ(DMA2_Stream7_IRQn);
-
+#endif
 		HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 0, 0);
 		HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
 
@@ -148,6 +149,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
 
 		HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+#if UART_DMA_SEND
 		pUart->hdma_tx.Instance                 = DMA1_Stream3;
 
 		pUart->hdma_tx.Init.Channel             = DMA_CHANNEL_4;
@@ -166,7 +168,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
 		HAL_DMA_Init(&pUart->hdma_tx);
 
 		__HAL_LINKDMA(huart, hdmatx, pUart->hdma_tx);
-
+#endif
 		pUart->hdma_rx.Instance                 = DMA1_Stream1;
 
 		pUart->hdma_rx.Init.Channel             = DMA_CHANNEL_4;
@@ -186,9 +188,10 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart)
 
 		__HAL_LINKDMA(huart, hdmarx, pUart->hdma_rx);
 
+#if UART_DMA_SEND
 		HAL_NVIC_SetPriority(DMA1_Stream3_IRQn, 0, 1);
 		HAL_NVIC_EnableIRQ(DMA1_Stream3_IRQn);
-
+#endif
 		HAL_NVIC_SetPriority(DMA1_Stream1_IRQn, 0, 0);
 		HAL_NVIC_EnableIRQ(DMA1_Stream1_IRQn);
 
@@ -210,11 +213,14 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef *huart)
 		HAL_GPIO_DeInit(GPIOA, GPIO_PIN_9);
 		HAL_GPIO_DeInit(GPIOA, GPIO_PIN_10);
 
-		HAL_DMA_DeInit(&pUart->hdma_tx);
-		HAL_DMA_DeInit(&pUart->hdma_rx);
 
-		HAL_NVIC_DisableIRQ(DMA2_Stream7_IRQn);
+		HAL_DMA_DeInit(&pUart->hdma_rx);
 		HAL_NVIC_DisableIRQ(DMA2_Stream2_IRQn);
+#if UART_DMA_SEND
+		HAL_DMA_DeInit(&pUart->hdma_tx);
+		HAL_NVIC_DisableIRQ(DMA2_Stream7_IRQn);
+#endif
+
 	}
 	if (huart->Instance == USART3) {
 		__HAL_RCC_USART3_FORCE_RESET();
@@ -224,11 +230,12 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef *huart)
 
 		HAL_GPIO_DeInit(GPIOB, GPIO_PIN_11);
 
-		HAL_DMA_DeInit(&pUart->hdma_tx);
 		HAL_DMA_DeInit(&pUart->hdma_rx);
-		
-		HAL_NVIC_DisableIRQ(DMA1_Stream3_IRQn);
 		HAL_NVIC_DisableIRQ(DMA1_Stream1_IRQn);
+#if UART_DMA_SEND
+		HAL_DMA_DeInit(&pUart->hdma_tx);
+		HAL_NVIC_DisableIRQ(DMA1_Stream3_IRQn); //发送跟I2S2 RX冲突
+#endif
 	}
 }
 
@@ -408,6 +415,7 @@ void DMA2_Stream2_IRQHandler(void)
 	}
 	VOSIntExit ();
 }
+#if UART_DMA_SEND
 void DMA2_Stream7_IRQHandler(void)
 {
 	struct StUartComm *pUart = UartCommPtr(USART1);
@@ -417,6 +425,7 @@ void DMA2_Stream7_IRQHandler(void)
 	}
 	VOSIntExit ();
 }
+#endif
 void USART1_IRQHandler(void)
 {
 	struct StUartComm *pUart = UartCommPtr(USART1);
@@ -433,6 +442,7 @@ void USART1_IRQHandler(void)
  * UART3 中断处理
  *
  ***************************/
+//接收
 void DMA1_Stream1_IRQHandler(void)
 {
 	struct StUartComm *pUart = UartCommPtr(USART3);
@@ -442,6 +452,8 @@ void DMA1_Stream1_IRQHandler(void)
 	}
 	VOSIntExit ();
 }
+#if UART_DMA_SEND
+//发送 , 跟i2s2 RX冲突
 void DMA1_Stream3_IRQHandler(void)
 {
 	struct StUartComm *pUart = UartCommPtr(USART3);
@@ -451,6 +463,7 @@ void DMA1_Stream3_IRQHandler(void)
 	}
 	VOSIntExit ();
 }
+#endif
 void USART3_IRQHandler(void)
 {
 	struct StUartComm *pUart = UartCommPtr(USART3);
@@ -647,7 +660,7 @@ int uart_sends(int port, unsigned char *buf, int len, unsigned int timeout_ms)
 	}
 	return len;
 }
-
+#if UART_DMA_SEND
 s32 uart_sends_dma(s32 port, u8 *data, s32 len)
 {
 	s32 ret = 0;
@@ -657,6 +670,7 @@ s32 uart_sends_dma(s32 port, u8 *data, s32 len)
 	}
 	return ret;
 }
+#endif
 
 
 void uart_close(int port)
