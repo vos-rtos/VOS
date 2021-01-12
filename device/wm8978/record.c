@@ -3,7 +3,7 @@
 #include "ff.h"
 #include "wm8978.h"
 #include "i2s.h"
-
+#if 0
 extern void (*i2s_rx_callback)(void);
 
 u8 *i2srecbuf1;
@@ -255,3 +255,4 @@ void wav_recorder(void)
 	vfree(wavhead);		//释放内存
 	vfree(pname);		//释放内存
 }
+#endif

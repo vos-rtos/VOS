@@ -4,7 +4,7 @@
 #include "vos.h"
 #include "wavplay.h"
 #include "ff.h"
-
+#if 0
 #define I2S_RX_DMA_BUF_SIZE    	4096		//定义RX DMA 数组大小
 
 void rec_i2s_dma_rx_callback(void);
@@ -14,5 +14,5 @@ void recoder_msg_show(u32 tsec,u32 kbps);
 void recoder_remindmsg_show(u8 mode);
 void recoder_new_pathname(u8 *pname, s32 len);
 void wav_recorder(void);
-
+#endif
 #endif

@@ -192,6 +192,14 @@ s32 VOSRingBufIsFull(StVOSRingBuf *ring)
 	return (s32)(ring->cnts==ring->max);
 }
 
+s32 VOSRingBufGetMax(StVOSRingBuf *ring)
+{
+	return ring->max;
+}
+s32 VOSRingBufGetCnts(StVOSRingBuf *ring)
+{
+	return ring->cnts;
+}
 
 s32 VOSRingBufGetCurBytes(StVOSRingBuf *ring)
 {

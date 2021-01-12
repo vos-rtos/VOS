@@ -278,11 +278,11 @@ void wm8978_test()
 {
 	WM8978_Init();
 	WM8978_HPvol_Set(40,40);
-	WM8978_SPKvol_Set(50);
+	WM8978_SPKvol_Set(40);
 
 	WM8978_ADDA_Cfg(1,0);
 	WM8978_Input_Cfg(0,0,0);
 	WM8978_Output_Cfg(1,0);
-
-	wav_play_song("0:/aaa.wav");
+	wav_play_song("0:/bbb.wav");
+	//wav_play_song("0:/aaa.wav");
 }

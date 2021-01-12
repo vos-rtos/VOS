@@ -2,7 +2,7 @@
 #include "ff.h"
 #include "i2s.h"
 #include "wm8978.h"
-
+#if 0
 void (*i2s_tx_callback)(void);
 
 //V1.0 说明
@@ -235,6 +235,128 @@ u8 wav_play_song(u8* fname)
 	vfree(audiodev.file);	//释放内存
 	return res;
 }
+#endif
+u8 wav_decode_init(u8* fname,__wavctrl* wavx)
+{
+	FIL*ftemp;
+	u8 *buf;
+	u32 br=0;
+	u8 res=0;
+
+	ChunkRIFF *riff;
+	ChunkFMT *fmt;
+	ChunkFACT *fact;
+	ChunkDATA *data;
+	ftemp=(FIL*)vmalloc(sizeof(FIL));
+	buf=vmalloc(512);
+	if(ftemp&&buf)	//内存申请成功
+	{
+		res=f_open(ftemp,(TCHAR*)fname,FA_READ);//打开文件
+		if(res==FR_OK)
+		{
+			f_read(ftemp,buf,512,&br);	//读取512字节在数据
+			riff=(ChunkRIFF *)buf;		//获取RIFF块
+			if(riff->Format==0X45564157)//是WAV文件
+			{
+				fmt=(ChunkFMT *)(buf+12);	//获取FMT块
+				fact=(ChunkFACT *)(buf+12+8+fmt->ChunkSize);//读取FACT块
+				if(fact->ChunkID==0X74636166||fact->ChunkID==0X5453494C)wavx->datastart=12+8+fmt->ChunkSize+8+fact->ChunkSize;//具有fact/LIST块的时候(未测试)
+				else wavx->datastart=12+8+fmt->ChunkSize;
+				data=(ChunkDATA *)(buf+wavx->datastart);	//读取DATA块
+				if(data->ChunkID==0X61746164)//解析成功!
+				{
+					wavx->audioformat=fmt->AudioFormat;		//音频格式
+					wavx->nchannels=fmt->NumOfChannels;		//通道数
+					wavx->samplerate=fmt->SampleRate;		//采样率
+					wavx->bitrate=fmt->ByteRate*8;			//得到位速
+					wavx->blockalign=fmt->BlockAlign;		//块对齐
+					wavx->bps=fmt->BitsPerSample;			//位数,16/24/32位
+
+					wavx->datasize=data->ChunkSize;			//数据块大小
+					wavx->datastart=wavx->datastart+8;		//数据流开始的地方.
+
+					printf("wavx->audioformat:%d\r\n",wavx->audioformat);
+					printf("wavx->nchannels:%d\r\n",wavx->nchannels);
+					printf("wavx->samplerate:%d\r\n",wavx->samplerate);
+					printf("wavx->bitrate:%d\r\n",wavx->bitrate);
+					printf("wavx->blockalign:%d\r\n",wavx->blockalign);
+					printf("wavx->bps:%d\r\n",wavx->bps);
+					printf("wavx->datasize:%d\r\n",wavx->datasize);
+					printf("wavx->datastart:%d\r\n",wavx->datastart);
+				}else res=3;//data区域未找到.
+			}else res=2;//非wav文件
+
+		}else res=1;//打开文件错误
+	}
+	f_close(ftemp);
+	vfree(ftemp);//释放内存
+	vfree(buf);
+	return 0;
+}
+
+u8 wav_play_song(u8* fname)
+{
+	s32 ret = 0;
+	static u8 buf[1*1024];//buf[16*1024];
+	u32 readed = 0;
+	__wavctrl wavctrl;
+	FIL fmp3;
+	ret = wav_decode_init(fname, &wavctrl);//得到文件的信息
+	if(ret != 0) goto END;
+
+//	WM8978_ADDA_Cfg(1,0);		//开启DAC
+//	WM8978_Input_Cfg(0,0,0);	//关闭输入通道(MIC&LINE IN)
+//	WM8978_Output_Cfg(1,0);		//开启DAC输出
+//	WM8978_MIC_Gain(0);			//MIC增益设置为0
+//	WM8978_SPKvol_Set(50);		//喇叭音量设置
+//
+//	I2S_Play_Stop();			//停止时钟发送
+//	I2S_Rec_Stop(); 			//停止录音
+
+	if(wavctrl.bps == 16) {
+		WM8978_I2S_Cfg(2, 0);	//飞利浦标准,16位数据长度
+		i2s_open(1, I2S_STANDARD_PHILIPS, I2S_MODE_MASTER_TX, I2S_CPOL_LOW, I2S_DATAFORMAT_16B_EXTENDED);	//飞利浦标准,主机发送,时钟低电平有效,16位扩展帧长度
+	}
+	else if(wavctrl.bps == 24){
+		WM8978_I2S_Cfg(2, 2);	//飞利浦标准,24位数据长度
+		i2s_open(1, I2S_STANDARD_PHILIPS, I2S_MODE_MASTER_TX, I2S_CPOL_LOW, I2S_DATAFORMAT_24B);	//飞利浦标准,主机发送,时钟低电平有效,24位长度
+	}
+	else  {
+		goto END;
+	}
+
+
+
+	I2S2_SampleRate_Set(wavctrl.samplerate);
+
+//	DMA_XXX();
+//	I2S_Play_Stop();
+	s32 mark = 0;
+	ret=f_open(&fmp3, (TCHAR*)fname, FA_READ);	//打开文件
+	if(ret == 0) {
+		f_lseek(&fmp3, wavctrl.datastart);		//跳过文件头
+		while (1) {							//此次要读取的字节数
+			f_read(&fmp3, buf, sizeof(buf), (UINT*)&readed);	//读取数据
+			if (readed < sizeof(buf)) {
+				break;
+			}
+			mark = 0;
+			while (1) {
+				ret = i2s_sends(1, buf+mark, readed-mark, 1000);
+				if (ret > 0) {
+					mark += ret;
+				}
+				if (mark == readed) break;
+				if (ret <= 0){
+					//VOSTaskDelay(5);
+				}
+			}
+		}
+	}
+END:
+	return ret;
+}
+
 
 
 
