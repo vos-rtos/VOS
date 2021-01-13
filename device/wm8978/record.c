@@ -3,7 +3,7 @@
 #include "ff.h"
 #include "wm8978.h"
 #include "i2s.h"
-#if 0
+#if 1
 extern void (*i2s_rx_callback)(void);
 
 u8 *i2srecbuf1;
@@ -52,19 +52,21 @@ const u16 i2splaybuf[2]={0X0000,0X0000};//2¸ö16Î»Êı¾İ,ÓÃÓÚÂ¼ÒôÊ±I2S Master·¢ËÍ.Ñ
 //½øÈëPCM Â¼ÒôÄ£Ê½
 void recoder_enter_rec_mode(void)
 {
+	s32 ret = 0;
 	WM8978_ADDA_Cfg(0,1);		//¿ªÆôADC
 	WM8978_Input_Cfg(1,1,0);	//¿ªÆôÊäÈëÍ¨µÀ(MIC&LINE IN)
 	WM8978_Output_Cfg(0,1);		//¿ªÆôBYPASSÊä³ö
 	WM8978_MIC_Gain(46);		//MICÔöÒæÉèÖÃ
 	WM8978_SPKvol_Set(0);		//¹Ø±ÕÀ®°È.
 	WM8978_I2S_Cfg(2,0);		//·ÉÀûÆÖ±ê×¼,16Î»Êı¾İ³¤¶È
-
-	I2S2_Init(I2S_STANDARD_PHILIPS,I2S_MODE_MASTER_TX,I2S_CPOL_LOW,I2S_DATAFORMAT_16B);	//·ÉÀûÆÖ±ê×¼,Ö÷»ú·¢ËÍ,Ê±ÖÓµÍµçÆ½ÓĞĞ§,16Î»Ö¡³¤¶È
+	i2s_mode_set(1, MODE_I2S_RECORDER);
+	ret = i2s_open(1, I2S_STANDARD_PHILIPS,I2S_MODE_MASTER_TX,I2S_CPOL_LOW,I2S_DATAFORMAT_16B);
+	//I2S2_Init(I2S_STANDARD_PHILIPS,I2S_MODE_MASTER_TX,I2S_CPOL_LOW,I2S_DATAFORMAT_16B);	//·ÉÀûÆÖ±ê×¼,Ö÷»ú·¢ËÍ,Ê±ÖÓµÍµçÆ½ÓĞĞ§,16Î»Ö¡³¤¶È
 	I2S2_SampleRate_Set(16000);	//ÉèÖÃ²ÉÑùÂÊ
- 	I2S2_TX_DMA_Init((u8*)&i2splaybuf[0],(u8*)&i2splaybuf[1],1); 		//ÅäÖÃTX DMA
+ 	//I2S2_TX_DMA_Init((u8*)&i2splaybuf[0],(u8*)&i2splaybuf[1],1); 		//ÅäÖÃTX DMA
 	DMA1_Stream4->CR&=~(1<<4);	//¹Ø±Õ´«ÊäÍê³ÉÖĞ¶Ï(ÕâÀï²»ÓÃÖĞ¶ÏËÍÊı¾İ)
-	I2S2ext_RX_DMA_Init(i2srecbuf1,i2srecbuf2,I2S_RX_DMA_BUF_SIZE/2); 	//ÅäÖÃRX DMA
-  	i2s_rx_callback=rec_i2s_dma_rx_callback;//»Øµ÷º¯ÊıÖ¸wav_i2s_dma_callback
+//	I2S2ext_RX_DMA_Init(i2srecbuf1,i2srecbuf2,I2S_RX_DMA_BUF_SIZE/2); 	//ÅäÖÃRX DMA
+//  	i2s_rx_callback=rec_i2s_dma_rx_callback;//»Øµ÷º¯ÊıÖ¸wav_i2s_dma_callback
  	I2S_Play_Start();	//¿ªÊ¼I2SÊı¾İ·¢ËÍ(Ö÷»ú)
 	I2S_Rec_Start(); 	//¿ªÊ¼I2SÊı¾İ½ÓÊÕ(´Ó»ú)
 //	recoder_remindmsg_show(0);
@@ -145,12 +147,126 @@ void recoder_new_pathname(u8 *pname, s32 len)
 }
 
 //WAVÂ¼Òô
+//void wav_recorder(void)
+//{
+//	u8 res;
+//	u16 key;
+//	u8 rval=0;
+//
+//	__WaveHeader *wavhead=0;
+// 	DIR recdir;	 					//Ä¿Â¼
+// 	u8 *pname=0;
+//	u8 timecnt=0;					//¼ÆÊ±Æ÷
+//	u32 recsec=0;					//Â¼ÒôÊ±¼ä
+//	ttp229_init();
+//
+//	WM8978_Init();
+//	WM8978_HPvol_Set(40,40);
+//	WM8978_SPKvol_Set(30);
+//
+//  	while(f_opendir(&recdir,"0:/RECORDER"))//´ò¿ªÂ¼ÒôÎÄ¼ş¼Ğ
+// 	{
+//		VOSTaskDelay(200);
+//		VOSTaskDelay(200);
+//		f_mkdir("0:/RECORDER");				//´´½¨¸ÃÄ¿Â¼
+//	}
+//	i2srecbuf1=vmalloc(I2S_RX_DMA_BUF_SIZE);//I2SÂ¼ÒôÄÚ´æ1ÉêÇë
+//	i2srecbuf2=vmalloc(I2S_RX_DMA_BUF_SIZE);//I2SÂ¼ÒôÄÚ´æ2ÉêÇë
+//  	f_rec=(FIL *)vmalloc(sizeof(FIL));		//¿ª±ÙFIL×Ö½ÚµÄÄÚ´æÇøÓò
+// 	wavhead=(__WaveHeader*)vmalloc(sizeof(__WaveHeader));//¿ª±Ù__WaveHeader×Ö½ÚµÄÄÚ´æÇøÓò
+//	pname=vmalloc(30);						//ÉêÇë30¸ö×Ö½ÚÄÚ´æ,ÀàËÆ"0:RECORDER/REC00001.wav"
+//	if(!i2srecbuf1||!i2srecbuf2||!f_rec||!wavhead||!pname)rval=1; 	if(rval==0)
+//	{
+//		recoder_enter_rec_mode();	//½øÈëÂ¼ÒôÄ£Ê½,´ËÊ±¶ú»ú¿ÉÒÔÌıµ½ßäÍ·²É¼¯µ½µÄÒôÆµ
+//		pname[0]=0;					//pnameÃ»ÓĞÈÎºÎÎÄ¼şÃû
+// 	   	while(rval==0)
+//		{
+//			key=ttp229_scan();
+//			switch(key)
+//			{
+//				case 0:	//STOP&SAVE
+//					if(rec_sta&0X80)//ÓĞÂ¼Òô
+//					{
+//						rec_sta=0;	//¹Ø±ÕÂ¼Òô
+//						wavhead->riff.ChunkSize=wavsize+36;		//Õû¸öÎÄ¼şµÄ´óĞ¡-8;
+//				   		wavhead->data.ChunkSize=wavsize;		//Êı¾İ´óĞ¡
+//						f_lseek(f_rec,0);						//Æ«ÒÆµ½ÎÄ¼şÍ·.
+//				  		f_write(f_rec,(const void*)wavhead,sizeof(__WaveHeader),&bw);//Ğ´ÈëÍ·Êı¾İ
+//						f_close(f_rec);
+//						wavsize=0;
+//					}
+//					rec_sta=0;
+//					recsec=0;
+//					break;
+//				case 1:	//REC/PAUSE
+//					if(rec_sta&0X01)//Ô­À´ÊÇÔİÍ£,¼ÌĞøÂ¼Òô
+//					{
+//						rec_sta&=0XFE;//È¡ÏûÔİÍ£
+//					}else if(rec_sta&0X80)//ÒÑ¾­ÔÚÂ¼ÒôÁË,ÔİÍ£
+//					{
+//						rec_sta|=0X01;	//ÔİÍ£
+//					}else				//»¹Ã»¿ªÊ¼Â¼Òô
+//					{
+//						recsec=0;
+//						recoder_new_pathname(pname, 30);			//µÃµ½ĞÂµÄÃû×Ö
+//				 		recoder_wav_init(wavhead);				//³õÊ¼»¯wavÊı¾İ
+//	 					res=f_open(f_rec,(const TCHAR*)pname, FA_CREATE_ALWAYS | FA_WRITE);
+//						if(res)			//ÎÄ¼ş´´½¨Ê§°Ü
+//						{
+//							rec_sta=0;	//´´½¨ÎÄ¼şÊ§°Ü,²»ÄÜÂ¼Òô
+//							rval=0XFE;	//ÌáÊ¾ÊÇ·ñ´æÔÚSD¿¨
+//						}else
+//						{
+//							res=f_write(f_rec,(const void*)wavhead,sizeof(__WaveHeader),&bw);//Ğ´ÈëÍ·Êı¾İ
+// 							rec_sta|=0X80;	//¿ªÊ¼Â¼Òô
+//						}
+// 					}
+//					break;
+//				case 2:	//²¥·Å×î½üÒ»¶ÎÂ¼Òô
+//					if(rec_sta!=0X80)//Ã»ÓĞÔÚÂ¼Òô
+//					{
+//						if(pname[0])//Èç¹û°´¼ü±»°´ÏÂ,ÇÒpname²»Îª¿Õ
+//						{
+//							recoder_enter_play_mode();	//½øÈë²¥·ÅÄ£Ê½
+//							//audio_play_song(pname);		//²¥·Åpname
+//							WM8978_HPvol_Set(40,40);
+//							WM8978_SPKvol_Set(50);
+//
+//							WM8978_ADDA_Cfg(1,0);
+//							WM8978_Input_Cfg(0,0,0);
+//							WM8978_Output_Cfg(1,0);
+//							wav_play_song(pname);
+//							recoder_enter_rec_mode();	//ÖØĞÂ½øÈëÂ¼ÒôÄ£Ê½
+//						}
+//					}
+//					break;
+//				default:
+//					break;
+//			}
+//			VOSTaskDelay(5);
+//			timecnt++;
+// 			if(recsec!=(wavsize/wavhead->fmt.ByteRate))	//Â¼ÒôÊ±¼äÏÔÊ¾
+//			{
+//				recsec=wavsize/wavhead->fmt.ByteRate;	//Â¼ÒôÊ±¼ä
+//			}
+//		}
+//	}
+//	vfree(i2srecbuf1);	//ÊÍ·ÅÄÚ´æ
+//	vfree(i2srecbuf2);	//ÊÍ·ÅÄÚ´æ
+//	vfree(f_rec);		//ÊÍ·ÅÄÚ´æ
+//	vfree(wavhead);		//ÊÍ·ÅÄÚ´æ
+//	vfree(pname);		//ÊÍ·ÅÄÚ´æ
+//}
+
 void wav_recorder(void)
 {
-	u8 res;
+	static u8 buf[8*1024];
+	s32 mark = 0;
+	s32 total = 0;
+	s32 ret = 0;
 	u16 key;
 	u8 rval=0;
-
+	FIL fmp3;
 	__WaveHeader *wavhead=0;
  	DIR recdir;	 					//Ä¿Â¼
  	u8 *pname=0;
@@ -168,91 +284,67 @@ void wav_recorder(void)
 		VOSTaskDelay(200);
 		f_mkdir("0:/RECORDER");				//´´½¨¸ÃÄ¿Â¼
 	}
-	i2srecbuf1=vmalloc(I2S_RX_DMA_BUF_SIZE);//I2SÂ¼ÒôÄÚ´æ1ÉêÇë
-	i2srecbuf2=vmalloc(I2S_RX_DMA_BUF_SIZE);//I2SÂ¼ÒôÄÚ´æ2ÉêÇë
-  	f_rec=(FIL *)vmalloc(sizeof(FIL));		//¿ª±ÙFIL×Ö½ÚµÄÄÚ´æÇøÓò
  	wavhead=(__WaveHeader*)vmalloc(sizeof(__WaveHeader));//¿ª±Ù__WaveHeader×Ö½ÚµÄÄÚ´æÇøÓò
 	pname=vmalloc(30);						//ÉêÇë30¸ö×Ö½ÚÄÚ´æ,ÀàËÆ"0:RECORDER/REC00001.wav"
-	if(!i2srecbuf1||!i2srecbuf2||!f_rec||!wavhead||!pname)rval=1; 	if(rval==0)
-	{
-		recoder_enter_rec_mode();	//½øÈëÂ¼ÒôÄ£Ê½,´ËÊ±¶ú»ú¿ÉÒÔÌıµ½ßäÍ·²É¼¯µ½µÄÒôÆµ
-		pname[0]=0;					//pnameÃ»ÓĞÈÎºÎÎÄ¼şÃû
- 	   	while(rval==0)
-		{
-			key=ttp229_scan();
-			switch(key)
-			{
-				case 0:	//STOP&SAVE
-					if(rec_sta&0X80)//ÓĞÂ¼Òô
-					{
-						rec_sta=0;	//¹Ø±ÕÂ¼Òô
-						wavhead->riff.ChunkSize=wavsize+36;		//Õû¸öÎÄ¼şµÄ´óĞ¡-8;
-				   		wavhead->data.ChunkSize=wavsize;		//Êı¾İ´óĞ¡
-						f_lseek(f_rec,0);						//Æ«ÒÆµ½ÎÄ¼şÍ·.
-				  		f_write(f_rec,(const void*)wavhead,sizeof(__WaveHeader),&bw);//Ğ´ÈëÍ·Êı¾İ
-						f_close(f_rec);
-						wavsize=0;
-					}
-					rec_sta=0;
-					recsec=0;
-					break;
-				case 1:	//REC/PAUSE
-					if(rec_sta&0X01)//Ô­À´ÊÇÔİÍ£,¼ÌĞøÂ¼Òô
-					{
-						rec_sta&=0XFE;//È¡ÏûÔİÍ£
-					}else if(rec_sta&0X80)//ÒÑ¾­ÔÚÂ¼ÒôÁË,ÔİÍ£
-					{
-						rec_sta|=0X01;	//ÔİÍ£
-					}else				//»¹Ã»¿ªÊ¼Â¼Òô
-					{
-						recsec=0;
-						recoder_new_pathname(pname, 30);			//µÃµ½ĞÂµÄÃû×Ö
-				 		recoder_wav_init(wavhead);				//³õÊ¼»¯wavÊı¾İ
-	 					res=f_open(f_rec,(const TCHAR*)pname, FA_CREATE_ALWAYS | FA_WRITE);
-						if(res)			//ÎÄ¼ş´´½¨Ê§°Ü
-						{
-							rec_sta=0;	//´´½¨ÎÄ¼şÊ§°Ü,²»ÄÜÂ¼Òô
-							rval=0XFE;	//ÌáÊ¾ÊÇ·ñ´æÔÚSD¿¨
-						}else
-						{
-							res=f_write(f_rec,(const void*)wavhead,sizeof(__WaveHeader),&bw);//Ğ´ÈëÍ·Êı¾İ
- 							rec_sta|=0X80;	//¿ªÊ¼Â¼Òô
-						}
- 					}
-					break;
-				case 2:	//²¥·Å×î½üÒ»¶ÎÂ¼Òô
-					if(rec_sta!=0X80)//Ã»ÓĞÔÚÂ¼Òô
-					{
-						if(pname[0])//Èç¹û°´¼ü±»°´ÏÂ,ÇÒpname²»Îª¿Õ
-						{
-							recoder_enter_play_mode();	//½øÈë²¥·ÅÄ£Ê½
-							//audio_play_song(pname);		//²¥·Åpname
-							WM8978_HPvol_Set(40,40);
-							WM8978_SPKvol_Set(50);
 
-							WM8978_ADDA_Cfg(1,0);
-							WM8978_Input_Cfg(0,0,0);
-							WM8978_Output_Cfg(1,0);
-							wav_play_song(pname);
-							recoder_enter_rec_mode();	//ÖØĞÂ½øÈëÂ¼ÒôÄ£Ê½
-						}
-					}
-					break;
-				default:
-					break;
+	recoder_enter_rec_mode();	//½øÈëÂ¼ÒôÄ£Ê½,´ËÊ±¶ú»ú¿ÉÒÔÌıµ½ßäÍ·²É¼¯µ½µÄÒôÆµ
+	pname[0]=0;					//pnameÃ»ÓĞÈÎºÎÎÄ¼şÃû
+
+	recsec=0;
+	wavsize = 0;
+	recoder_new_pathname(pname, 30);			//µÃµ½ĞÂµÄÃû×Ö
+	recoder_wav_init(wavhead);				//³õÊ¼»¯wavÊı¾İ
+	ret=f_open(&fmp3,(const TCHAR*)pname, FA_CREATE_ALWAYS | FA_WRITE);
+	if(ret==0)
+	{
+		ret=f_write(&fmp3,(const void*)wavhead,sizeof(__WaveHeader),&bw);//Ğ´ÈëÍ·Êı¾İ
+	}
+	u32 mark_time = VOSGetTimeMs();
+	kprintf("recorder begin!\r\n");
+	while (1) {
+		ret = i2s_recvs(1, buf, sizeof(buf), 100);
+		if (ret > 0) {
+			total = ret;
+			mark = 0;
+			while (1) {
+				ret = f_write(&fmp3, buf+mark, total-mark, &bw);
+				if (bw > 0) {
+					mark += bw;
+					wavsize += bw;
+				}
+				if (mark == total) break;
+				VOSTaskDelay(5);
 			}
-			VOSTaskDelay(5);
-			timecnt++;
- 			if(recsec!=(wavsize/wavhead->fmt.ByteRate))	//Â¼ÒôÊ±¼äÏÔÊ¾
-			{
-				recsec=wavsize/wavhead->fmt.ByteRate;	//Â¼ÒôÊ±¼ä
+			if (VOSGetTimeMs() - mark_time > 20 * 1000) {//ÈÎÒâ¼üÌø³ö
+				kprintf("recorder end!\r\n");
+				wavhead->riff.ChunkSize=wavsize+36;		//Õû¸öÎÄ¼şµÄ´óĞ¡-8;
+				wavhead->data.ChunkSize=wavsize;		//Êı¾İ´óĞ¡
+				f_lseek(&fmp3,0);						//Æ«ÒÆµ½ÎÄ¼şÍ·.
+				f_write(&fmp3,(const void*)wavhead,sizeof(__WaveHeader),&bw);//Ğ´ÈëÍ·Êı¾İ
+				f_close(&fmp3);
+				goto END;
 			}
 		}
 	}
-	vfree(i2srecbuf1);	//ÊÍ·ÅÄÚ´æ
-	vfree(i2srecbuf2);	//ÊÍ·ÅÄÚ´æ
-	vfree(f_rec);		//ÊÍ·ÅÄÚ´æ
+
+
+//				if(pname[0])//Èç¹û°´¼ü±»°´ÏÂ,ÇÒpname²»Îª¿Õ
+//				{
+//					recoder_enter_play_mode();	//½øÈë²¥·ÅÄ£Ê½
+//					//audio_play_song(pname);		//²¥·Åpname
+//					WM8978_HPvol_Set(40,40);
+//					WM8978_SPKvol_Set(50);
+//
+//					WM8978_ADDA_Cfg(1,0);
+//					WM8978_Input_Cfg(0,0,0);
+//					WM8978_Output_Cfg(1,0);
+//					wav_play_song(pname);
+//					recoder_enter_rec_mode();	//ÖØĞÂ½øÈëÂ¼ÒôÄ£Ê½
+//				}
+
+END:
 	vfree(wavhead);		//ÊÍ·ÅÄÚ´æ
 	vfree(pname);		//ÊÍ·ÅÄÚ´æ
 }
+
 #endif

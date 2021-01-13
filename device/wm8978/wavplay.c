@@ -297,7 +297,7 @@ u8 wav_decode_init(u8* fname,__wavctrl* wavx)
 u8 wav_play_song(u8* fname)
 {
 	s32 ret = 0;
-	static u8 buf[1*1024];//buf[16*1024];
+	static u8 buf[8*1024];//buf[16*1024];
 	u32 readed = 0;
 	__wavctrl wavctrl;
 	FIL fmp3;
@@ -314,7 +314,7 @@ u8 wav_play_song(u8* fname)
 //	I2S_Rec_Stop(); 			//停止录音
 
 	if(wavctrl.bps == 16) {
-		WM8978_I2S_Cfg(2, 0);	//飞利浦标准,16位数据长度
+		WM8978_I2S_Cfg(2, 0);	//飞利浦标准,16位数据长度I2S_DataFormat_16bextended
 		i2s_open(1, I2S_STANDARD_PHILIPS, I2S_MODE_MASTER_TX, I2S_CPOL_LOW, I2S_DATAFORMAT_16B_EXTENDED);	//飞利浦标准,主机发送,时钟低电平有效,16位扩展帧长度
 	}
 	else if(wavctrl.bps == 24){
@@ -348,7 +348,7 @@ u8 wav_play_song(u8* fname)
 				}
 				if (mark == readed) break;
 				if (ret <= 0){
-					//VOSTaskDelay(5);
+					VOSTaskDelay(5);
 				}
 			}
 		}

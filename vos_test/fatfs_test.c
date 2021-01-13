@@ -109,8 +109,9 @@ void fatfs_sddisk_test()
 	{
 		return;
 	}
-
-	wm8978_test();
+	s32 mp3_dec_file(s8 *path);
+	mp3_dec_file("0:/my.mp3");
+//	wm8978_test();
 //	void wav_recorder();
 //	wav_recorder();
 #if 1

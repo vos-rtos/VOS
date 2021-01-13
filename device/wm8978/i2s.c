@@ -9,7 +9,10 @@
 
 void i2s_tx_timer(void *ptimer, void *parg);
 
+
+
 typedef struct StI2sBus {
+	s32 mode; //0: player, 1: recorder
 	I2S_HandleTypeDef handle;
 	StVOSRingBuf *ring_rx; //接收环形缓冲
 	StVOSRingBuf *ring_tx; //发送环形缓冲
@@ -33,9 +36,11 @@ typedef struct StI2sBus {
 
 struct StI2sBus gI2sBus[3];
 
-//I2S_HandleTypeDef I2S2_Handler;			//I2S2句柄
-//DMA_HandleTypeDef I2S2_TXDMA_Handler;   //I2S2发送DMA句柄
-//DMA_HandleTypeDef I2S2_RXDMA_Handler;   //I2S2接收DMA句柄
+void i2s_mode_set(s32 port, s32 mode)
+{
+	struct StI2sBus *pI2sBus = &gI2sBus[port];
+	pI2sBus->mode = mode;
+}
 
 s32 i2s_open(s32 port, u32 I2S_Standard, u32 I2S_Mode, u32 I2S_Clock_Polarity, u32 I2S_DataFormat)
 {
@@ -60,6 +65,7 @@ s32 i2s_open(s32 port, u32 I2S_Standard, u32 I2S_Mode, u32 I2S_Clock_Polarity, u
 			err = -3;
 			goto END;
 		}
+
 		pI2sBus->ring_tx = VOSRingBufCreate(pI2sBus->tx_ring_max =
 				(pI2sBus->tx_ring_max?pI2sBus->tx_ring_max:(I2S_RING_TX_DEFAULT+sizeof(StVOSRingBuf))));
 		if (pI2sBus->ring_tx == 0) {
@@ -72,11 +78,18 @@ s32 i2s_open(s32 port, u32 I2S_Standard, u32 I2S_Mode, u32 I2S_Clock_Polarity, u
 			err = -5;
 			goto END;
 		}
+
 		pI2sBus->tx_buf1 = vmalloc(pI2sBus->tx_len = (pI2sBus->tx_len ? pI2sBus->tx_len : I2S_TX_BUF_DEFAULT));
 		if (pI2sBus->tx_buf1 == 0) {
 			err = -6;
 			goto END;
 		}
+		//if (pI2sBus->mode == MODE_I2S_RECORDER) {//录音器，master， 推数据为收数据。
+			memset(pI2sBus->tx_buf0, 0, pI2sBus->tx_len);
+			memset(pI2sBus->tx_buf1, 0, pI2sBus->tx_len);
+		//}
+
+
 		//创建软件定时器，在第一次数据小于ring buf max时，设定定时器发送
 		pI2sBus->timer = VOSTimerCreate(VOS_TIMER_TYPE_ONE_SHOT, 500, i2s_tx_timer, pI2sBus, "timer");
 		if (pI2sBus->timer == 0) {
@@ -129,104 +142,7 @@ struct StI2sBus *I2sBusPtr(SPI_TypeDef *spi)
 	}
 	return 0;
 }
-#if 0
-void DMA_XXX()
-{
-#if 0
-	struct StI2sBus *pI2sBus = &gI2sBus[1];
-	__HAL_RCC_DMA1_CLK_ENABLE();                                    		//使能DMA1时钟
-	    __HAL_LINKDMA(&pI2sBus->handle,hdmatx,I2S2_TXDMA_Handler);         		//将DMA与I2S联系起来
 
-	    I2S2_TXDMA_Handler.Instance=DMA1_Stream4;                       		//DMA1数据流4
-	    I2S2_TXDMA_Handler.Init.Channel=DMA_CHANNEL_0;                  		//通道0
-	    I2S2_TXDMA_Handler.Init.Direction=DMA_MEMORY_TO_PERIPH;         		//存储器到外设模式
-	    I2S2_TXDMA_Handler.Init.PeriphInc=DMA_PINC_DISABLE;             		//外设非增量模式
-	    I2S2_TXDMA_Handler.Init.MemInc=DMA_MINC_ENABLE;                 		//存储器增量模式
-	    I2S2_TXDMA_Handler.Init.PeriphDataAlignment=DMA_PDATAALIGN_HALFWORD;   	//外设数据长度:16位
-	    I2S2_TXDMA_Handler.Init.MemDataAlignment=DMA_MDATAALIGN_HALFWORD;    	//存储器数据长度:16位
-	    I2S2_TXDMA_Handler.Init.Mode=DMA_CIRCULAR;                      		//使用循环模式
-	    I2S2_TXDMA_Handler.Init.Priority=DMA_PRIORITY_HIGH;             		//高优先级
-	    I2S2_TXDMA_Handler.Init.FIFOMode=DMA_FIFOMODE_DISABLE;          		//不使用FIFO
-	    I2S2_TXDMA_Handler.Init.MemBurst=DMA_MBURST_SINGLE;             		//存储器单次突发传输
-	    I2S2_TXDMA_Handler.Init.PeriphBurst=DMA_PBURST_SINGLE;          		//外设突发单次传输
-	    HAL_DMA_DeInit(&I2S2_TXDMA_Handler);                            		//先清除以前的设置
-	    HAL_DMA_Init(&I2S2_TXDMA_Handler);	                            		//初始化DMA
-
-	    u8 *buf0 = vmalloc(1024*8);
-	    u8 *buf1 = vmalloc(1024*8);
-	    HAL_DMAEx_MultiBufferStart(&I2S2_TXDMA_Handler,(u32)buf0,(u32)&SPI2->DR,(u32)buf1,1024*4);//开启双缓冲
-	    __HAL_DMA_DISABLE(&I2S2_TXDMA_Handler);                         		//先关闭DMA
-                                                  		//10us延时，防止-O2优化出问题
-	    __HAL_DMA_ENABLE_IT(&I2S2_TXDMA_Handler,DMA_IT_TC);             		//开启传输完成中断
-	    __HAL_DMA_CLEAR_FLAG(&I2S2_TXDMA_Handler,DMA_FLAG_TCIF0_4);     		//清除DMA传输完成中断标志位
-	    HAL_NVIC_SetPriority(DMA1_Stream4_IRQn,0,0);                    		//DMA中断优先级
-	    HAL_NVIC_EnableIRQ(DMA1_Stream4_IRQn);
-#elif 0
-		struct StI2sBus *pI2sBus = &gI2sBus[1];
-		__HAL_RCC_DMA1_CLK_ENABLE();                                    		//使能DMA1时钟
-		    __HAL_LINKDMA(&pI2sBus->handle,hdmatx, pI2sBus->hdma_tx);         		//将DMA与I2S联系起来
-
-		    pI2sBus->hdma_tx.Instance=DMA1_Stream4;                       		//DMA1数据流4
-		    pI2sBus->hdma_tx.Init.Channel=DMA_CHANNEL_0;                  		//通道0
-		    pI2sBus->hdma_tx.Init.Direction=DMA_MEMORY_TO_PERIPH;         		//存储器到外设模式
-		    pI2sBus->hdma_tx.Init.PeriphInc=DMA_PINC_DISABLE;             		//外设非增量模式
-		    pI2sBus->hdma_tx.Init.MemInc=DMA_MINC_ENABLE;                 		//存储器增量模式
-		    pI2sBus->hdma_tx.Init.PeriphDataAlignment=DMA_PDATAALIGN_HALFWORD;   	//外设数据长度:16位
-		    pI2sBus->hdma_tx.Init.MemDataAlignment=DMA_MDATAALIGN_HALFWORD;    	//存储器数据长度:16位
-		    pI2sBus->hdma_tx.Init.Mode=DMA_CIRCULAR;                      		//使用循环模式
-		    pI2sBus->hdma_tx.Init.Priority=DMA_PRIORITY_HIGH;             		//高优先级
-		    pI2sBus->hdma_tx.Init.FIFOMode=DMA_FIFOMODE_DISABLE;          		//不使用FIFO
-		    pI2sBus->hdma_tx.Init.MemBurst=DMA_MBURST_SINGLE;             		//存储器单次突发传输
-		    pI2sBus->hdma_tx.Init.PeriphBurst=DMA_PBURST_SINGLE;          		//外设突发单次传输
-		    HAL_DMA_DeInit(&pI2sBus->hdma_tx);                            		//先清除以前的设置
-		    HAL_DMA_Init(&pI2sBus->hdma_tx);	                            		//初始化DMA
-
-//		    pI2sBus->tx_buf0 = vmalloc(1024*8);
-//		    pI2sBus->tx_buf1 = vmalloc(1024*8);
-//		    HAL_DMAEx_MultiBufferStart(&pI2sBus->hdma_tx,(u32)buf0,(u32)&SPI2->DR,(u32)buf1,1024*4);//开启双缓冲
-//		    __HAL_DMA_DISABLE(&pI2sBus->hdma_tx);                         		//先关闭DMA
-		    //奇怪，dma地址不能是ccram!!!!!!!!!!!!
-		     HAL_DMAEx_MultiBufferStart(&pI2sBus->hdma_tx, (u32)pI2sBus->tx_buf0,
-			    		 (u32)&SPI2->DR, (u32)pI2sBus->tx_buf1, pI2sBus->tx_len/2);//开启双缓冲
-		     __HAL_DMA_DISABLE(&pI2sBus->hdma_tx);
-	                                                  		//10us延时，防止-O2优化出问题
-		    __HAL_DMA_ENABLE_IT(&pI2sBus->hdma_tx,DMA_IT_TC);             		//开启传输完成中断
-		    __HAL_DMA_CLEAR_FLAG(&pI2sBus->hdma_tx,DMA_FLAG_TCIF0_4);     		//清除DMA传输完成中断标志位
-		    HAL_NVIC_SetPriority(DMA1_Stream4_IRQn,0,0);                    		//DMA中断优先级
-		    HAL_NVIC_EnableIRQ(DMA1_Stream4_IRQn);
-#else
-	struct StI2sBus *pI2sBus = &gI2sBus[1];
-
-    //发送DMA设置
-	    __HAL_RCC_DMA1_CLK_ENABLE();                                    		//使能DMA1时钟
-	     __HAL_LINKDMA(&pI2sBus->handle, hdmatx, pI2sBus->hdma_tx);         		//将DMA与I2S联系起来
-
-	     pI2sBus->hdma_tx.Instance = DMA1_Stream4;                       		//DMA1数据流4
-	     pI2sBus->hdma_tx.Init.Channel = DMA_CHANNEL_0;                  		//通道0
-	     pI2sBus->hdma_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;         		//存储器到外设模式
-	     pI2sBus->hdma_tx.Init.PeriphInc = DMA_PINC_DISABLE;             		//外设非增量模式
-	     pI2sBus->hdma_tx.Init.MemInc = DMA_MINC_ENABLE;                 		//存储器增量模式
-	     pI2sBus->hdma_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;   	//外设数据长度:16位
-	     pI2sBus->hdma_tx.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;    	//存储器数据长度:16位
-	     pI2sBus->hdma_tx.Init.Mode = DMA_CIRCULAR;                      		//使用循环模式
-	     pI2sBus->hdma_tx.Init.Priority = DMA_PRIORITY_HIGH;             		//高优先级
-	     pI2sBus->hdma_tx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;          		//不使用FIFO
-	     pI2sBus->hdma_tx.Init.MemBurst = DMA_MBURST_SINGLE;             		//存储器单次突发传输
-	     pI2sBus->hdma_tx.Init.PeriphBurst = DMA_PBURST_SINGLE;          		//外设突发单次传输
-	     HAL_DMA_DeInit(&pI2sBus->hdma_tx);                            		//先清除以前的设置
-	     HAL_DMA_Init(&pI2sBus->hdma_tx);	                            		//初始化DMA
-
-	     HAL_DMAEx_MultiBufferStart(&pI2sBus->hdma_tx, (u32)pI2sBus->tx_buf0,
-	    		 (u32)&SPI2->DR, (u32)pI2sBus->tx_buf1, pI2sBus->tx_len/2);//开启双缓冲
-	     __HAL_DMA_DISABLE(&pI2sBus->hdma_tx);                         		//先关闭DMA
-	     VOSDelayUs(10);                                                  		//10us延时，防止-O2优化出问题
-	     __HAL_DMA_ENABLE_IT(&pI2sBus->hdma_tx, DMA_IT_TC);             		//开启传输完成中断
-	     __HAL_DMA_CLEAR_FLAG(&pI2sBus->hdma_tx, DMA_FLAG_TCIF0_4);     		//清除DMA传输完成中断标志位
-	     HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, 0, 0);                    		//DMA中断优先级
-	     HAL_NVIC_EnableIRQ(DMA1_Stream4_IRQn);
-#endif
-}
-#endif
 void HAL_I2S_MspInit(I2S_HandleTypeDef *hi2s)
 {
 	GPIO_InitTypeDef GPIO_Initure;
@@ -334,41 +250,6 @@ void HAL_I2S_MspDeInit(I2S_HandleTypeDef *hi2s)
 		HAL_NVIC_DisableIRQ(DMA1_Stream4_IRQn);
 	}
 }
-
-//I2S2 TX DMA配置
-//设置为双缓冲模式,并开启DMA传输完成中断
-//buf0:M0AR地址.
-//buf1:M1AR地址.
-//num:每次传输数据量
-//void I2S2_TX_DMA_Init(u8* buf0,u8 *buf1,u16 num)
-//{
-//    __HAL_RCC_DMA1_CLK_ENABLE();                                    		//使能DMA1时钟
-//    __HAL_LINKDMA(&I2S2_Handler,hdmatx,I2S2_TXDMA_Handler);         		//将DMA与I2S联系起来
-//
-//    I2S2_TXDMA_Handler.Instance=DMA1_Stream4;                       		//DMA1数据流4
-//    I2S2_TXDMA_Handler.Init.Channel=DMA_CHANNEL_0;                  		//通道0
-//    I2S2_TXDMA_Handler.Init.Direction=DMA_MEMORY_TO_PERIPH;         		//存储器到外设模式
-//    I2S2_TXDMA_Handler.Init.PeriphInc=DMA_PINC_DISABLE;             		//外设非增量模式
-//    I2S2_TXDMA_Handler.Init.MemInc=DMA_MINC_ENABLE;                 		//存储器增量模式
-//    I2S2_TXDMA_Handler.Init.PeriphDataAlignment=DMA_PDATAALIGN_HALFWORD;   	//外设数据长度:16位
-//    I2S2_TXDMA_Handler.Init.MemDataAlignment=DMA_MDATAALIGN_HALFWORD;    	//存储器数据长度:16位
-//    I2S2_TXDMA_Handler.Init.Mode=DMA_CIRCULAR;                      		//使用循环模式
-//    I2S2_TXDMA_Handler.Init.Priority=DMA_PRIORITY_HIGH;             		//高优先级
-//    I2S2_TXDMA_Handler.Init.FIFOMode=DMA_FIFOMODE_DISABLE;          		//不使用FIFO
-//    I2S2_TXDMA_Handler.Init.MemBurst=DMA_MBURST_SINGLE;             		//存储器单次突发传输
-//    I2S2_TXDMA_Handler.Init.PeriphBurst=DMA_PBURST_SINGLE;          		//外设突发单次传输
-//    HAL_DMA_DeInit(&I2S2_TXDMA_Handler);                            		//先清除以前的设置
-//    HAL_DMA_Init(&I2S2_TXDMA_Handler);	                            		//初始化DMA
-//
-//    HAL_DMAEx_MultiBufferStart(&I2S2_TXDMA_Handler,(u32)buf0,(u32)&SPI2->DR,(u32)buf1,num);//开启双缓冲
-//    __HAL_DMA_DISABLE(&I2S2_TXDMA_Handler);                         		//先关闭DMA
-//    VOSDelayUs(10);                                                  		//10us延时，防止-O2优化出问题
-//    __HAL_DMA_ENABLE_IT(&I2S2_TXDMA_Handler,DMA_IT_TC);             		//开启传输完成中断
-//    __HAL_DMA_CLEAR_FLAG(&I2S2_TXDMA_Handler,DMA_FLAG_TCIF0_4);     		//清除DMA传输完成中断标志位
-//    HAL_NVIC_SetPriority(DMA1_Stream4_IRQn,0,0);                    		//DMA中断优先级
-//    HAL_NVIC_EnableIRQ(DMA1_Stream4_IRQn);
-//}
-
 
 //I2S2ext RX DMA配置
 //设置为双缓冲模式,并开启DMA传输完成中断
@@ -526,40 +407,6 @@ u8 I2S2_SampleRate_Set(u32 samplerate)
 	return 0;
 }
 
-//I2S2 TX DMA配置
-//设置为双缓冲模式,并开启DMA传输完成中断
-//buf0:M0AR地址.
-//buf1:M1AR地址.
-//num:每次传输数据量
-//void I2S2_TX_DMA_Init(u8* buf0,u8 *buf1,u16 num)
-//{
-//    __HAL_RCC_DMA1_CLK_ENABLE();                                    		//使能DMA1时钟
-//    __HAL_LINKDMA(&I2S2_Handler,hdmatx,I2S2_TXDMA_Handler);         		//将DMA与I2S联系起来
-//
-//    I2S2_TXDMA_Handler.Instance=DMA1_Stream4;                       		//DMA1数据流4
-//    I2S2_TXDMA_Handler.Init.Channel=DMA_CHANNEL_0;                  		//通道0
-//    I2S2_TXDMA_Handler.Init.Direction=DMA_MEMORY_TO_PERIPH;         		//存储器到外设模式
-//    I2S2_TXDMA_Handler.Init.PeriphInc=DMA_PINC_DISABLE;             		//外设非增量模式
-//    I2S2_TXDMA_Handler.Init.MemInc=DMA_MINC_ENABLE;                 		//存储器增量模式
-//    I2S2_TXDMA_Handler.Init.PeriphDataAlignment=DMA_PDATAALIGN_HALFWORD;   	//外设数据长度:16位
-//    I2S2_TXDMA_Handler.Init.MemDataAlignment=DMA_MDATAALIGN_HALFWORD;    	//存储器数据长度:16位
-//    I2S2_TXDMA_Handler.Init.Mode=DMA_CIRCULAR;                      		//使用循环模式
-//    I2S2_TXDMA_Handler.Init.Priority=DMA_PRIORITY_HIGH;             		//高优先级
-//    I2S2_TXDMA_Handler.Init.FIFOMode=DMA_FIFOMODE_DISABLE;          		//不使用FIFO
-//    I2S2_TXDMA_Handler.Init.MemBurst=DMA_MBURST_SINGLE;             		//存储器单次突发传输
-//    I2S2_TXDMA_Handler.Init.PeriphBurst=DMA_PBURST_SINGLE;          		//外设突发单次传输
-//    HAL_DMA_DeInit(&I2S2_TXDMA_Handler);                            		//先清除以前的设置
-//    HAL_DMA_Init(&I2S2_TXDMA_Handler);	                            		//初始化DMA
-//
-//    HAL_DMAEx_MultiBufferStart(&I2S2_TXDMA_Handler,(u32)buf0,(u32)&SPI2->DR,(u32)buf1,num);//开启双缓冲
-//    __HAL_DMA_DISABLE(&I2S2_TXDMA_Handler);                         		//先关闭DMA
-//    VOSDelayUs(10);                                                  		//10us延时，防止-O2优化出问题
-//    __HAL_DMA_ENABLE_IT(&I2S2_TXDMA_Handler,DMA_IT_TC);             		//开启传输完成中断
-//    __HAL_DMA_CLEAR_FLAG(&I2S2_TXDMA_Handler,DMA_FLAG_TCIF0_4);     		//清除DMA传输完成中断标志位
-//    HAL_NVIC_SetPriority(DMA1_Stream4_IRQn,0,0);                    		//DMA中断优先级
-//    HAL_NVIC_EnableIRQ(DMA1_Stream4_IRQn);
-//}
-
 //I2S2ext RX DMA配置
 //设置为双缓冲模式,并开启DMA传输完成中断
 //buf0:M0AR地址.
@@ -615,15 +462,17 @@ void DMA1_Stream4_IRQHandler()
     	else { //当前使用的是buf0, 证明中断是buf1完成
     		pbuf = pI2sBus->tx_buf1;
     	}
-    	/* 从发送ring缓冲区获取数据到dma buf */
-		ret = VOSRingBufGet(pI2sBus->ring_tx, pbuf, pI2sBus->tx_len);
-		if (ret == 0) { //没数据，直接关闭dma, 下次发送时自动开动dma
-			__HAL_DMA_DISABLE(&pI2sBus->hdma_tx);
-			pI2sBus->is_dma_tx_working = 0;
-		}
-		else if (ret <= pI2sBus->tx_len) {//这里证明源头数据太慢，这里直接填充0，部分静音
-			memset(pbuf, 0x00, pI2sBus->tx_len-ret);
-		}
+    	if (pI2sBus->mode == MODE_I2S_PLAYER) { //播放器才输出有效的数据，否者输出0数据
+			/* 从发送ring缓冲区获取数据到dma buf */
+			ret = VOSRingBufGet(pI2sBus->ring_tx, pbuf,  pI2sBus->tx_len);
+			if (ret == 0) { //没数据，直接关闭dma, 下次发送时自x, pbuf, pI2sB动开动dma
+				__HAL_DMA_DISABLE(&pI2sBus->hdma_tx);
+				pI2sBus->is_dma_tx_working = 0;
+			}
+			else if (ret <= pI2sBus->tx_len) {//这里证明源头数据太慢，这里直接填充0，部分静音
+				memset(pbuf, 0x00, pI2sBus->tx_len-ret);
+			}
+    	}
     } 
 	VOSIntExit ();
 }
@@ -663,7 +512,7 @@ s32 i2s_sends(s32 port, u8 *buf, s32 len, u32 timeout_ms)
 		}
 		else {//处理数据小于ring tx buf时，没任何触发发送
 			if (!pI2sBus->is_dma_tx_working && pI2sBus->timer) {//如果没启动dma发送，就设定定时器
-				VOSTimerStart(pI2sBus->timer); //启动定时器
+				VOSTimerStart(pI2sBus->timer); //启动定时器, 重复调用，会返回定时器已启动信息
 			}
 		}
 	}

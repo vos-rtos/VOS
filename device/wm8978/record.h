@@ -4,7 +4,7 @@
 #include "vos.h"
 #include "wavplay.h"
 #include "ff.h"
-#if 0
+#if 1
 #define I2S_RX_DMA_BUF_SIZE    	4096		//定义RX DMA 数组大小
 
 void rec_i2s_dma_rx_callback(void);

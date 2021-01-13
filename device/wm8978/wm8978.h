@@ -2,8 +2,24 @@
 #define __WM8978_H__
 #include "vos.h"
 
-#ifndef __WM8978_H
-#define __WM8978_H
+#define __packed __attribute__((packed))
+
+typedef struct 
+{							  
+	u8 mvol;		//音量(耳机和喇叭一起调),范围:0~63
+	u8 cfreq[5];	//中心频率选择数组,每个元素可选范围为0~3,且代表的频率各不相同 
+					//[0]对应频率:80,105,135,175
+					//[1]对应频率:230,300,385,500
+					//[2]对应频率:650,850,1100,1400
+					//[3]对应频率:1800,2400,3200,4100
+					//[4]对应频率:5300,6900,9000,11700
+	u8 freqval[5];	//中心频率增益表
+	u8 d3;			//3d设置	
+	u8 speakersw;	//板载喇叭开关,0,关闭;1,打开 
+	u8 saveflag; 	//保存标志,0X0A,保存过了;其他,还从未保存	   
+}__packed  _wm8978_obj;
+
+extern _wm8978_obj wm8978set;//WM8978的设置
 
 #define WM8978_ADDR     0X1A	//WM8978的器件地址,固定为0X1A
 
@@ -51,8 +67,5 @@ void WM8978_EQ2_Set(u8 cfreq,u8 gain);
 void WM8978_EQ3_Set(u8 cfreq,u8 gain);
 void WM8978_EQ4_Set(u8 cfreq,u8 gain);
 void WM8978_EQ5_Set(u8 cfreq,u8 gain);
-
-#endif
-
 
 #endif

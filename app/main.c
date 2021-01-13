@@ -51,6 +51,9 @@ void test_mg_http();
 #define DEF_SD_FATFS 1
 //#define DEF_USB_FATFS 1
 //#define DEF_GUI 1
+#define DEF_MP3_DEC 1
+
+
 #undef printf
 
 int binary_main(int argc, char *argv[]);
@@ -70,6 +73,11 @@ void main(void *param)
 
 	kprintf("VOS startup!\r\n");
  	//test_ttp229();
+
+#if DEF_MP3_DEC
+	s32 mp3_dec_init();
+	mp3_dec_init();
+#endif
 
 
 #if DEF_SD_WIFI

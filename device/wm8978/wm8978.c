@@ -1,8 +1,33 @@
 #include "stm32f4xx_hal.h"
 #include "wm8978.h"
 #include "i2c.h"
+//WM8978默认参数
+_wm8978_obj wm8978set=
+{
+	50,			//音量:50
+	0,0,0,0,0,	//频率标志设为0
+	0,0,0,0,0,	//中心频率增益表全0
+	0,			//3D效果为0
+	1,			//开启板载喇叭		  	 
+	0,			 
+};
 
-
+//WM8978数据保存在:SYSTEM_PARA_SAVE_BASE+sizeof(_system_setings)之后
+//读取WM8978数据
+//wm8978dev:wm8978数据
+void wm8978_read_para(_wm8978_obj * wm8978dev)
+{
+	//AT24CXX_Read(SYSTEM_PARA_SAVE_BASE+sizeof(_system_setings),(u8*)wm8978dev,sizeof(_wm8978_obj));
+}
+//写入WM8978数据
+//wm8978dev:wm8978数据
+void wm8978_save_para(_wm8978_obj * wm8978dev)
+{										   
+//    OS_CPU_SR cpu_sr=0;
+//	OS_ENTER_CRITICAL();	//进入临界区(无法被中断打断)
+//	AT24CXX_Write(SYSTEM_PARA_SAVE_BASE+sizeof(_system_setings),(u8*)wm8978dev,sizeof(_wm8978_obj));
+//	OS_EXIT_CRITICAL();		//退出临界区(可以被中断打断)
+}
 //WM8978寄存器值缓存区(总共58个寄存器,0~57),占用116字节内存
 //因为WM8978的IIC操作不支持读操作,所以在本地保存所有寄存器值
 //写WM8978寄存器时,同步更新到本地寄存器值,读寄存器时,直接返回本地保存的寄存器值.
@@ -280,9 +305,14 @@ void wm8978_test()
 	WM8978_HPvol_Set(40,40);
 	WM8978_SPKvol_Set(40);
 
+	void recoder_enter_play_mode();
+	//recoder_enter_play_mode();
 	WM8978_ADDA_Cfg(1,0);
 	WM8978_Input_Cfg(0,0,0);
 	WM8978_Output_Cfg(1,0);
 	wav_play_song("0:/bbb.wav");
 	//wav_play_song("0:/aaa.wav");
 }
+
+
+
