@@ -533,7 +533,7 @@ int run_async(struct mad_decoder *decoder)
  */
 int mad_decoder_run(struct mad_decoder *decoder, enum mad_decoder_mode mode)
 {
-  //static define_align_buf(,sizeof(*decoder->sync));
+  
   int result;
   int (*run)(struct mad_decoder *) = 0;
 
@@ -551,15 +551,19 @@ int mad_decoder_run(struct mad_decoder *decoder, enum mad_decoder_mode mode)
 
   if (run == 0)
     return -1;
-
+#ifdef LIB_STATIC_MEM
+    static unsigned int syncbuffer[sizeof(*decoder->sync)/4];
+	decoder->sync = syncbuffer;
+#else
  decoder->sync = malloc(sizeof(*decoder->sync));
-  //decoder->sync = syncbuffer;
+  
  if (decoder->sync == 0)
   return -1;
-
+#endif
   result = run(decoder);
-
+#ifndef LIB_STATIC_MEM
   free(decoder->sync);
+#endif
   decoder->sync = 0;
 
   return result;

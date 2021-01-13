@@ -122,7 +122,7 @@
 
 //#define ASO_IMDCT
 
-//#define LIB_STATIC_MEM
+#define LIB_STATIC_MEM
 
 #define malloc vmalloc
 #define free vfree
