@@ -63,7 +63,7 @@ u8 WM8978_Init(void)
 	WM8978_Write_Reg(47,1<<8);	//R47设置,PGABOOSTL,左通道MIC获得20倍增益
 	WM8978_Write_Reg(48,1<<8);	//R48设置,PGABOOSTR,右通道MIC获得20倍增益
 	WM8978_Write_Reg(49,1<<1);	//R49,TSDEN,开启过热保护
-	WM8978_Write_Reg(49,1<<2);	//R49,SPEAKER BOOST,1.5x
+	//WM8978_Write_Reg(49,1<<2);	//R49,SPEAKER BOOST,1.5x
 	WM8978_Write_Reg(10,1<<3);	//R10,SOFTMUTE关闭,128x采样,最佳SNR
 	WM8978_Write_Reg(14,1<<3);	//R14,ADC 128x采样率
 	return 0;
@@ -310,7 +310,9 @@ void wm8978_test()
 	WM8978_ADDA_Cfg(1,0);
 	WM8978_Input_Cfg(0,0,0);
 	WM8978_Output_Cfg(1,0);
-	wav_play_song("0:/bbb.wav");
+
+	wav_play_song("0:/075.wav");
+	//wav_play_song("0:/bbb.wav");
 	//wav_play_song("0:/aaa.wav");
 }
 

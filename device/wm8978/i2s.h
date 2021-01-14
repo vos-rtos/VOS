@@ -13,4 +13,9 @@ s32 i2s_recvs(s32 port, u8 *buf, s32 len, u32 timeout_ms);
 s32 i2s_sends(s32 port, u8 *buf, s32 len, u32 timeout_ms);
 void i2s_close(s32 port);
 
+void i2s_tx_dma_start(s32 port);
+void i2s_tx_dma_stop(s32 port);
+
+void i2s_rx_dma_start(s32 port);
+void i2s_rx_dma_stop(s32 port);
 #endif

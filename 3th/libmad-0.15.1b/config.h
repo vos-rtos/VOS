@@ -121,12 +121,13 @@
 #define VERSION "0.15.1b"
 
 //#define ASO_IMDCT
-
+#ifdef VOS
 #define LIB_STATIC_MEM
 
 #define malloc vmalloc
 #define free vfree
 #define calloc vcalloc
+#endif
 
 #define FPM_ARM
 

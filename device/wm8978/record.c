@@ -1,5 +1,5 @@
 #include "record.h"
-
+#if 0
 #include "ff.h"
 #include "wm8978.h"
 #include "i2s.h"
@@ -287,7 +287,7 @@ void wav_recorder(void)
  	wavhead=(__WaveHeader*)vmalloc(sizeof(__WaveHeader));//开辟__WaveHeader字节的内存区域
 	pname=vmalloc(30);						//申请30个字节内存,类似"0:RECORDER/REC00001.wav"
 
-	recoder_enter_rec_mode();	//进入录音模式,此时耳机可以听到咪头采集到的音频
+	//recoder_enter_rec_mode();	//进入录音模式,此时耳机可以听到咪头采集到的音频
 	pname[0]=0;					//pname没有任何文件名
 
 	recsec=0;
@@ -301,6 +301,7 @@ void wav_recorder(void)
 	}
 	u32 mark_time = VOSGetTimeMs();
 	kprintf("recorder begin!\r\n");
+	recoder_enter_rec_mode();
 	while (1) {
 		ret = i2s_recvs(1, buf, sizeof(buf), 100);
 		if (ret > 0) {
@@ -308,7 +309,7 @@ void wav_recorder(void)
 			mark = 0;
 			while (1) {
 				ret = f_write(&fmp3, buf+mark, total-mark, &bw);
-				if (bw > 0) {
+				if (ret == 0 && bw > 0) {
 					mark += bw;
 					wavsize += bw;
 				}
@@ -347,4 +348,5 @@ END:
 	vfree(pname);		//释放内存
 }
 
+#endif
 #endif

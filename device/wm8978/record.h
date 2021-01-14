@@ -1,6 +1,6 @@
 #ifndef __RECORD_H__
 #define __RECORD_H__
-
+#if 0
 #include "vos.h"
 #include "wavplay.h"
 #include "ff.h"
@@ -14,5 +14,6 @@ void recoder_msg_show(u32 tsec,u32 kbps);
 void recoder_remindmsg_show(u8 mode);
 void recoder_new_pathname(u8 *pname, s32 len);
 void wav_recorder(void);
+#endif
 #endif
 #endif

@@ -12,6 +12,9 @@ s32 audio_open(s32 port,  s32 data_bits)
 	WM8978_ADDA_Cfg(1,0);
 	WM8978_Input_Cfg(0,0,0);
 	WM8978_Output_Cfg(1,0);
+	WM8978_MIC_Gain(0);			//MIC增益设置为0
+
+	i2s_mode_set(port, MODE_I2S_PLAYER);
 
 	if (data_bits == AUDIO_ADC_16BIT) {
 		WM8978_I2S_Cfg(2, 0);	//飞利浦标准,16位数据长度I2S_DataFormat_16bextended
@@ -21,7 +24,10 @@ s32 audio_open(s32 port,  s32 data_bits)
 		WM8978_I2S_Cfg(2, 2);	//飞利浦标准,24位数据长度
 		i2s_open(port, I2S_STANDARD_PHILIPS, I2S_MODE_MASTER_TX, I2S_CPOL_LOW, I2S_DATAFORMAT_24B);	//飞利浦标准,主机发送,时钟低电平有效,24位长度
 	}
-	//wav_play_song("0:/bbb.wav");
+	//停止录音
+	i2s_rx_dma_stop(port);
+	//停止播放, 发送函数里自动打开播放
+	i2s_tx_dma_stop(port);
 }
 
 s32 audio_sends(s32 port, u8 *buf, s32 len, u32 timeout_ms)
