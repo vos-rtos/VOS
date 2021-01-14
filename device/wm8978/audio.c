@@ -14,6 +14,7 @@ s32 audio_open(s32 port,  s32 data_bits)
 	WM8978_Output_Cfg(1,0);
 	WM8978_MIC_Gain(0);			//MIC增益设置为0
 
+
 	i2s_mode_set(port, MODE_I2S_PLAYER);
 
 	if (data_bits == AUDIO_ADC_16BIT) {
@@ -28,6 +29,8 @@ s32 audio_open(s32 port,  s32 data_bits)
 	i2s_rx_dma_stop(port);
 	//停止播放, 发送函数里自动打开播放
 	i2s_tx_dma_stop(port);
+
+	DMA1_Stream4->CR |= 1<<4;	//打开传输完成中断(录音是关闭了，这需要打开)
 }
 
 s32 audio_sends(s32 port, u8 *buf, s32 len, u32 timeout_ms)
