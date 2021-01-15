@@ -39,7 +39,7 @@ int kprintf(char* format, ...)
 	va_list lst;
 	va_start (lst, format);
 	num = rpl_vsnprintf(temp, sizeof(temp), format, lst);
-	if (num > sizeof(temp)) {
+	if (num >= sizeof(temp)) {
 		new_len = num+1;
 		pnew = vmalloc(new_len);
 		if (pnew) {

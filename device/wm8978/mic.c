@@ -2,7 +2,7 @@
 #include "stm32f4xx_hal.h"
 #include "wm8978.h"
 #include "i2s.h"
-
+int aaxx = 1;
 s32 mic_open(s32 port)
 {
 	s32 ret = 0;
@@ -14,6 +14,7 @@ s32 mic_open(s32 port)
 	WM8978_Input_Cfg(1,1,0);	//开启输入通道(MIC&LINE IN)
 	WM8978_Output_Cfg(0,1);		//开启BYPASS输出
 	WM8978_MIC_Gain(46);		//MIC增益设置
+	//WM8978_LINEIN_Gain(0);
 	WM8978_SPKvol_Set(0);		//关闭喇叭.
 	WM8978_I2S_Cfg(2,0);		//飞利浦标准,16位数据长度
 
@@ -27,6 +28,11 @@ s32 mic_open(s32 port)
 	i2s_rx_dma_start(port);
 	//启动发送, 要发送，才能接收，spi原理
 	i2s_tx_dma_start(port);
+
+//	while (aaxx) {
+//		VOSTaskDelay(5);
+//	}
+
 	return ret;
 }
 
@@ -66,6 +72,7 @@ void recoder_wav_init(__WaveHeader* wavhead) //初始化WAV头
    	wavhead->data.ChunkID=0X61746164;	//"data"
  	wavhead->data.ChunkSize=0;			//数据大小,还需要计算
 }
+
 void mic_test()
 {
 	s32 wavsize;
@@ -98,9 +105,10 @@ void mic_test()
 	{
 		ret=f_write(&fmp3,(const void*)wavhead,sizeof(__WaveHeader),&bw);//写入头数据
 	}
+
+	mic_open(1);
 	u32 mark_time = VOSGetTimeMs();
 	kprintf("recorder begin!\r\n");
-	mic_open(1);
 	while (1) {
 		ret = mic_recvs(1, buf, sizeof(buf), 100);
 		if (ret > 0) {

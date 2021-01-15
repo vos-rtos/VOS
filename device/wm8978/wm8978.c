@@ -303,7 +303,7 @@ void wm8978_test()
 {
 	WM8978_Init();
 	WM8978_HPvol_Set(40,40);
-	WM8978_SPKvol_Set(40);
+	WM8978_SPKvol_Set(63);//(40);
 
 	void recoder_enter_play_mode();
 	//recoder_enter_play_mode();
@@ -311,8 +311,8 @@ void wm8978_test()
 	WM8978_Input_Cfg(0,0,0);
 	WM8978_Output_Cfg(1,0);
 
-	wav_play_song("0:/075.wav");
-	//wav_play_song("0:/bbb.wav");
+	//wav_play_song("0:/075.wav");
+	wav_play_song("0:/ccc.wav");
 	//wav_play_song("0:/aaa.wav");
 }
 

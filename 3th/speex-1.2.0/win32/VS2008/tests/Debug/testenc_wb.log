@@ -1,0 +1,12 @@
+﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(491,5): warning MSB8028: 中间目录(Debug\)包含从另一个项目(testenc.vcxproj, testenc_uwb.vcxproj)共享的文件。   这会导致错误的清除和重新生成行为。
+cl : 命令行 warning D9035: “Gm”选项已否决，并将在将来的版本中移除
+  testenc_wb.c
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\testenc_wb.c(122,38): warning C4244: “+=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\testenc_wb.c(130,39): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\testenc_wb.c(75,10): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\testenc_wb.c(77,11): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\testenc_wb.c(81,15): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1341,5): warning MSB8012: TargetPath(D:\git_vincent\VOS_USB\3th\speex-1.2.0\win32\VS2008\tests\Debug\testenc_wb.exe) 与 Linker 的 OutputFile 属性值(D:\git_vincent\VOS_USB\3th\speex-1.2.0\bin\testenc_wb.exe)不匹配。这可能导致项目生成不正确。若要更正此问题，请确保 $(OutDir)、$(TargetName) 和 $(TargetExt) 属性值与 %(Link.OutputFile) 中指定的值匹配。
+testenc_wb.obj : warning LNK4075: 忽略“/EDITANDCONTINUE”(由于“/SAFESEH”规范)
+LINK : warning LNK4098: 默认库“LIBCMTD”与其他库的使用冲突；请使用 /NODEFAULTLIB:library
+  testenc_wb.vcxproj -> D:\git_vincent\VOS_USB\3th\speex-1.2.0\win32\VS2008\tests\Debug\testenc_wb.exe

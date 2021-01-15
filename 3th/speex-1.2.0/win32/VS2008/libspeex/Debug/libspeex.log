@@ -1,0 +1,301 @@
+﻿cl : 命令行 warning D9035: “Gm”选项已否决，并将在将来的版本中移除
+  window.c
+  vq.c
+  vbr.c
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(87,53): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(88,30): warning C4305: “=”: 从“double”到“float”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(94,48): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(140,37): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(147,51): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(148,59): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(150,34): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(152,38): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(168,59): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(169,67): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(177,61): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(178,64): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(184,17): warning C4305: “-=”: 从“double”到“float”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(186,18): warning C4305: “-=”: 从“double”到“float”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(188,18): warning C4305: “-=”: 从“double”到“float”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(191,54): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(192,56): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(201,30): warning C4244: “+=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(203,30): warning C4244: “+=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(215,56): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(216,56): warning C4244: “+=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(219,44): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(237,58): warning C4244: “-=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(244,57): warning C4244: “-=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(246,57): warning C4244: “-=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(249,43): warning C4244: “+=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(123,67): warning C4100: “pitch”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(268,28): warning C4100: “vbr”: 未引用的形参
+  stereo.c
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(57,27): warning C4244: “return”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(91,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(116,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(323,17): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\stereo.c(118,53): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\stereo.c(128,26): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\stereo.c(135,35): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\stereo.c(171,53): warning C4244: “=”: 从“double”转换到“spx_int16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\stereo.c(196,38): warning C4244: “=”: 从“double”转换到“spx_word32_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\stereo.c(197,26): warning C4244: “=”: 从“double”转换到“spx_word32_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\stereo.c(198,38): warning C4244: “=”: 从“double”转换到“int”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\stereo.c(213,39): warning C4244: “=”: 从“double”转换到“spx_word32_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\stereo.c(293,46): warning C4244: “=”: 从“unsigned int”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\stereo.c(295,40): warning C4244: “=”: 从“double”转换到“spx_word32_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\stereo.c(281,68): warning C4100: “state”: 未引用的形参
+  speex_header.c
+  speex_callbacks.c
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\speex_callbacks.c(75,66): warning C4100: “state”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\speex_callbacks.c(83,70): warning C4100: “state”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\speex_callbacks.c(91,71): warning C4100: “state”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\speex_callbacks.c(100,65): warning C4100: “state”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\speex_callbacks.c(109,65): warning C4100: “state”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\speex_callbacks.c(121,46): warning C4244: “=”: 从“unsigned int”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\speex_callbacks.c(118,73): warning C4100: “state”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\speex_callbacks.c(130,44): warning C4244: “=”: 从“unsigned int”转换到“unsigned char”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\speex_callbacks.c(127,58): warning C4100: “state”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\speex_callbacks.c(139,75): warning C4100: “data”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\speex_callbacks.c(139,62): warning C4100: “state”: 未引用的形参
+  speex.c
+  smallft.c
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\smallft.c(101,18): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\smallft.c(102,18): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\smallft.c(285,15): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\smallft.c(286,15): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\smallft.c(855,15): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\smallft.c(856,15): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+  sb_celp.c
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(57,27): warning C4244: “return”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(91,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(116,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(323,17): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(85,84): warning C4305: “初始化”: 从“double”到“const spx_word16_t”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(88,78): warning C4305: “初始化”: 从“double”到“const spx_word16_t”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(338,20): warning C4244: “=”: 从“spx_int32_t”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(443,41): warning C4127: 条件表达式是常量
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(305,1): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(625,59): warning C4305: “函数”: 从“double”到“spx_word16_t”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(628,64): warning C4305: “函数”: 从“double”到“spx_word16_t”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(649,66): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(651,30): warning C4305: “=”: 从“double”到“float”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(653,31): warning C4305: “=”: 从“double”到“float”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(663,46): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(675,45): warning C4244: “+=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(698,80): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(780,98): warning C4305: “函数”: 从“double”到“spx_word16_t”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(781,101): warning C4305: “函数”: 从“double”到“spx_word16_t”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(803,37): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(867,73): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1341,101): warning C4305: “函数”: 从“double”到“spx_word16_t”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1361,40): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1371,62): warning C4244: “=”: 从“double”转换到“spx_word32_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1387,70): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1428,42): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+  quant_lsp.c
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(83,31): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(91,38): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(172,43): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(176,34): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(207,34): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(220,27): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(225,60): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(229,64): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(233,65): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(237,69): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(241,70): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(258,43): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(261,32): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(280,34): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(293,27): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(298,46): warning C4244: “+=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(302,50): warning C4244: “+=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(306,53): warning C4244: “+=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(337,48): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(340,34): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(356,34): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(371,32): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(376,55): warning C4244: “+=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(381,56): warning C4244: “+=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
+  nb_celp.c
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(57,27): warning C4244: “return”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(91,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(116,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(323,17): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(257,20): warning C4244: “=”: 从“spx_int32_t”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(518,20): warning C4305: “函数”: 从“double”到“spx_word16_t”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(519,21): warning C4305: “函数”: 从“double”到“spx_word16_t”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(594,66): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(596,31): warning C4305: “=”: 从“double”到“float”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(598,32): warning C4305: “=”: 从“double”到“float”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(665,80): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(750,68): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(761,81): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(780,40): warning C4244: “=”: 从“double”转换到“spx_word32_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(853,7): warning C4127: 条件表达式是常量
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(1213,74): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(1264,104): warning C4305: “初始化”: 从“double”到“const spx_word16_t”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(1297,21): warning C4305: “=”: 从“double”到“spx_word16_t”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(1307,33): warning C4244: “函数”: 从“int”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(1318,27): warning C4305: “函数”: 从“double”到“spx_word16_t”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(1494,34): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(1518,81): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(1529,40): warning C4244: “=”: 从“double”转换到“spx_word32_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(1614,45): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(1810,43): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+  modes_wb.c
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\modes_wb.c(202,1): warning C4305: “初始化”: 从“double”到“spx_word16_t”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\modes_wb.c(248,1): warning C4305: “初始化”: 从“double”到“spx_word16_t”截断
+  modes.c
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\modes.c(220,1): warning C4305: “初始化”: 从“double”到“spx_word16_t”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\modes.c(241,1): warning C4305: “初始化”: 从“double”到“spx_word16_t”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\modes.c(262,1): warning C4305: “初始化”: 从“double”到“spx_word16_t”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\modes.c(304,1): warning C4305: “初始化”: 从“double”到“spx_word16_t”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\modes.c(325,1): warning C4305: “初始化”: 从“double”到“spx_word16_t”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\modes.c(347,1): warning C4305: “初始化”: 从“double”到“spx_word16_t”截断
+  ltp.c
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(57,27): warning C4244: “return”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(91,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(116,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(323,17): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(484,34): warning C4244: “*=”: 从“double”转换到“spx_word32_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(485,34): warning C4244: “*=”: 从“double”转换到“spx_word32_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(486,34): warning C4244: “*=”: 从“double”转换到“spx_word32_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(497,54): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(498,54): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(499,54): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(507,12): warning C4456: “j”的声明隐藏了上一个本地声明
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(371,10): message : 参见“j”的声明
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(508,15): warning C4456: “tmp1”的声明隐藏了上一个本地声明
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(372,4): message : 参见“tmp1”的声明
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(368,5): warning C4100: “scaledown”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(360,12): warning C4100: “bits”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(643,88): warning C4244: “=”: 从“double”转换到“spx_word32_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(543,14): warning C4100: “pitch_coef”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(701,49): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(702,51): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(703,51): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(717,20): warning C4305: “=”: 从“double”到“spx_word16_t”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(719,44): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(715,1): warning C4244: “初始化”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(673,7): warning C4100: “stack”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(667,14): warning C4100: “pitch_coef”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(666,7): warning C4100: “end”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(794,21): warning C4305: “=”: 从“double”到“spx_word16_t”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(783,15): warning C4100: “cumul_gain”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(782,5): warning C4100: “plc_tuning”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(781,5): warning C4100: “cdbk_offset”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(780,5): warning C4100: “complexity”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(779,15): warning C4100: “r”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(776,12): warning C4100: “bits”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(772,7): warning C4100: “end”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(770,13): warning C4100: “par”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(765,15): warning C4100: “sw”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(839,21): warning C4305: “=”: 从“double”到“spx_word16_t”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(830,5): warning C4100: “cdbk_offset”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(829,14): warning C4100: “last_pitch_gain”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(828,5): warning C4100: “subframe_offset”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(827,5): warning C4100: “count_lost”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(826,7): warning C4100: “stack”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(825,12): warning C4100: “bits”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(821,13): warning C4100: “par”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(819,7): warning C4100: “end”: 未引用的形参
+  lsp_tables_nb.c
+  lsp.c
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(57,27): warning C4244: “return”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(91,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(116,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(323,17): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(197,31): warning C4244: “return”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(178,77): warning C4100: “stack”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(334,33): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(361,36): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(376,30): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(630,43): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
+  lpc.c
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lpc.c(94,32): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+  kiss_fftr.c
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(57,27): warning C4244: “return”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(91,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(116,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(323,17): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\kiss_fftr.c(129,46): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\kiss_fftr.c(130,46): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\kiss_fftr.c(131,52): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\kiss_fftr.c(132,52): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+  kiss_fft.c
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(57,27): warning C4244: “return”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(91,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(116,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(323,17): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\kiss_fft.c(197,53): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\kiss_fft.c(198,53): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\kiss_fft.c(363,13): warning C4100: “s2”: 未引用的形参
+  high_lsp_tables.c
+  正在生成代码...
+  正在编译...
+  hexc_table.c
+  hexc_10_32_table.c
+  gain_table_lbr.c
+  gain_table.c
+  filters.c
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(57,27): warning C4244: “return”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(91,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(116,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(323,17): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters_sse.h(37,97): warning C4100: “ord”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters_sse.h(90,96): warning C4100: “ord”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters_sse.h(134,118): warning C4100: “stack”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters_sse.h(144,75): warning C4100: “ord”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters_sse.h(193,74): warning C4100: “ord”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters_sse.h(233,96): warning C4100: “stack”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters_sse.h(242,75): warning C4100: “ord”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters_sse.h(290,74): warning C4100: “ord”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters_sse.h(330,96): warning C4100: “stack”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(315,27): warning C4244: “return”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(749,56): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(750,64): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(751,49): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(781,28): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(782,28): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(803,67): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(804,67): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(806,67): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(807,67): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(671,5): warning C4100: “p”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(670,13): warning C4100: “ak”: 未引用的形参
+  exc_8_128_table.c
+  exc_5_64_table.c
+  exc_5_256_table.c
+  exc_20_32_table.c
+  exc_10_32_table.c
+  exc_10_16_table.c
+  cb_search.c
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(57,27): warning C4244: “return”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(91,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(116,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(323,17): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search_sse.h(71,50): warning C4244: “函数”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search_sse.h(71,82): warning C4244: “函数”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search_sse.h(71,116): warning C4244: “函数”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search_sse.h(71,150): warning C4244: “函数”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(199,75): warning C4244: “=”: 从“double”转换到“spx_sig_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(220,54): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(445,57): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(499,72): warning C4244: “=”: 从“double”转换到“spx_sig_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(574,74): warning C4244: “+=”: 从“double”转换到“spx_sig_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(527,14): warning C4100: “seed”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(524,7): warning C4100: “nsf”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(594,7): warning C4100: “update_target”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(593,7): warning C4100: “complexity”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(591,12): warning C4100: “bits”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(590,15): warning C4100: “r”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(586,13): warning C4100: “par”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(614,7): warning C4100: “stack”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(613,12): warning C4100: “bits”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(611,13): warning C4100: “par”: 未引用的形参
+  bits.c
+  正在生成代码...
+  libspeex.vcxproj -> D:\git_vincent\VOS_USB\3th\speex-1.2.0\win32\VS2008\Debug\libspeex.lib

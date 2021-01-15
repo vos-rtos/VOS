@@ -109,6 +109,8 @@
 									<listOptionValue builtIn="false" value="../device/wm8978"/>
 									<listOptionValue builtIn="false" value="../device/i2c"/>
 									<listOptionValue builtIn="false" value="../3th/libmad-0.15.1b"/>
+									<listOptionValue builtIn="false" value="../3th/libogg-1.3.2"/>
+									<listOptionValue builtIn="false" value="../3th/libogg-1.3.2/include"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs.1583497841" name="Defined symbols (-D)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs" useByScannerDiscovery="true" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="DEBUG=1"/>
@@ -261,6 +263,8 @@
 									<listOptionValue builtIn="false" value="../device/wm8978"/>
 									<listOptionValue builtIn="false" value="../device/i2c"/>
 									<listOptionValue builtIn="false" value="../3th/libmad-0.15.1b"/>
+									<listOptionValue builtIn="false" value="../3th/libogg-1.3.2"/>
+									<listOptionValue builtIn="false" value="../3th/libogg-1.3.2/include"/>
 								</option>
 								<inputType id="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.input.1694708034" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.input"/>
 							</tool>

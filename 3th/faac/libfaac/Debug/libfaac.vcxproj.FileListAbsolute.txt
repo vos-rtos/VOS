@@ -1,0 +1,2 @@
+D:\git_vincent\VOS_USB\3th\faac-faac1_28\libfaac\Debug\libfaac.lib
+D:\git_vincent\VOS_USB\3th\faac-faac1_28\libfaac\Debug\libfaac.pdb

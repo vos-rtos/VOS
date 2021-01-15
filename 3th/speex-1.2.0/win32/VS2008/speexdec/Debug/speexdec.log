@@ -1,0 +1,17 @@
+﻿cl : 命令行 warning D9035: “Gm”选项已否决，并将在将来的版本中移除
+  wav_io.c
+  wave_out.c
+  speexdec.c
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\src\speexdec.c(240,17): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\src\speexdec.c(540,40): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\src\speexdec.c(629,132): warning C4244: “=”: 从“ogg_int64_t”转换到“int”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\src\speexdec.c(584,13): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  skeleton.c
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\src\skeleton.c(36,5): warning C4996: '_snprintf': This function or variable may be unsafe. Consider using _snprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  getopt1.c
+  getopt.c
+  framing.c
+  bitwise.c
+  正在生成代码...
+bitwise.obj : warning LNK4075: 忽略“/EDITANDCONTINUE”(由于“/SAFESEH”规范)
+  speexdec.vcxproj -> D:\git_vincent\VOS_USB\3th\speex-1.2.0\win32\VS2008\Debug\speexdec.exe

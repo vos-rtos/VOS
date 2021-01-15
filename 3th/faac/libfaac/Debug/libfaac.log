@@ -1,0 +1,39 @@
+﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppCommon.targets(37,5): warning MSB4211: 正在首次将属性“IntermediateOutputPath”设置为某个值，但已在“C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppCommon.targets (36,5)”处使用了该属性。
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\Microsoft.Common.CurrentVersion.targets(340,5): warning MSB4211: 正在首次将属性“CleanFile”设置为某个值，但已在“C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppCommon.targets (36,5)”处使用了该属性。
+  aacquant.c
+D:\git_vincent\VOS_USB\3th\faac-faac1_28\libfaac\aacquant.c(198,75): warning C4244: “函数”: 从“double”转换到“int”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\faac-faac1_28\libfaac\aacquant.c(337,27): warning C4307: “*”: 有符号整型常量溢出
+D:\git_vincent\VOS_USB\3th\faac-faac1_28\libfaac\aacquant.c(337,48): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\faac-faac1_28\libfaac\aacquant.c(446,23): warning C4244: “=”: 从“double”转换到“int”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\faac-faac1_28\libfaac\aacquant.c(447,21): warning C4244: “=”: 从“double”转换到“int”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\faac-faac1_28\libfaac\aacquant.c(602,66): warning C4244: “=”: 从“double”转换到“int”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\faac-faac1_28\libfaac\aacquant.c(614,66): warning C4244: “=”: 从“double”转换到“int”，可能丢失数据
+  backpred.c
+  bitstream.c
+D:\git_vincent\VOS_USB\3th\faac-faac1_28\libfaac\bitstream.c(124,15): warning C4013: “strlen”未定义；假设外部返回 int
+D:\git_vincent\VOS_USB\3th\faac-faac1_28\libfaac\bitstream.c(122,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  channels.c
+  fft.c
+D:\git_vincent\VOS_USB\3th\faac-faac1_28\libfaac\fft.c(614,45): warning C4244: “=”: 从“double”转换到“fftfloat”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\faac-faac1_28\libfaac\fft.c(615,48): warning C4244: “=”: 从“double”转换到“fftfloat”，可能丢失数据
+  filtbank.c
+  frame.c
+D:\git_vincent\VOS_USB\3th\faac-faac1_28\libfaac\frame.c(235,79): warning C4244: “=”: 从“double”转换到“unsigned int”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\faac-faac1_28\libfaac\frame.c(241,61): warning C4244: “=”: 从“double”转换到“unsigned int”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\faac-faac1_28\libfaac\frame.c(242,62): warning C4244: “=”: 从“double”转换到“unsigned long”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\faac-faac1_28\libfaac\frame.c(245,25): warning C4018: “>”: 有符号/无符号不匹配
+D:\git_vincent\VOS_USB\3th\faac-faac1_28\libfaac\frame.c(330,62): warning C4244: “=”: 从“const double”转换到“unsigned int”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\faac-faac1_28\libfaac\frame.c(331,36): warning C4018: “>”: 有符号/无符号不匹配
+D:\git_vincent\VOS_USB\3th\faac-faac1_28\libfaac\frame.c(533,21): warning C4018: “<”: 有符号/无符号不匹配
+D:\git_vincent\VOS_USB\3th\faac-faac1_28\libfaac\frame.c(545,21): warning C4018: “<”: 有符号/无符号不匹配
+D:\git_vincent\VOS_USB\3th\faac-faac1_28\libfaac\frame.c(557,21): warning C4018: “<”: 有符号/无符号不匹配
+  huffman.c
+  ltp.c
+  midside.c
+  psychkni.c
+D:\git_vincent\VOS_USB\3th\faac-faac1_28\libfaac\psychkni.c(346,73): warning C4244: “=”: 从“double”转换到“int”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\faac-faac1_28\libfaac\psychkni.c(393,43): warning C4244: “=”: 从“double”转换到“psyfloat”，可能丢失数据
+  tns.c
+  util.c
+  正在生成代码...
+  libfaac.vcxproj -> D:\git_vincent\VOS_USB\3th\faac-faac1_28\libfaac\Debug\libfaac.lib
