@@ -32,9 +32,9 @@
 
 */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+//#ifdef HAVE_CONFIG_H
+#include "speex_stm32_config.h"
+//#endif
 
 #include "speex/speex_bits.h"
 #include "arch.h"
