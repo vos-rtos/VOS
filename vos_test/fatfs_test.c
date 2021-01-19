@@ -109,11 +109,21 @@ void fatfs_sddisk_test()
 	{
 		return;
 	}
-	s32 mp3_dec_file(s8 *path);
+
+	//speex_app_test();
+	int speexenc_test(int argc, char **argv);
+	char *argv[3] = {
+			"xxx",
+			"0:/ccc.wav",
+			"0:/ccc.spx",
+	};
+	speexenc_test(3, argv);
+
+	//s32 mp3_dec_file(s8 *path);
 	//mp3_dec_file("0:/386.mp3");
 	//wm8978_test();
-	void mic_test();
-	mic_test();
+	//void mic_test();
+//	mic_test();
 
 #if 1
  	char *arg[3] = {

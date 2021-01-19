@@ -9,6 +9,9 @@
 #include "usbh_udisk.h"
 
 
+
+__attribute__((weak)) void _fini() { }
+
 int kprintf(char* format, ...);
 #define printf kprintf
 
@@ -70,6 +73,8 @@ void main(void *param)
 	s8 buf[100];
 	uart_open(0, 115200, 8, "none", 1);
 // 	uart_open(2, 115200, 8, "none", 1);
+
+
 
 	kprintf("VOS startup!\r\n");
  	//test_ttp229();

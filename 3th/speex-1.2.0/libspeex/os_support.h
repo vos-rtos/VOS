@@ -38,9 +38,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+//#ifdef HAVE_CONFIG_H
+#include "speex_stm32_config.h"
+//#endif
 #ifdef OS_SUPPORT_CUSTOM
 #include "os_support_custom.h"
 #endif

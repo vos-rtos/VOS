@@ -19,14 +19,14 @@
 //#define _WIN32
 //#define __MINGW32__
 
-#define DJYOS
+#define VOS
 
 /* make it easy on the folks that want to compile the libs with a
    different malloc than stdlib */
-#define _ogg_malloc  malloc
-#define _ogg_calloc  calloc
-#define _ogg_realloc realloc
-#define _ogg_free    free
+#define _ogg_malloc  vmalloc
+#define _ogg_calloc  vcalloc
+#define _ogg_realloc vrealloc
+#define _ogg_free    vfree
 
 #if defined(_WIN32)
 
@@ -141,7 +141,7 @@
    typedef signed int ogg_int32_t;
    typedef unsigned int ogg_uint32_t;
    typedef long long int ogg_int64_t;
-#elif defined(DJYOS)
+#elif defined(VOS)
 #    include <sys/types.h>
      typedef short ogg_int16_t;
      typedef unsigned short ogg_uint16_t;

@@ -1,2 +1,0 @@
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\win32\VS2008\Debug\libspeex.pdb
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\win32\VS2008\libspeex\Debug\libspeex.pdb

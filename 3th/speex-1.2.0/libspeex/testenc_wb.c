@@ -1,3 +1,4 @@
+#if 0
 //#ifdef HAVE_CONFIG_H
 #include "speex_stm32_config.h"
 //#endif
@@ -137,3 +138,4 @@ int main(int argc, char **argv)
 
    return 1;
 }
+#endif

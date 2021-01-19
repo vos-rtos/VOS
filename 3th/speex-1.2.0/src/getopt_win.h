@@ -131,15 +131,15 @@ struct option
 /* Many other libraries have conflicting prototypes for getopt, with
    differences in the consts, in stdlib.h.  To avoid compilation
    errors, only prototype getopt for the GNU C library.  */
-extern int getopt (int __argc, char *const *__argv, const char *__shortopts);
+extern int getopt_v (int __argc, char *const *__argv, const char *__shortopts);
 # else /* not __GNU_LIBRARY__ */
-extern int getopt ();
+extern int getopt_v ();
 # endif /* __GNU_LIBRARY__ */
 
 # ifndef __need_getopt
-extern int getopt_long (int __argc, char *const *__argv, const char *__shortopts,
+extern int getopt_long_v (int __argc, char *const *__argv, const char *__shortopts,
 		        const struct option *__longopts, int *__longind);
-extern int getopt_long_only (int __argc, char *const *__argv,
+extern int getopt_long_only_v (int __argc, char *const *__argv,
 			     const char *__shortopts,
 		             const struct option *__longopts, int *__longind);
 

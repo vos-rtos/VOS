@@ -22,6 +22,8 @@
 #ifndef _SPEEX_TYPES_H
 #define _SPEEX_TYPES_H
 
+#define CONFIG_STM32_VOS 1
+
 #if defined(_WIN32)
 
 #  if defined(__CYGWIN__)

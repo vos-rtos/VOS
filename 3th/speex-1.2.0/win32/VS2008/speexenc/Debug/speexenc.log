@@ -9,11 +9,36 @@ D:\git_vincent\VOS_USB\3th\speex-1.2.0\src\speexenc.c(370,4): warning C4996: '_s
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\src\speexenc.c(562,13): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\src\speexenc.c(684,14): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   skeleton.c
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\src\skeleton.c(31,48): warning C4013: “vcalloc”未定义；假设外部返回 int
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\src\skeleton.c(31,81): warning C4047: “=”:“char *”与“int”的间接级别不同
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\src\skeleton.c(34,49): warning C4013: “vrealloc”未定义；假设外部返回 int
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\src\skeleton.c(34,86): warning C4047: “=”:“char *”与“int”的间接级别不同
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\src\skeleton.c(36,5): warning C4996: '_snprintf': This function or variable may be unsafe. Consider using _snprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\src\skeleton.c(52,65): warning C4047: “=”:“unsigned char *”与“int”的间接级别不同
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\src\skeleton.c(81,65): warning C4047: “=”:“unsigned char *”与“int”的间接级别不同
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\src\skeleton.c(135,83): warning C4047: “=”:“char *”与“int”的间接级别不同
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\src\skeleton.c(147,14): warning C4013: “vfree”未定义；假设外部返回 int
   getopt1.c
   getopt.c
   framing.c
+D:\git_vincent\VOS_USB\3th\libogg-1.3.2\src\framing.c(195,30): warning C4013: “vmalloc”未定义；假设外部返回 int
+D:\git_vincent\VOS_USB\3th\libogg-1.3.2\src\framing.c(195,71): warning C4047: “=”:“unsigned char *”与“int”的间接级别不同
+D:\git_vincent\VOS_USB\3th\libogg-1.3.2\src\framing.c(196,77): warning C4047: “=”:“int *”与“int”的间接级别不同
+D:\git_vincent\VOS_USB\3th\libogg-1.3.2\src\framing.c(197,79): warning C4047: “=”:“ogg_int64_t *”与“int”的间接级别不同
+D:\git_vincent\VOS_USB\3th\libogg-1.3.2\src\framing.c(220,31): warning C4013: “vfree”未定义；假设外部返回 int
+D:\git_vincent\VOS_USB\3th\libogg-1.3.2\src\framing.c(250,21): warning C4013: “vrealloc”未定义；假设外部返回 int
+D:\git_vincent\VOS_USB\3th\libogg-1.3.2\src\framing.c(250,72): warning C4047: “=”:“void *”与“int”的间接级别不同
+D:\git_vincent\VOS_USB\3th\libogg-1.3.2\src\framing.c(271,78): warning C4047: “=”:“void *”与“int”的间接级别不同
+D:\git_vincent\VOS_USB\3th\libogg-1.3.2\src\framing.c(278,48): warning C4047: “=”:“void *”与“int”的间接级别不同
+D:\git_vincent\VOS_USB\3th\libogg-1.3.2\src\framing.c(645,41): warning C4047: “=”:“void *”与“int”的间接级别不同
+D:\git_vincent\VOS_USB\3th\libogg-1.3.2\src\framing.c(647,31): warning C4047: “=”:“void *”与“int”的间接级别不同
   bitwise.c
+D:\git_vincent\VOS_USB\3th\libogg-1.3.2\src\bitwise.c(42,31): warning C4013: “vmalloc”未定义；假设外部返回 int
+D:\git_vincent\VOS_USB\3th\libogg-1.3.2\src\bitwise.c(42,49): warning C4047: “=”:“unsigned char *”与“int”的间接级别不同
+D:\git_vincent\VOS_USB\3th\libogg-1.3.2\src\bitwise.c(89,21): warning C4013: “vrealloc”未定义；假设外部返回 int
+D:\git_vincent\VOS_USB\3th\libogg-1.3.2\src\bitwise.c(89,60): warning C4047: “=”:“void *”与“int”的间接级别不同
+D:\git_vincent\VOS_USB\3th\libogg-1.3.2\src\bitwise.c(132,60): warning C4047: “=”:“void *”与“int”的间接级别不同
+D:\git_vincent\VOS_USB\3th\libogg-1.3.2\src\bitwise.c(199,43): warning C4047: “=”:“void *”与“int”的间接级别不同
+D:\git_vincent\VOS_USB\3th\libogg-1.3.2\src\bitwise.c(251,25): warning C4013: “vfree”未定义；假设外部返回 int
   正在生成代码...
-bitwise.obj : warning LNK4075: 忽略“/EDITANDCONTINUE”(由于“/SAFESEH”规范)
-  speexenc.vcxproj -> D:\git_vincent\VOS_USB\3th\speex-1.2.0\win32\VS2008\Debug\speexenc.exe
+LINK : fatal error LNK1104: 无法打开文件“D:\git_vincent\VOS_USB\3th\speex-1.2.0\win32\VS2008\Debug\libspeex.lib”

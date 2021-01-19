@@ -43,6 +43,9 @@
 #define SPEEX_VERSION "speex-1.2.0"   /**< Speex version string. */
 #endif
 
+#ifndef WIN32
+#define FIXED_POINT 1
+#endif
 /* A couple test to catch stupid option combinations */
 #ifdef FIXED_POINT
 

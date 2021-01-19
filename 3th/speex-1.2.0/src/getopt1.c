@@ -64,7 +64,7 @@
 #endif
 
 int
-getopt_long (argc, argv, options, long_options, opt_index)
+getopt_long_v (argc, argv, options, long_options, opt_index)
      int argc;
      char *const *argv;
      const char *options;
@@ -80,7 +80,7 @@ getopt_long (argc, argv, options, long_options, opt_index)
    instead.  */
 
 int
-getopt_long_only (argc, argv, options, long_options, opt_index)
+getopt_long_only_v (argc, argv, options, long_options, opt_index)
      int argc;
      char *const *argv;
      const char *options;

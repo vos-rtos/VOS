@@ -1,6 +1,8 @@
 ﻿cl : 命令行 warning D9035: “Gm”选项已否决，并将在将来的版本中移除
   window.c
   vq.c
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vq.c(76,152): warning C4100: “stack”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vq.c(110,157): warning C4100: “stack”: 未引用的形参
   vbr.c
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(87,53): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(88,30): warning C4305: “=”: 从“double”到“float”截断
@@ -31,20 +33,22 @@ D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(249,43): warning C4244: �
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(123,67): warning C4100: “pitch”: 未引用的形参
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\vbr.c(268,28): warning C4100: “vbr”: 未引用的形参
   stereo.c
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(57,27): warning C4244: “return”: 从“double”转换到“spx_word16_t”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(91,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(116,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(323,17): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(150,13): warning C4244: “return”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(259,39): warning C4244: “=”: 从“int”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(294,14): warning C4244: “函数”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(300,14): warning C4244: “函数”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\stereo.c(118,53): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\stereo.c(128,26): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\stereo.c(135,35): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\stereo.c(171,53): warning C4244: “=”: 从“double”转换到“spx_int16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\stereo.c(196,38): warning C4244: “=”: 从“double”转换到“spx_word32_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\stereo.c(197,26): warning C4244: “=”: 从“double”转换到“spx_word32_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\stereo.c(198,38): warning C4244: “=”: 从“double”转换到“int”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\stereo.c(213,39): warning C4244: “=”: 从“double”转换到“spx_word32_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\stereo.c(142,34): warning C4244: “函数”: 从“float”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\stereo.c(238,27): warning C4244: “=”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\stereo.c(241,105): warning C4244: “=”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\stereo.c(246,1): warning C4244: “初始化”: 从“float”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\stereo.c(265,27): warning C4244: “=”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\stereo.c(268,105): warning C4244: “=”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\stereo.c(293,46): warning C4244: “=”: 从“unsigned int”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\stereo.c(295,40): warning C4244: “=”: 从“double”转换到“spx_word32_t”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\stereo.c(281,68): warning C4100: “state”: 未引用的形参
   speex_header.c
   speex_callbacks.c
@@ -68,170 +72,249 @@ D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\smallft.c(286,15): warning C4244
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\smallft.c(855,15): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\smallft.c(856,15): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
   sb_celp.c
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(57,27): warning C4244: “return”: 从“double”转换到“spx_word16_t”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(91,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(116,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(323,17): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(85,84): warning C4305: “初始化”: 从“double”到“const spx_word16_t”截断
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(88,78): warning C4305: “初始化”: 从“double”到“const spx_word16_t”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(150,13): warning C4244: “return”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(259,39): warning C4244: “=”: 从“int”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(294,14): warning C4244: “函数”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(300,14): warning C4244: “函数”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(210,92): warning C4244: “=”: 从“int”转换到“spx_lsp_t”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(338,20): warning C4244: “=”: 从“spx_int32_t”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(415,98): warning C4244: “=”: 从“int”转换到“spx_lsp_t”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(443,41): warning C4127: 条件表达式是常量
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(305,1): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(625,59): warning C4305: “函数”: 从“double”到“spx_word16_t”截断
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(628,64): warning C4305: “函数”: 从“double”到“spx_word16_t”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(565,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(565,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(565,55): error C2133: “low_innov_rms”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(575,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(575,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(575,53): error C2133: “low_pi_gain”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(576,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(576,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(576,53): error C2133: “low_exc_rms”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(587,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(587,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(587,39): error C2133: “lpc”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(588,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(588,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(588,46): error C2133: “interp_lpc”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(589,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(589,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(589,43): error C2133: “bw_lpc1”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(590,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(590,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(590,43): error C2133: “bw_lpc2”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(592,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(592,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(592,38): error C2133: “lsp”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(593,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(593,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(593,39): error C2133: “qlsp”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(594,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(594,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(594,45): error C2133: “interp_lsp”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(595,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(595,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(595,46): error C2133: “interp_qlsp”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(600,7): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(600,7): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(600,51): error C2133: “autocorr”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(601,7): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(601,7): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(601,49): error C2133: “w_sig”: 未知的大小
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(649,66): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(651,30): warning C4305: “=”: 从“double”到“float”截断
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(653,31): warning C4305: “=”: 从“double”到“float”截断
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(663,46): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(675,45): warning C4244: “+=”: 从“double”转换到“float”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(698,80): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(780,98): warning C4305: “函数”: 从“double”到“spx_word16_t”截断
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(781,101): warning C4305: “函数”: 从“double”到“spx_word16_t”截断
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(803,37): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(867,73): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1341,101): warning C4305: “函数”: 从“double”到“spx_word16_t”截断
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1361,40): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1371,62): warning C4244: “=”: 从“double”转换到“spx_word32_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1387,70): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1428,42): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(757,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(757,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(757,38): error C2133: “mem”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(758,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(758,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(758,51): error C2133: “syn_resp”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(759,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(759,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(759,45): error C2133: “innov”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(760,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(760,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(760,49): error C2133: “target”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(775,7): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(775,7): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(775,49): error C2133: “exc”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(776,7): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(776,7): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(776,49): error C2133: “res”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(777,7): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(777,7): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(777,48): error C2133: “sw”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(839,37): warning C4244: “函数”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(915,13): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(915,13): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(915,55): error C2133: “innov2”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(930,48): warning C4244: “=”: 从“int”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1303,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1303,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1303,53): error C2133: “low_pi_gain”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1304,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1304,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1304,53): error C2133: “low_exc_rms”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1308,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1308,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1308,39): error C2133: “qlsp”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1309,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1309,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1309,46): error C2133: “interp_qlsp”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1318,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1318,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1318,38): error C2133: “ak”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1332,7): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1332,7): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1332,49): error C2133: “exc”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1401,13): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1401,13): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\sb_celp.c(1401,55): error C2133: “innov2”: 未知的大小
   quant_lsp.c
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(83,31): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(91,38): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(172,43): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(176,34): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(207,34): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(220,27): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(225,60): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(229,64): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(233,65): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(237,69): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(241,70): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(258,43): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(261,32): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(280,34): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(293,27): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(298,46): warning C4244: “+=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(302,50): warning C4244: “+=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(306,53): warning C4244: “+=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(337,48): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(340,34): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(356,34): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(371,32): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(376,55): warning C4244: “+=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(381,56): warning C4244: “+=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(220,27): warning C4244: “=”: 从“int”转换到“spx_lsp_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\quant_lsp.c(293,27): warning C4244: “=”: 从“int”转换到“spx_lsp_t”，可能丢失数据
   nb_celp.c
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(57,27): warning C4244: “return”: 从“double”转换到“spx_word16_t”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(91,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(116,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(323,17): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(150,13): warning C4244: “return”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(259,39): warning C4244: “=”: 从“int”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(294,14): warning C4244: “函数”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(300,14): warning C4244: “函数”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(257,20): warning C4244: “=”: 从“spx_int32_t”转换到“float”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(518,20): warning C4305: “函数”: 从“double”到“spx_word16_t”截断
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(519,21): warning C4305: “函数”: 从“double”到“spx_word16_t”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(518,20): warning C4244: “函数”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(519,21): warning C4244: “函数”: 从“double”转换到“spx_word16_t”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(594,66): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(596,31): warning C4305: “=”: 从“double”到“float”截断
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(598,32): warning C4305: “=”: 从“double”到“float”截断
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(607,110): warning C4244: “函数”: 从“double”转换到“float”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(665,80): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(750,68): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(761,81): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(780,40): warning C4244: “=”: 从“double”转换到“spx_word32_t”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(853,7): warning C4127: 条件表达式是常量
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(953,26): warning C4244: “=”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(1109,40): warning C4244: “=”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(1213,74): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(1264,104): warning C4305: “初始化”: 从“double”到“const spx_word16_t”截断
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(1297,21): warning C4305: “=”: 从“double”到“spx_word16_t”截断
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(1307,33): warning C4244: “函数”: 从“int”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(1318,27): warning C4305: “函数”: 从“double”到“spx_word16_t”截断
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(1494,34): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(1518,81): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(1529,40): warning C4244: “=”: 从“double”转换到“spx_word32_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(1614,45): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(1810,43): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(1792,43): warning C4244: “=”: 从“int”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\nb_celp.c(1816,30): warning C4244: “=”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
   modes_wb.c
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\modes_wb.c(202,1): warning C4305: “初始化”: 从“double”到“spx_word16_t”截断
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\modes_wb.c(248,1): warning C4305: “初始化”: 从“double”到“spx_word16_t”截断
   modes.c
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\modes.c(220,1): warning C4305: “初始化”: 从“double”到“spx_word16_t”截断
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\modes.c(241,1): warning C4305: “初始化”: 从“double”到“spx_word16_t”截断
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\modes.c(262,1): warning C4305: “初始化”: 从“double”到“spx_word16_t”截断
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\modes.c(304,1): warning C4305: “初始化”: 从“double”到“spx_word16_t”截断
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\modes.c(325,1): warning C4305: “初始化”: 从“double”到“spx_word16_t”截断
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\modes.c(347,1): warning C4305: “初始化”: 从“double”到“spx_word16_t”截断
   ltp.c
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(57,27): warning C4244: “return”: 从“double”转换到“spx_word16_t”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(91,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(116,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(323,17): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(484,34): warning C4244: “*=”: 从“double”转换到“spx_word32_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(485,34): warning C4244: “*=”: 从“double”转换到“spx_word32_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(486,34): warning C4244: “*=”: 从“double”转换到“spx_word32_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(497,54): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(498,54): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(499,54): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(150,13): warning C4244: “return”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(259,39): warning C4244: “=”: 从“int”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(294,14): warning C4244: “函数”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(300,14): warning C4244: “函数”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(143,122): warning C4100: “stack”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(189,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(189,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(189,44): error C2133: “corr16”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(190,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(190,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(190,44): error C2133: “ener16”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(191,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(191,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(191,42): error C2133: “corr”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(204,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(204,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(204,38): error C2133: “best_score”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(205,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(205,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(205,37): error C2133: “best_ener”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(382,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(382,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(382,36): error C2133: “tmp1”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(383,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(383,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(383,31): error C2133: “e”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(399,7): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(399,7): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(399,30): error C2133: “mm”: 未知的大小
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(507,12): warning C4456: “j”的声明隐藏了上一个本地声明
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(371,10): message : 参见“j”的声明
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(508,15): warning C4456: “tmp1”的声明隐藏了上一个本地声明
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(372,4): message : 参见“tmp1”的声明
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(368,5): warning C4100: “scaledown”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(360,12): warning C4100: “bits”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(643,88): warning C4244: “=”: 从“double”转换到“spx_word32_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(543,14): warning C4100: “pitch_coef”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(701,49): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(702,51): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(703,51): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(717,20): warning C4305: “=”: 从“double”到“spx_word16_t”截断
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(719,44): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(715,1): warning C4244: “初始化”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(673,7): warning C4100: “stack”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(667,14): warning C4100: “pitch_coef”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(666,7): warning C4100: “end”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(794,21): warning C4305: “=”: 从“double”到“spx_word16_t”截断
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(783,15): warning C4100: “cumul_gain”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(782,5): warning C4100: “plc_tuning”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(781,5): warning C4100: “cdbk_offset”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(780,5): warning C4100: “complexity”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(779,15): warning C4100: “r”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(776,12): warning C4100: “bits”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(772,7): warning C4100: “end”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(770,13): warning C4100: “par”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(765,15): warning C4100: “sw”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(839,21): warning C4305: “=”: 从“double”到“spx_word16_t”截断
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(830,5): warning C4100: “cdbk_offset”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(829,14): warning C4100: “last_pitch_gain”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(828,5): warning C4100: “subframe_offset”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(827,5): warning C4100: “count_lost”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(826,7): warning C4100: “stack”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(825,12): warning C4100: “bits”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(821,13): warning C4100: “par”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(819,7): warning C4100: “end”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(382,4): message : 参见“tmp1”的声明
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(581,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(581,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(581,24): error C2133: “nbest”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(618,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(618,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(618,35): error C2133: “best_exc”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(619,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(619,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(619,40): error C2133: “new_target”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(620,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(620,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(620,41): error C2133: “best_target”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(788,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(788,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\ltp.c(788,33): error C2133: “res”: 未知的大小
   lsp_tables_nb.c
   lsp.c
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(57,27): warning C4244: “return”: 从“double”转换到“spx_word16_t”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(91,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(116,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(323,17): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(197,31): warning C4244: “return”: 从“double”转换到“float”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(178,77): warning C4100: “stack”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(334,33): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(361,36): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(376,30): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(630,43): warning C4244: “=”: 从“double”转换到“spx_lsp_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(150,13): warning C4244: “return”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(259,39): warning C4244: “=”: 从“int”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(294,14): warning C4244: “函数”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(300,14): warning C4244: “函数”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(145,17): warning C4100: “stack”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(246,5): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(246,5): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(246,34): error C2133: “Q”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(247,5): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(247,5): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(247,34): error C2133: “P”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(303,5): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(303,5): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(303,34): error C2133: “P16”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(304,5): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(304,5): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(304,34): error C2133: “Q16”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(308,21): warning C4244: “=”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(309,21): warning C4244: “=”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(442,5): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(442,5): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(442,36): error C2133: “xp”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(443,5): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(443,5): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(443,51): error C2133: “xpmem”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(445,5): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(445,5): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(445,36): error C2133: “xq”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(446,5): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(446,5): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(446,51): error C2133: “xqmem”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(455,5): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(455,5): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lsp.c(455,39): error C2133: “freqn”: 未知的大小
   lpc.c
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lpc.c(94,32): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\lpc.c(161,33): warning C4244: “=”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
   kiss_fftr.c
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(57,27): warning C4244: “return”: 从“double”转换到“spx_word16_t”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(91,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(116,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(323,17): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\kiss_fftr.c(129,46): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\kiss_fftr.c(130,46): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\kiss_fftr.c(131,52): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\kiss_fftr.c(132,52): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(150,13): warning C4244: “return”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(259,39): warning C4244: “=”: 从“int”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(294,14): warning C4244: “函数”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(300,14): warning C4244: “函数”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\kiss_fftr.c(247,47): warning C4244: “=”: 从“int”转换到“spx_int16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\kiss_fftr.c(248,45): warning C4244: “=”: 从“int”转换到“spx_int16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\kiss_fftr.c(249,55): warning C4244: “=”: 从“int”转换到“spx_int16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\kiss_fftr.c(250,53): warning C4244: “=”: 从“int”转换到“spx_int16_t”，可能丢失数据
   kiss_fft.c
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(57,27): warning C4244: “return”: 从“double”转换到“spx_word16_t”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(91,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(116,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(323,17): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\kiss_fft.c(197,53): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\kiss_fft.c(198,53): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(150,13): warning C4244: “return”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(259,39): warning C4244: “=”: 从“int”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(294,14): warning C4244: “函数”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(300,14): warning C4244: “函数”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\kiss_fft.c(57,76): warning C4244: “=”: 从“int”转换到“spx_int16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\kiss_fft.c(58,76): warning C4244: “=”: 从“int”转换到“spx_int16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\kiss_fft.c(59,75): warning C4244: “=”: 从“int”转换到“spx_int16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\kiss_fft.c(60,75): warning C4244: “=”: 从“int”转换到“spx_int16_t”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\kiss_fft.c(363,13): warning C4100: “s2”: 未引用的形参
   high_lsp_tables.c
   正在生成代码...
@@ -241,31 +324,45 @@ D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\kiss_fft.c(363,13): warning C410
   gain_table_lbr.c
   gain_table.c
   filters.c
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(57,27): warning C4244: “return”: 从“double”转换到“spx_word16_t”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(91,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(116,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(323,17): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters_sse.h(37,97): warning C4100: “ord”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters_sse.h(90,96): warning C4100: “ord”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters_sse.h(134,118): warning C4100: “stack”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters_sse.h(144,75): warning C4100: “ord”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters_sse.h(193,74): warning C4100: “ord”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters_sse.h(233,96): warning C4100: “stack”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters_sse.h(242,75): warning C4100: “ord”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters_sse.h(290,74): warning C4100: “ord”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters_sse.h(330,96): warning C4100: “stack”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(315,27): warning C4244: “return”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(749,56): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(750,64): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(751,49): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(781,28): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(782,28): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(803,67): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(804,67): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(806,67): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(807,67): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(671,5): warning C4100: “p”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(670,13): warning C4100: “ak”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(150,13): warning C4244: “return”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(259,39): warning C4244: “=”: 从“int”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(294,14): warning C4244: “函数”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(300,14): warning C4244: “函数”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(238,23): warning C4244: “=”: 从“spx_sig_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(328,143): warning C4100: “stack”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(348,117): warning C4100: “stack”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(368,117): warning C4100: “stack”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(392,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(392,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(392,30): error C2133: “mem”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(404,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(404,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(404,30): error C2133: “mem”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(421,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(421,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(421,31): error C2133: “mem1”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(422,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(422,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(422,31): error C2133: “mem2”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(436,78): warning C4244: “=”: 从“int”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(458,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(458,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(458,29): error C2133: “a”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(459,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(459,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(459,33): error C2133: “x”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(499,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(499,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(499,35): error C2133: “xx1”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(500,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(500,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(500,35): error C2133: “xx2”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(662,33): warning C4244: “=”: 从“int”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(721,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(721,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(721,36): error C2133: “iexc”: 未知的大小
   exc_8_128_table.c
   exc_5_64_table.c
   exc_5_256_table.c
@@ -273,29 +370,92 @@ D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\filters.c(670,13): warning C4100
   exc_10_32_table.c
   exc_10_16_table.c
   cb_search.c
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(57,27): warning C4244: “return”: 从“double”转换到“spx_word16_t”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(91,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
 D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(116,12): warning C4244: “return”: 从“int”转换到“spx_int16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(323,17): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search_sse.h(71,50): warning C4244: “函数”: 从“double”转换到“float”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search_sse.h(71,82): warning C4244: “函数”: 从“double”转换到“float”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search_sse.h(71,116): warning C4244: “函数”: 从“double”转换到“float”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search_sse.h(71,150): warning C4244: “函数”: 从“double”转换到“float”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(199,75): warning C4244: “=”: 从“double”转换到“spx_sig_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(220,54): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(445,57): warning C4244: “=”: 从“double”转换到“spx_word16_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(499,72): warning C4244: “=”: 从“double”转换到“spx_sig_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(574,74): warning C4244: “+=”: 从“double”转换到“spx_sig_t”，可能丢失数据
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(527,14): warning C4100: “seed”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(524,7): warning C4100: “nsf”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(594,7): warning C4100: “update_target”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(593,7): warning C4100: “complexity”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(591,12): warning C4100: “bits”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(590,15): warning C4100: “r”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(586,13): warning C4100: “par”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(614,7): warning C4100: “stack”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(613,12): warning C4100: “bits”: 未引用的形参
-D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(611,13): warning C4100: “par”: 未引用的形参
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(150,13): warning C4244: “return”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(259,39): warning C4244: “=”: 从“int”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(294,14): warning C4244: “函数”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\math_approx.h(300,14): warning C4244: “函数”: 从“spx_word32_t”转换到“spx_word16_t”，可能丢失数据
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(59,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(59,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(59,44): error C2133: “shape”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(141,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(141,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(141,57): error C2133: “resp”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(147,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(147,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(147,41): error C2133: “E”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(149,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(149,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(149,31): error C2133: “t”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(150,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(150,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(150,28): error C2133: “e”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(235,7): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(235,7): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(235,35): error C2133: “r2”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(304,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(304,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(304,32): error C2133: “ot2”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(305,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(305,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(305,32): error C2133: “nt2”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(306,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(306,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(306,24): error C2133: “oind”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(307,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(307,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(307,24): error C2133: “nind”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(315,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(315,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(315,57): error C2133: “resp”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(321,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(321,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(321,41): error C2133: “E”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(323,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(323,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(323,31): error C2133: “t”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(324,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(324,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(324,28): error C2133: “e”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(325,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(325,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(325,31): error C2133: “ind”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(327,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(327,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(327,37): error C2133: “tmp”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(335,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(335,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(335,29): error C2133: “best_index”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(336,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(336,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(336,37): error C2133: “best_dist”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(337,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(337,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(337,28): error C2133: “best_nind”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(338,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(338,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(338,31): error C2133: “best_ntarget”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(339,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(339,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(339,33): error C2133: “ndist”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(340,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(340,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(340,33): error C2133: “odist”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(342,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(342,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(342,36): error C2133: “itmp”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(510,7): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(510,7): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(510,35): error C2133: “r2”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(545,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(545,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(545,31): error C2133: “ind”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(546,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(546,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(546,33): error C2133: “signs”: 未知的大小
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(599,4): error C2057: 应输入常量表达式
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(599,4): error C2466: 不能分配常量大小为 0 的数组
+D:\git_vincent\VOS_USB\3th\speex-1.2.0\libspeex\cb_search.c(599,33): error C2133: “tmp”: 未知的大小
   bits.c
   正在生成代码...
-  libspeex.vcxproj -> D:\git_vincent\VOS_USB\3th\speex-1.2.0\win32\VS2008\Debug\libspeex.lib
