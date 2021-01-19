@@ -350,7 +350,7 @@ void mp3_dec_main(void *arg)
 
         mad_decoder_finish(&decoder);
         VOSTaskDelay(1000);
-        kprintf("--------mp3--------loop!!!\r\n");
+        //kprintf("--------mp3--------loop!!!\r\n");
     }
 }
 

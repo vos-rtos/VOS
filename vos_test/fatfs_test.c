@@ -89,6 +89,21 @@ void fatfs_test()
 #endif
 #include "usbh_diskio.h"
 
+
+static long long speex_stack[6*1024];//__attribute__ ((section(".bss.CCMRAM")));
+
+static void task_speex_codec(void *param)
+{
+	int speexenc_test(int argc, char **argv);
+	char *argv[3] = {
+			"xxx",
+			"0:/aaa.wav",
+			"0:/aaa.spx",
+	};
+	speexenc_test(3, argv);
+	while (1)  {VOSTaskDelay(5*1000);}
+}
+
 static u8 buf[512*4] __attribute__ ((aligned (4)));
 void fatfs_sddisk_test()
 {
@@ -111,14 +126,17 @@ void fatfs_sddisk_test()
 	}
 
 	//speex_app_test();
-	int speexenc_test(int argc, char **argv);
-	char *argv[3] = {
-			"xxx",
-			"0:/ccc.wav",
-			"0:/ccc.spx",
-	};
-	speexenc_test(3, argv);
+//	int speexenc_test(int argc, char **argv);
+//	char *argv[3] = {
+//			"xxx",
+//			"0:/aaa.wav",
+//			"0:/aaa.spx",
+//	};
+//	speexenc_test(3, argv);
 
+	s32 task_id;
+	task_id = VOSTaskCreate(task_speex_codec, 0, speex_stack, sizeof(speex_stack), TASK_PRIO_REAL, "speex_codec");
+	while (1)  {VOSTaskDelay(5*1000);}
 	//s32 mp3_dec_file(s8 *path);
 	//mp3_dec_file("0:/386.mp3");
 	//wm8978_test();

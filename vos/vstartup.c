@@ -92,6 +92,7 @@ void __attribute__((weak,noreturn)) abort(void)
 * 注意：无
 *********************************************************************************************************/
 extern void SystemClock_Config();
+
 void __attribute__ ((section(".after_vectors")))
 vos_start(void)
 {
@@ -133,6 +134,7 @@ vos_start(void)
 	VOSTimerInit(); //定时器初始化，依赖信号量，互斥量，不能关中断里执行，因为里面有使用svn中断
 
 	VOSShellInit();
+
 	void *main_stack = vmalloc(1024*16);//vmalloc(1024*32);
 	if (main_stack) {
 		code = VOSTaskCreate(main, 0, main_stack, 1024*16, TASK_PRIO_NORMAL, "main");
