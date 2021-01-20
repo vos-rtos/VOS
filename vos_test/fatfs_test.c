@@ -94,7 +94,16 @@ static long long speex_stack[8*1024];//__attribute__ ((section(".bss.CCMRAM")));
 
 static void task_speex_codec(void *param)
 {
-	int speexenc_test(int argc, char **argv);
+
+	int test_enc(int argc, char **argv);
+	char *argv[4] = {
+				"xxx",
+				"0:/aaa.wav",
+				"0:/aaa.data",
+				"0:/aaa.spx",
+		};
+	test_enc(4, argv);
+//	int speexenc_test(int argc, char **argv);
 //	char *argv[3] = {
 //			"xxx",
 //			"0:/aaa.wav",
@@ -102,13 +111,13 @@ static void task_speex_codec(void *param)
 //	};
 //	speexenc_test(3, argv);
 
-	int speex_dec(int argc, char **argv);
-	char *argv_dec[3] = {
-			"xxx",
-			"0:/kkk.spx",
-			"0:/zzz.wav",
-	};
-	speex_dec(3, argv_dec);
+//	int speex_dec(int argc, char **argv);
+//	char *argv_dec[3] = {
+//			"xxx",
+//			"0:/kkk.spx",
+//			"0:/zzz.wav",
+//	};
+//	speex_dec(3, argv_dec);
 
 	while (1)  {VOSTaskDelay(5*1000);}
 }
@@ -133,23 +142,15 @@ void fatfs_sddisk_test()
 	{
 		return;
 	}
-
-	//speex_app_test();
-//	int speexenc_test(int argc, char **argv);
-//	char *argv[3] = {
-//			"xxx",
-//			"0:/aaa.wav",
-//			"0:/aaa.spx",
-//	};
-//	speexenc_test(3, argv);
-
+#if 1
 	s32 task_id;
 	task_id = VOSTaskCreate(task_speex_codec, 0, speex_stack, sizeof(speex_stack), TASK_PRIO_REAL, "speex_codec");
 	while (1)  {VOSTaskDelay(5*1000);}
+#endif
 	//s32 mp3_dec_file(s8 *path);
 	//mp3_dec_file("0:/386.mp3");
 	//wm8978_test();
-	//void mic_test();
+//	void mic_test();
 //	mic_test();
 
 #if 1
