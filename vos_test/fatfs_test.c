@@ -90,17 +90,26 @@ void fatfs_test()
 #include "usbh_diskio.h"
 
 
-static long long speex_stack[6*1024];//__attribute__ ((section(".bss.CCMRAM")));
+static long long speex_stack[8*1024];//__attribute__ ((section(".bss.CCMRAM")));
 
 static void task_speex_codec(void *param)
 {
 	int speexenc_test(int argc, char **argv);
-	char *argv[3] = {
+//	char *argv[3] = {
+//			"xxx",
+//			"0:/aaa.wav",
+//			"0:/aaa.spx",
+//	};
+//	speexenc_test(3, argv);
+
+	int speex_dec(int argc, char **argv);
+	char *argv_dec[3] = {
 			"xxx",
-			"0:/aaa.wav",
-			"0:/aaa.spx",
+			"0:/kkk.spx",
+			"0:/zzz.wav",
 	};
-	speexenc_test(3, argv);
+	speex_dec(3, argv_dec);
+
 	while (1)  {VOSTaskDelay(5*1000);}
 }
 

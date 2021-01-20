@@ -35,6 +35,10 @@
 #ifndef ARCH_H
 #define ARCH_H
 
+//#ifdef HAVE_CONFIG_H
+#include "speex_stm32_config.h"
+//#endif
+
 #ifndef SPEEX_VERSION
 #define SPEEX_MAJOR_VERSION 1         /**< Major Speex version. */
 #define SPEEX_MINOR_VERSION 1         /**< Minor Speex version. */
@@ -43,9 +47,9 @@
 #define SPEEX_VERSION "speex-1.2.0"   /**< Speex version string. */
 #endif
 
-#ifndef WIN32
-#define FIXED_POINT 1
-#endif
+//#ifndef WIN32
+//#define FIXED_POINT 1
+//#endif
 /* A couple test to catch stupid option combinations */
 #ifdef FIXED_POINT
 
