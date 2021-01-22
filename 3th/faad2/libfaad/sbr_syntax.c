@@ -28,7 +28,7 @@
 ** $Id: sbr_syntax.c,v 1.39 2009/01/26 22:32:31 menno Exp $
 **/
 
-#include "common.h"
+#include "../libfaad/common.h"
 #include "structs.h"
 
 #ifdef SBR_DEC

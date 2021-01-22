@@ -33,7 +33,7 @@
  * For more info see: http://www.spiral.net/
  */
 
-#include "common.h"
+#include "../libfaad/common.h"
 
 #ifdef SBR_DEC
 

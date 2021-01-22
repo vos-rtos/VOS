@@ -35,7 +35,7 @@
    - applying scalefactors
 */
 
-#include "common.h"
+#include "../libfaad/common.h"
 #include "structs.h"
 
 #include <string.h>

@@ -44,7 +44,7 @@
  *
  */
 
-#include "common.h"
+#include "../libfaad/common.h"
 #include "structs.h"
 
 #include <stdlib.h>

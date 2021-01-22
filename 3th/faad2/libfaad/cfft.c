@@ -37,7 +37,7 @@
 
 /* isign is +1 for backward and -1 for forward transforms */
 
-#include "common.h"
+#include "../libfaad/common.h"
 #include "structs.h"
 
 #include <stdlib.h>

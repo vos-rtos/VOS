@@ -28,7 +28,7 @@
 ** $Id: bits.c,v 1.44 2007/11/01 12:33:29 menno Exp $
 **/
 
-#include "common.h"
+#include "../libfaad/common.h"
 #include "structs.h"
 
 #include <stdlib.h>

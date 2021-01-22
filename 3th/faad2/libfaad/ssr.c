@@ -28,7 +28,7 @@
 ** $Id: ssr.c,v 1.19 2007/11/01 12:33:36 menno Exp $
 **/
 
-#include "common.h"
+#include "../libfaad/common.h"
 #include "structs.h"
 
 #ifdef SSR_DEC

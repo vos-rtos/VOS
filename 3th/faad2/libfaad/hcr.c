@@ -28,7 +28,7 @@
 ** $Id: hcr.c,v 1.26 2009/01/26 23:51:15 menno Exp $
 **/
 
-#include "common.h"
+#include "../libfaad/common.h"
 #include "structs.h"
 
 #include <stdlib.h>

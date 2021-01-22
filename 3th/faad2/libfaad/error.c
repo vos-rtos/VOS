@@ -28,7 +28,7 @@
 ** $Id: error.c,v 1.33 2008/09/19 23:31:39 menno Exp $
 **/
 
-#include "common.h"
+#include "../libfaad/common.h"
 #include "error.h"
 
 char *err_msg[] = {

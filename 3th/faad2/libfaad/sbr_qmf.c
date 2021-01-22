@@ -28,7 +28,7 @@
 ** $Id: sbr_qmf.c,v 1.32 2007/11/01 12:33:36 menno Exp $
 **/
 
-#include "common.h"
+#include "../libfaad/common.h"
 #include "structs.h"
 
 #ifdef SBR_DEC

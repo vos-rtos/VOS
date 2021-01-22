@@ -32,7 +32,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include "common.h"
+#include "../libfaad/common.h"
 
 #ifdef DRM
 

@@ -30,7 +30,7 @@
 
 /* Time/Frequency grid */
 
-#include "common.h"
+#include "../libfaad/common.h"
 #include "structs.h"
 
 #ifdef SBR_DEC

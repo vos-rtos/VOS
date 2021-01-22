@@ -39,12 +39,13 @@ extern "C" {
 
 #define OUTPUT_WAV 1
 #define OUTPUT_RAW 2
+#include "ff.h"
 
 typedef struct
 {
     int toStdio;
     int outputFormat;
-    FILE *sndfile;
+    FIL sndfile;
     unsigned int fileType;
     unsigned long samplerate;
     unsigned int bits_per_sample;

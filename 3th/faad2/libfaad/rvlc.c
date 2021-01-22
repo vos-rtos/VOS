@@ -41,7 +41,7 @@
  * decoding from the other end of the data, to find all but 1 scalefactor.
  */
 
-#include "common.h"
+#include "../libfaad/common.h"
 #include "structs.h"
 
 #include <stdlib.h>

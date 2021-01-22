@@ -28,7 +28,7 @@
 ** $Id: drc.c,v 1.29 2015/02/22 10:09:29 knik Exp $
 **/
 
-#include "common.h"
+#include "../libfaad/common.h"
 #include "structs.h"
 
 #include <stdlib.h>

@@ -28,7 +28,7 @@
 ** $Id: pns.c,v 1.39 2010/06/04 20:47:56 menno Exp $
 **/
 
-#include "common.h"
+#include "../libfaad/common.h"
 #include "structs.h"
 
 #include "pns.h"

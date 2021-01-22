@@ -77,19 +77,19 @@ extern int optopt;
    one).  For long options that have a zero `flag' field, `getopt'
    returns the contents of the `val' field.  */
 
-struct option
-{
-#if __STDC__
-  const char *name;
-#else
-  char *name;
-#endif
-  /* has_arg can't be an enum because some compilers complain about
-     type mismatches in all the code that assumes it is an int.  */
-  int has_arg;
-  int *flag;
-  int val;
-};
+//struct option
+//{
+//#if __STDC__
+//  const char *name;
+//#else
+//  char *name;
+//#endif
+//  /* has_arg can't be an enum because some compilers complain about
+//     type mismatches in all the code that assumes it is an int.  */
+//  int has_arg;
+//  int *flag;
+//  int val;
+//};
 
 /* Names for the values of the `has_arg' field of `struct option'.  */
 

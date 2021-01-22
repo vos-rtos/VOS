@@ -28,7 +28,7 @@
 ** $Id: ms.c,v 1.21 2007/11/01 12:33:32 menno Exp $
 **/
 
-#include "common.h"
+#include "../libfaad/common.h"
 #include "structs.h"
 
 #include "syntax.h"

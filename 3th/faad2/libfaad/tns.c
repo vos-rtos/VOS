@@ -28,7 +28,7 @@
 ** $Id: tns.c,v 1.40 2007/11/01 12:33:40 menno Exp $
 **/
 
-#include "common.h"
+#include "../libfaad/common.h"
 #include "structs.h"
 
 #include "syntax.h"

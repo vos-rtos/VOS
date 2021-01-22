@@ -28,7 +28,7 @@
 ** $Id: ssr_ipqf.c,v 1.18 2007/11/01 12:33:39 menno Exp $
 **/
 
-#include "common.h"
+#include "../libfaad/common.h"
 #include "structs.h"
 
 #ifdef SSR_DEC

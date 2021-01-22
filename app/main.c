@@ -67,6 +67,12 @@ int enhancer_main(int argc, char *argv[]);
 int mask_main(int argc, char *argv[]);
 int minutia_main(int argc, char *argv[]);
 
+//clock_t _times(struct tms* tms) {
+//    return (clock_t)-1;
+//}
+
+
+
 void main(void *param)
 {
 	s32 res;

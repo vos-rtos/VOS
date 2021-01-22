@@ -43,7 +43,7 @@ void init_console_utf8(FILE *const stream);
 void uninit_console_utf8(void);
 #define faad_fopen(X,Y) fopen_utf8((X),(Y))
 #else
-#define faad_fopen(X,Y) fopen((X),(Y))
+//#define faad_fopen(X,Y) fopen((X),(Y))
 #endif
 
 #endif //UNICODE_SUPPORT_H_INCLUDED

@@ -28,7 +28,7 @@
 ** $Id: sbr_huff.c,v 1.21 2007/11/01 12:33:35 menno Exp $
 **/
 
-#include "common.h"
+#include "../libfaad/common.h"
 #include "structs.h"
 
 #ifdef SBR_DEC

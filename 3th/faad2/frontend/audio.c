@@ -2,7 +2,7 @@
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
 ** Copyright (C) 2003-2005 M. Bakker, Nero AG, http://www.nero.com
 **
-** This program is free software; you can redistribute it and/or modify
+** This program is vfree software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
@@ -27,7 +27,7 @@
 **
 ** $Id: audio.c,v 1.30 2015/01/22 09:40:52 knik Exp $
 **/
-
+#include "vos.h"
 #ifdef _WIN32
 #include <io.h>
 #endif
@@ -35,17 +35,19 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <math.h>
+#include "audio.h"
 #include <neaacdec.h>
 #include <stdint.h>
 
 #include "unicode_support.h"
-#include "audio.h"
+#include "ff.h"
 
 
 audio_file *open_audio_file(char *infile, int samplerate, int channels,
                             int outputFormat, int fileType, long channelMask)
 {
-    audio_file *aufile = malloc(sizeof(audio_file));
+	FRESULT res;
+    audio_file *aufile = vmalloc(sizeof(audio_file));
 
     aufile->outputFormat = outputFormat;
 
@@ -68,27 +70,24 @@ audio_file *open_audio_file(char *infile, int samplerate, int channels,
         aufile->bits_per_sample = 32;
         break;
     default:
-        if (aufile) free(aufile);
+        if (aufile) vfree(aufile);
         return NULL;
     }
 
     if(infile[0] == '-')
     {
-#ifdef _WIN32
-        _setmode(_fileno(stdout), O_BINARY);
-#endif
-        aufile->sndfile = stdout;
-        aufile->toStdio = 1;
+
     } else {
         aufile->toStdio = 0;
-        aufile->sndfile = faad_fopen(infile, "wb");
+        //aufile->sndfile = faad_fopen(infile, "wb");
+        res = f_open(&aufile->sndfile, infile, FA_WRITE | FA_CREATE_ALWAYS);
     }
 
-    if (aufile->sndfile == NULL)
-    {
-        if (aufile) free(aufile);
-        return NULL;
-    }
+//    if (aufile->sndfile == NULL)
+//    {
+//        if (aufile) vfree(aufile);
+//        return NULL;
+//    }
 
     if (aufile->fileType == OUTPUT_WAV)
     {
@@ -125,8 +124,8 @@ void close_audio_file(audio_file *aufile)
 {
     if ((aufile->fileType == OUTPUT_WAV) && (aufile->toStdio == 0))
     {
-        fseek(aufile->sndfile, 0, SEEK_SET);
-
+        //fseek(aufile->sndfile, 0, SEEK_SET);
+        f_lseek(&aufile->sndfile, 0);
         if (aufile->channelMask)
             write_wav_extensible_header(aufile, aufile->channelMask);
         else
@@ -134,9 +133,10 @@ void close_audio_file(audio_file *aufile)
     }
 
     if (aufile->toStdio == 0)
-        fclose(aufile->sndfile);
+        f_close(&aufile->sndfile);
 
-    if (aufile) free(aufile);
+
+    if (aufile) vfree(aufile);
 }
 
 static int write_wav_header(audio_file *aufile)
@@ -200,7 +200,10 @@ static int write_wav_header(audio_file *aufile)
     *p++ = (unsigned char)(word32 >> 16);
     *p++ = (unsigned char)(word32 >> 24);
 
-    return fwrite(header, sizeof(header), 1, aufile->sndfile);
+    //return fwrite(header, sizeof(header), 1, aufile->sndfile);
+    s32 num = 0;
+    f_write (&aufile->sndfile, header, sizeof(header), &num);
+    return num;
 }
 
 static int write_wav_extensible_header(audio_file *aufile, long channelMask)
@@ -299,7 +302,10 @@ static int write_wav_extensible_header(audio_file *aufile, long channelMask)
     *p++ = (unsigned char)(word32 >> 16);
     *p++ = (unsigned char)(word32 >> 24);
 
-    return fwrite(header, sizeof(header), 1, aufile->sndfile);
+    //return fwrite(header, sizeof(header), 1, aufile->sndfile);
+    s32 num = 0;
+    f_write (&aufile->sndfile, header, sizeof(header), &num);
+    return num;
 }
 
 static int write_audio_16bit(audio_file *aufile, void *sample_buffer,
@@ -308,7 +314,7 @@ static int write_audio_16bit(audio_file *aufile, void *sample_buffer,
     int ret;
     unsigned int i;
     short *sample_buffer16 = (short*)sample_buffer;
-    char *data = malloc(samples*aufile->bits_per_sample*sizeof(char)/8);
+    char *data = vmalloc(samples*aufile->bits_per_sample*sizeof(char)/8);
 
     aufile->total_samples += samples;
 
@@ -338,9 +344,10 @@ static int write_audio_16bit(audio_file *aufile, void *sample_buffer,
         data[i*2+1] = (char)((sample_buffer16[i] >> 8) & 0xFF);
     }
 
-    ret = fwrite(data, samples, aufile->bits_per_sample/8, aufile->sndfile);
-
-    if (data) free(data);
+    //ret = fwrite(data, samples, aufile->bits_per_sample/8, aufile->sndfile);
+    ret = 0;
+    FRESULT res = f_write (&aufile->sndfile, data, samples*(aufile->bits_per_sample/8), &ret);
+    if (data) vfree(data);
 
     return ret;
 }
@@ -351,7 +358,7 @@ static int write_audio_24bit(audio_file *aufile, void *sample_buffer,
     int ret;
     unsigned int i;
     int32_t *sample_buffer24 = (int32_t*)sample_buffer;
-    char *data = malloc(samples*aufile->bits_per_sample*sizeof(char)/8);
+    char *data = vmalloc(samples*aufile->bits_per_sample*sizeof(char)/8);
 
     aufile->total_samples += samples;
 
@@ -382,9 +389,10 @@ static int write_audio_24bit(audio_file *aufile, void *sample_buffer,
         data[i*3+2] = (char)((sample_buffer24[i] >> 16) & 0xFF);
     }
 
-    ret = fwrite(data, samples, aufile->bits_per_sample/8, aufile->sndfile);
-
-    if (data) free(data);
+    //ret = fwrite(data, samples, aufile->bits_per_sample/8, aufile->sndfile);
+    ret = 0;
+    f_write (&aufile->sndfile, data, samples*(aufile->bits_per_sample/8), &ret);
+    if (data) vfree(data);
 
     return ret;
 }
@@ -395,7 +403,7 @@ static int write_audio_32bit(audio_file *aufile, void *sample_buffer,
     int ret;
     unsigned int i;
     int32_t *sample_buffer32 = (int32_t*)sample_buffer;
-    char *data = malloc(samples*aufile->bits_per_sample*sizeof(char)/8);
+    char *data = vmalloc(samples*aufile->bits_per_sample*sizeof(char)/8);
 
     aufile->total_samples += samples;
 
@@ -427,9 +435,10 @@ static int write_audio_32bit(audio_file *aufile, void *sample_buffer,
         data[i*4+3] = (char)((sample_buffer32[i] >> 24) & 0xFF);
     }
 
-    ret = fwrite(data, samples, aufile->bits_per_sample/8, aufile->sndfile);
-
-    if (data) free(data);
+    //ret = fwrite(data, samples, aufile->bits_per_sample/8, aufile->sndfile);
+    ret = 0;
+    f_write (&aufile->sndfile, data, samples*(aufile->bits_per_sample/8), &ret);
+    if (data) vfree(data);
 
     return ret;
 }
@@ -440,7 +449,7 @@ static int write_audio_float(audio_file *aufile, void *sample_buffer,
     int ret;
     unsigned int i;
     float *sample_buffer_f = (float*)sample_buffer;
-    unsigned char *data = malloc(samples*aufile->bits_per_sample*sizeof(char)/8);
+    unsigned char *data = vmalloc(samples*aufile->bits_per_sample*sizeof(char)/8);
 
     aufile->total_samples += samples;
 
@@ -495,9 +504,10 @@ static int write_audio_float(audio_file *aufile, void *sample_buffer,
         data[i*4+3] |= (exponent >> 1) & 0x7F;
     }
 
-    ret = fwrite(data, samples, aufile->bits_per_sample/8, aufile->sndfile);
-
-    if (data) free(data);
+    //ret = fwrite(data, samples, aufile->bits_per_sample/8, aufile->sndfile);
+    ret = 0;
+    f_write (&aufile->sndfile, data, samples*(aufile->bits_per_sample/8), &ret);
+    if (data) vfree(data);
 
     return ret;
 }

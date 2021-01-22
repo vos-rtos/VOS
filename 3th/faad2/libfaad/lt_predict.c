@@ -29,7 +29,7 @@
 **/
 
 
-#include "common.h"
+#include "../libfaad/common.h"
 #include "structs.h"
 
 #ifdef LTP_DEC

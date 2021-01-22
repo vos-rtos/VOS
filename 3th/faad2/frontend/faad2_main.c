@@ -2,7 +2,7 @@
 ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
 ** Copyright (C) 2003-2005 M. Bakker, Nero AG, http://www.nero.com
 **
-** This program is free software; you can redistribute it and/or modify
+** This program is vfree software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
@@ -40,8 +40,11 @@
 #define off_t __int64
 #endif
 #else
-#include <time.h>
+//#include <time.h>
 #endif
+
+#include "vos.h"
+#include "ff.h"
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -74,25 +77,7 @@
 
 static int quiet = 0;
 
-static void faad_fprintf(FILE *stream, const char *fmt, ...)
-{
-    va_list ap;
-
-    if (!quiet)
-    {
-        va_start(ap, fmt);
-        vfprintf(stream, fmt, ap);
-        va_end(ap);
-    }
-
-#ifdef _WIN32
-    if (!_isatty(_fileno(stream)))
-    {
-        fflush(stream); /*ensure real-time progress output on Win32*/
-    }
-#endif
-}
-
+void x_ungetc(u8 ch, FIL *f);
 /* FAAD file buffering routines */
 typedef struct {
     long bytes_into_buffer;
@@ -100,12 +85,14 @@ typedef struct {
     long file_offset;
     unsigned char *buffer;
     int at_eof;
-    FILE *infile;
+    FIL infile;
 } aac_buffer;
 
 
 static int fill_buffer(aac_buffer *b)
 {
+	u32 num;
+	FRESULT res;
     int bread;
 
     if (b->bytes_consumed > 0)
@@ -118,10 +105,13 @@ static int fill_buffer(aac_buffer *b)
 
         if (!b->at_eof)
         {
-            bread = fread((void*)(b->buffer + b->bytes_into_buffer), 1,
-                b->bytes_consumed, b->infile);
-
-            if (bread != b->bytes_consumed)
+//            bread = fread((void*)(b->buffer + b->bytes_into_buffer), 1,
+//                b->bytes_consumed, b->infile);
+//            if (bread != b->bytes_consumed)
+//                b->at_eof = 1;
+            res = f_read (&b->infile, (void*)(b->buffer + b->bytes_into_buffer),
+            		b->bytes_consumed, &bread);
+            if (res == 0 && bread != b->bytes_consumed)
                 b->at_eof = 1;
 
             b->bytes_into_buffer += bread;
@@ -249,12 +239,18 @@ static int adts_parse(aac_buffer *b, int *bitrate, float *length)
 
 uint32_t read_callback(void *user_data, void *buffer, uint32_t length)
 {
-    return fread(buffer, 1, length, (FILE*)user_data);
+	u32 num;
+	FRESULT res;
+//    return fread(buffer, 1, length, (FILE*)user_data);
+    num = 0;
+    res = f_read ((FIL*)user_data, buffer, length, &num);
+    return num;
 }
 
 uint32_t seek_callback(void *user_data, uint64_t position)
 {
-    return fseek((FILE*)user_data, position, SEEK_SET);
+//    return fseek((FILE*)user_data, position, SEEK_SET);
+	return f_lseek((FIL*)user_data, position);
 }
 
 /* MicroSoft channel definitions */
@@ -316,30 +312,30 @@ static void print_channel_info(NeAACDecFrameInfo *frameInfo)
     int i;
     long channelMask = aacChannelConfig2wavexChannelMask(frameInfo);
 
-    faad_fprintf(stderr, "  ---------------------\n");
+    kprintf("  ---------------------\n");
     if (frameInfo->num_lfe_channels > 0)
     {
-        faad_fprintf(stderr, " | Config: %2d.%d Ch     |", frameInfo->channels-frameInfo->num_lfe_channels, frameInfo->num_lfe_channels);
+        kprintf(" | Config: %2d.%d Ch     |", frameInfo->channels-frameInfo->num_lfe_channels, frameInfo->num_lfe_channels);
     } else {
-        faad_fprintf(stderr, " | Config: %2d Ch       |", frameInfo->channels);
+        kprintf(" | Config: %2d Ch       |", frameInfo->channels);
     }
     if (channelMask)
-        faad_fprintf(stderr, " WARNING: channels are reordered according to\n");
+        kprintf(" WARNING: channels are reordered according to\n");
     else
-        faad_fprintf(stderr, "\n");
-    faad_fprintf(stderr, "  ---------------------");
+        kprintf("\n");
+    kprintf("  ---------------------");
     if (channelMask)
-        faad_fprintf(stderr, "  MS defaults defined in WAVE_FORMAT_EXTENSIBLE\n");
+        kprintf("  MS defaults defined in WAVE_FORMAT_EXTENSIBLE\n");
     else
-        faad_fprintf(stderr, "\n");
-    faad_fprintf(stderr, " | Ch |    Position    |\n");
-    faad_fprintf(stderr, "  ---------------------\n");
+        kprintf("\n");
+    kprintf(" | Ch |    Position    |\n");
+    kprintf("  ---------------------\n");
     for (i = 0; i < frameInfo->channels; i++)
     {
-        faad_fprintf(stderr, " | %.2d | %-14s |\n", i, position2string((int)frameInfo->channel_position[i]));
+        kprintf(" | %.2d | %-14s |\n", i, position2string((int)frameInfo->channel_position[i]));
     }
-    faad_fprintf(stderr, "  ---------------------\n");
-    faad_fprintf(stderr, "\n");
+    kprintf("  ---------------------\n");
+    kprintf("\n");
 }
 
 static int FindAdtsSRIndex(int sr)
@@ -368,7 +364,7 @@ static unsigned char *MakeAdtsHeader(int *dataSize, NeAACDecFrameInfo *hInfo, in
 
     *dataSize = 7;
 
-    data = malloc(*dataSize * sizeof(unsigned char));
+    data = vmalloc(*dataSize * sizeof(unsigned char));
     memset(data, 0, *dataSize * sizeof(unsigned char));
 
     data[0] += 0xFF; /* 8b: syncword */
@@ -417,40 +413,40 @@ static const char *file_ext[] =
 
 static void usage(void)
 {
-    faad_fprintf(stdout, "\nUsage:\n");
-    faad_fprintf(stdout, "%s [options] infile.aac\n", progName);
-    faad_fprintf(stdout, "Options:\n");
-    faad_fprintf(stdout, " -h    Shows this help screen.\n");
-    faad_fprintf(stdout, " -i    Shows info about the input file.\n");
-    faad_fprintf(stdout, " -a X  Write MPEG-4 AAC ADTS output file.\n");
-    faad_fprintf(stdout, " -t    Assume old ADTS format.\n");
-    faad_fprintf(stdout, " -o X  Set output filename.\n");
-    faad_fprintf(stdout, " -f X  Set output format. Valid values for X are:\n");
-    faad_fprintf(stdout, "        1:  Microsoft WAV format (default).\n");
-    faad_fprintf(stdout, "        2:  RAW PCM data.\n");
-    faad_fprintf(stdout, " -b X  Set output sample format. Valid values for X are:\n");
-    faad_fprintf(stdout, "        1:  16 bit PCM data (default).\n");
-    faad_fprintf(stdout, "        2:  24 bit PCM data.\n");
-    faad_fprintf(stdout, "        3:  32 bit PCM data.\n");
-    faad_fprintf(stdout, "        4:  32 bit floating point data.\n");
-    faad_fprintf(stdout, "        5:  64 bit floating point data.\n");
-    faad_fprintf(stdout, " -s X  Force the samplerate to X (for RAW files).\n");
-    faad_fprintf(stdout, " -l X  Set object type. Supported object types:\n");
-    faad_fprintf(stdout, "        1:  Main object type.\n");
-    faad_fprintf(stdout, "        2:  LC (Low Complexity) object type.\n");
-    faad_fprintf(stdout, "        4:  LTP (Long Term Prediction) object type.\n");
-    faad_fprintf(stdout, "        23: LD (Low Delay) object type.\n");
-    faad_fprintf(stdout, " -d    Down matrix 5.1 to 2 channels\n");
-    faad_fprintf(stdout, " -w    Write output to stdio instead of a file.\n");
-    faad_fprintf(stdout, " -g    Disable gapless decoding.\n");
-    faad_fprintf(stdout, " -q    Quiet - suppresses status messages.\n");
-    faad_fprintf(stdout, " -j X  Jump - start output X seconds into track (MP4 files only).\n");
-    faad_fprintf(stdout, "Example:\n");
-    faad_fprintf(stdout, "       %s infile.aac\n", progName);
-    faad_fprintf(stdout, "       %s infile.mp4\n", progName);
-    faad_fprintf(stdout, "       %s -o outfile.wav infile.aac\n", progName);
-    faad_fprintf(stdout, "       %s -w infile.aac > outfile.wav\n", progName);
-    faad_fprintf(stdout, "       %s -a outfile.aac infile.aac\n", progName);
+    kprintf("\nUsage:\n");
+    kprintf("%s [options] infile.aac\n", progName);
+    kprintf("Options:\n");
+    kprintf(" -h    Shows this help screen.\n");
+    kprintf(" -i    Shows info about the input file.\n");
+    kprintf(" -a X  Write MPEG-4 AAC ADTS output file.\n");
+    kprintf(" -t    Assume old ADTS format.\n");
+    kprintf(" -o X  Set output filename.\n");
+    kprintf(" -f X  Set output format. Valid values for X are:\n");
+    kprintf("        1:  Microsoft WAV format (default).\n");
+    kprintf("        2:  RAW PCM data.\n");
+    kprintf(" -b X  Set output sample format. Valid values for X are:\n");
+    kprintf("        1:  16 bit PCM data (default).\n");
+    kprintf("        2:  24 bit PCM data.\n");
+    kprintf("        3:  32 bit PCM data.\n");
+    kprintf("        4:  32 bit floating point data.\n");
+    kprintf("        5:  64 bit floating point data.\n");
+    kprintf(" -s X  Force the samplerate to X (for RAW files).\n");
+    kprintf(" -l X  Set object type. Supported object types:\n");
+    kprintf("        1:  Main object type.\n");
+    kprintf("        2:  LC (Low Complexity) object type.\n");
+    kprintf("        4:  LTP (Long Term Prediction) object type.\n");
+    kprintf("        23: LD (Low Delay) object type.\n");
+    kprintf(" -d    Down matrix 5.1 to 2 channels\n");
+    kprintf(" -w    Write output to stdio instead of a file.\n");
+    kprintf(" -g    Disable gapless decoding.\n");
+    kprintf(" -q    Quiet - suppresses status messages.\n");
+    kprintf(" -j X  Jump - start output X seconds into track (MP4 files only).\n");
+    kprintf("Example:\n");
+    kprintf("       %s infile.aac\n", progName);
+    kprintf("       %s infile.mp4\n", progName);
+    kprintf("       %s -o outfile.wav infile.aac\n", progName);
+    kprintf("       %s -w infile.aac > outfile.wav\n", progName);
+    kprintf("       %s -a outfile.aac infile.aac\n", progName);
     return;
 }
 
@@ -459,6 +455,8 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
                   int downMatrix, int infoOnly, int adts_out, int old_format,
                   float *song_length)
 {
+	u32 num;
+	FRESULT res;
     int tagsize;
     unsigned long samplerate;
     unsigned char channels;
@@ -466,7 +464,7 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
 
     audio_file *aufile = NULL;
 
-    FILE *adtsFile = NULL;
+    FIL adtsFile;
     unsigned char *adtsData;
     int adtsDataSize;
 
@@ -491,34 +489,32 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
 
     if (adts_out)
     {
-        adtsFile = faad_fopen(adts_fn, "wb");
-        if (adtsFile == NULL)
+        //adtsFile = faad_fopen(adts_fn, "wb");
+        res = f_open(&adtsFile, adts_fn, FA_WRITE | FA_CREATE_ALWAYS);
+        if (res)
         {
-            faad_fprintf(stderr, "Error opening file: %s\n", adts_fn);
+            kprintf("Error opening file: %s\n", adts_fn);
             return 1;
         }
     }
 
     if (0 == strcmp(aacfile, "-"))
     {
-        b.infile = stdin;
-#ifdef _WIN32
-        _setmode(_fileno(stdin), O_BINARY);
-#endif
-
     }
     else
     {
-        b.infile = faad_fopen(aacfile, "rb");
-        if (b.infile == NULL)
+        //b.infile = faad_fopen(aacfile, "rb");
+        res = f_open(&b.infile, aacfile, FA_READ);
+        if (res)
         {
             /* unable to open file */
-            faad_fprintf(stderr, "Error opening file: %s\n", aacfile);
+            kprintf("Error opening file: %s\n", aacfile);
             return 1;
         }
     }
 
-    retval = fseek(b.infile, 0, SEEK_END);
+    //retval = fseek(b.infile, 0, SEEK_END);
+    retval = f_lseek(&b.infile, b.infile.obj.objsize);
 #ifdef _WIN32
     if (0 == strcmp(aacfile, "-")) {
         retval = -1;
@@ -526,22 +522,27 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
 #endif
     if (retval )
     {
-        faad_fprintf(stderr, "Input not seekable %s\n", aacfile);
+        kprintf("Input not seekable %s\n", aacfile);
         fileread = -1;
         streaminput = 1;
     } else {
-        fileread = ftell(b.infile);
-        fseek(b.infile, 0, SEEK_SET);
+//        fileread = ftell(b.infile);
+    	fileread = f_tell(&b.infile);
+//        fseek(b.infile, 0, SEEK_SET);
+        f_lseek(&b.infile, 0);
     };
 
-    if (!(b.buffer = (unsigned char*)malloc(FAAD_MIN_STREAMSIZE*MAX_CHANNELS)))
+    if (!(b.buffer = (unsigned char*)vmalloc(FAAD_MIN_STREAMSIZE*MAX_CHANNELS)))
     {
-        faad_fprintf(stderr, "Memory allocation error\n");
+        kprintf("Memory allocation error\n");
         return 0;
     }
     memset(b.buffer, 0, FAAD_MIN_STREAMSIZE*MAX_CHANNELS);
 
-    bread = fread(b.buffer, 1, FAAD_MIN_STREAMSIZE*MAX_CHANNELS, b.infile);
+//    bread = fread(b.buffer, 1, FAAD_MIN_STREAMSIZE*MAX_CHANNELS, b.infile);
+    bread = 0;
+    res = f_read (&b.infile, b.buffer, FAAD_MIN_STREAMSIZE*MAX_CHANNELS, &bread);
+
     b.bytes_into_buffer = bread;
     b.bytes_consumed = 0;
     b.file_offset = 0;
@@ -595,12 +596,14 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
             bytes_per_frame = (float)frame_length/(float)(1000);
             bitrate = (int)(8. * bytes_per_frame * frames_per_sec + 0.5);
             length = 1;
-            faad_fprintf(stderr, "Streamed input format  samplerate %d channels %d.\n", samplerate, channels);
+            kprintf("Streamed input format  samplerate %d channels %d.\n", samplerate, channels);
         } else {
             adts_parse(&b, &bitrate, &length);
-            fseek(b.infile, tagsize, SEEK_SET);
-
-            bread = fread(b.buffer, 1, FAAD_MIN_STREAMSIZE*MAX_CHANNELS, b.infile);
+//            fseek(b.infile, tagsize, SEEK_SET);
+            f_lseek(&b.infile, tagsize);
+            //bread = fread(b.buffer, 1, FAAD_MIN_STREAMSIZE*MAX_CHANNELS, b.infile);
+            bread = 0;
+            res = f_read (&b.infile, b.buffer, FAAD_MIN_STREAMSIZE*MAX_CHANNELS, &bread);
             if (bread != FAAD_MIN_STREAMSIZE*MAX_CHANNELS)
                 b.at_eof = 1;
             else
@@ -638,30 +641,30 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
         b.bytes_into_buffer, &samplerate, &channels)) < 0)
     {
         /* If some error initializing occured, skip the file */
-        faad_fprintf(stderr, "Error initializing decoder library.\n");
+        kprintf("Error initializing decoder library.\n");
         if (b.buffer)
-            free(b.buffer);
+            vfree(b.buffer);
         NeAACDecClose(hDecoder);
-        if (b.infile != stdin)
-            fclose(b.infile);
+        //if (b.infile != stdin)
+            f_close(&b.infile);
         return 1;
     }
     advance_buffer(&b, bread);
     fill_buffer(&b);
 
     /* print AAC file info */
-    faad_fprintf(stderr, "%s file info:\n", aacfile);
+    kprintf("%s file info:\n", aacfile);
     switch (header_type)
     {
     case 0:
-        faad_fprintf(stderr, "RAW\n\n");
+        kprintf("RAW\n\n");
         break;
     case 1:
-        faad_fprintf(stderr, "ADTS, %.3f sec, %d kbps, %d Hz\n\n",
+        kprintf("ADTS, %.3f sec, %d kbps, %d Hz\n\n",
             length, bitrate, samplerate);
         break;
     case 2:
-        faad_fprintf(stderr, "ADIF, %.3f sec, %d kbps, %d Hz\n\n",
+        kprintf("ADIF, %.3f sec, %d kbps, %d Hz\n\n",
             length, bitrate, samplerate);
         break;
     }
@@ -669,10 +672,10 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
     if (infoOnly)
     {
         NeAACDecClose(hDecoder);
-        if (b.infile != stdin)
-            fclose(b.infile);
+        //if (b.infile != stdin)
+        f_close(&b.infile);
         if (b.buffer)
-            free(b.buffer);
+            vfree(b.buffer);
         return 0;
     }
 
@@ -687,13 +690,17 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
             adtsData = MakeAdtsHeader(&adtsDataSize, &frameInfo, old_format);
 
             /* write the adts header */
-            fwrite(adtsData, 1, adtsDataSize, adtsFile);
-
+            //fwrite(adtsData, 1, adtsDataSize, adtsFile);
+            num = 0;
+            res = f_write (&adtsFile, adtsData, adtsDataSize, &num);
             /* write the frame data */
-            if (frameInfo.header_type == ADTS)
-                fwrite(b.buffer + skip, 1, frameInfo.bytesconsumed - skip, adtsFile);
-            else
-                fwrite(b.buffer, 1, frameInfo.bytesconsumed, adtsFile);
+            if (frameInfo.header_type == ADTS) {
+                //fwrite(b.buffer + skip, 1, frameInfo.bytesconsumed - skip, adtsFile);
+            	res = f_write (&adtsFile, b.buffer + skip, frameInfo.bytesconsumed - skip, &num);
+            } else {
+                //fwrite(b.buffer, 1, frameInfo.bytesconsumed, adtsFile);
+            	res = f_write (&adtsFile, b.buffer, frameInfo.bytesconsumed, &num);
+            }
         }
 
         /* update buffer indices */
@@ -705,7 +712,7 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
 
         if (frameInfo.error > 0)
         {
-            faad_fprintf(stderr, "Error: %s\n",
+            kprintf("Error: %s\n",
                 NeAACDecGetErrorMessage(frameInfo.error));
         }
 
@@ -729,14 +736,14 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
                 if (aufile == NULL)
                 {
                     if (b.buffer)
-                        free(b.buffer);
+                        vfree(b.buffer);
                     NeAACDecClose(hDecoder);
-                    if (b.infile != stdin)
-                        fclose(b.infile);
+                    //if (b.infile != stdin)
+                        f_close(&b.infile);
                     return 0;
                 }
             } else {
-                faad_fprintf(stderr, "Writing output MPEG-4 AAC ADTS file.\n\n");
+                kprintf("Writing output MPEG-4 AAC ADTS file.\n\n");
             }
             first_time = 0;
         }
@@ -746,7 +753,7 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
         {
             old_percent = percent;
             snprintf(percents, MAX_PERCENTS, "%d%% decoding %s.", percent, aacfile);
-            faad_fprintf(stderr, "%s\r", percents);
+            kprintf("%s\r", percents);
 #ifdef _WIN32
             SetConsoleTitle(percents);
 #endif
@@ -768,19 +775,19 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
 
     NeAACDecClose(hDecoder);
 
-    if (adts_out == 1)
-    {
-        fclose(adtsFile);
-    }
+//    if (adts_out == 1)
+//    {
+        f_close(&adtsFile);
+//    }
+//
+//    if (b.infile != stdin)
+        f_close(&b.infile);
 
-    if (b.infile != stdin)
-        fclose(b.infile);
-
-    if (!first_time && !adts_out)
+    if (!first_time)// && !adts_out)
         close_audio_file(aufile);
 
     if (b.buffer)
-        free(b.buffer);
+        vfree(b.buffer);
 
     return frameInfo.error;
 }
@@ -795,6 +802,8 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
                   int outputFormat, int fileType, int downMatrix, int noGapless,
                   int infoOnly, int adts_out, float *song_length, float seek_to)
 {
+	u32 num;
+	FRESULT res;
     /*int track;*/
     unsigned long samplerate;
     unsigned char channels;
@@ -804,7 +813,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
 
     audio_file *aufile = NULL;
 
-    FILE *adtsFile = NULL;
+    FIL adtsFile;
     unsigned char *adtsData;
     int adtsDataSize;
 
@@ -824,7 +833,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
     unsigned decoded;
 
     if (strcmp(mp4file, "-") == 0 ) {
-        faad_fprintf(stderr, "Cannot open stdin for MP4 input \n");
+        kprintf("Cannot open stdin for MP4 input \n");
         return 1;
     }
 
@@ -836,7 +845,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
     if (mp4read_open(mp4file))
     {
         /* unable to open file */
-        faad_fprintf(stderr, "Error opening file: %s\n", mp4file);
+        kprintf("Error opening file: %s\n", mp4file);
         return 1;
     }
 
@@ -851,10 +860,11 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
 
     if (adts_out)
     {
-        adtsFile = faad_fopen(adts_fn, "wb");
-        if (adtsFile == NULL)
+        //adtsFile = faad_fopen(adts_fn, "wb");
+        res = f_open(&adtsFile, adts_fn, FA_WRITE | FA_CREATE_ALWAYS);
+        if (res)
         {
-            faad_fprintf(stderr, "Error opening file: %s\n", adts_fn);
+            kprintf("Error opening file: %s\n", adts_fn);
             return 1;
         }
     }
@@ -863,7 +873,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
                     &samplerate, &channels) < 0)
     {
         /* If some error initializing occured, skip the file */
-        faad_fprintf(stderr, "Error initializing decoder library.\n");
+        kprintf("Error initializing decoder library.\n");
         NeAACDecClose(hDecoder);
         mp4read_close();
         return 1;
@@ -883,7 +893,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
     }
 
     /* print some mp4 file info */
-    faad_fprintf(stderr, "%s file info:\n\n", mp4file);
+    kprintf("%s file info:\n\n", mp4file);
     {
         char *tag = NULL, *item = NULL;
         /*int k, j;*/
@@ -893,7 +903,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
 
         *song_length = seconds;
 
-        faad_fprintf(stderr, "%s\t%.3f secs, %d ch, %d Hz\n\n", ot[(mp4ASC.objectTypeIndex > 5)?0:mp4ASC.objectTypeIndex],
+        kprintf("%s\t%.3f secs, %d ch, %d Hz\n\n", ot[(mp4ASC.objectTypeIndex > 5)?0:mp4ASC.objectTypeIndex],
             seconds, mp4ASC.channelsConfiguration, mp4ASC.samplingFrequency);
     }
 
@@ -931,9 +941,10 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
             adtsData = MakeAdtsHeader(&adtsDataSize, &frameInfo, 0);
 
             /* write the adts header */
-            fwrite(adtsData, 1, adtsDataSize, adtsFile);
-
-            fwrite(mp4config.bitbuf.data, 1, frameInfo.bytesconsumed, adtsFile);
+            //fwrite(adtsData, 1, adtsDataSize, adtsFile);
+            res = f_write (&adtsFile, adtsData, adtsDataSize, &num);
+            //fwrite(mp4config.bitbuf.data, 1, frameInfo.bytesconsumed, adtsFile);
+            res = f_write (&adtsFile, mp4config.bitbuf.data, frameInfo.bytesconsumed, &num);
         }
 
         dur = frameInfo.samples / frameInfo.channels;
@@ -944,7 +955,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
 
         if (dur > framesize)
         {
-            faad_fprintf(stderr, "Warning: excess frame detected in MP4 file.\n");
+            kprintf("Warning: excess frame detected in MP4 file.\n");
             dur = framesize;
         }
 
@@ -996,7 +1007,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
         {
             old_percent = percent;
             snprintf(percents, MAX_PERCENTS, "%d%% decoding %s.", percent, mp4file);
-            faad_fprintf(stderr, "%s\r", percents);
+            kprintf("%s\r", percents);
 #ifdef _WIN32
             SetConsoleTitle(percents);
 #endif
@@ -1010,16 +1021,16 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
 
         if (frameInfo.error > 0)
         {
-            faad_fprintf(stderr, "Warning: %s\n",
+            kprintf("Warning: %s\n",
                 NeAACDecGetErrorMessage(frameInfo.error));
         }
     }
 
     NeAACDecClose(hDecoder);
 
-    if (adts_out == 1)
+    //if (adts_out == 1)
     {
-        fclose(adtsFile);
+        f_close(&adtsFile);
     }
 
     mp4read_close();
@@ -1030,8 +1041,17 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
     return frameInfo.error;
 }
 
-static int faad_main(int argc, char *argv[])
+void x_ungetc(u8 ch, FIL *f)
 {
+	u32 num;
+	FRESULT res;
+	res = f_write (f, &ch, 1, &num);
+}
+
+int faad_main(int argc, char *argv[])
+{
+	u32 num;
+	FRESULT res;
     int result;
     int infoOnly = 0;
     int writeToStdio = 0;
@@ -1055,7 +1075,7 @@ static int faad_main(int argc, char *argv[])
     unsigned char header[8];
     int bread;
     float length = 0;
-    FILE *hMP4File;
+    FIL hMP4File;
     char *faad_id_string;
     char *faad_copyright_string;
 
@@ -1103,10 +1123,10 @@ static int faad_main(int argc, char *argv[])
             if (optarg)
             {
                 outfile_set = 1;
-                audioFileName = (char *) malloc(sizeof(char) * (strlen(optarg) + 1));
+                audioFileName = (char *) vmalloc(sizeof(char) * (strlen(optarg) + 1));
                 if (audioFileName == NULL)
                 {
-                    faad_fprintf(stderr, "Error allocating memory for audioFileName.\n");
+                    kprintf("Error allocating memory for audioFileName.\n");
                     return 1;
                 }
                 strcpy(audioFileName, optarg);
@@ -1116,10 +1136,10 @@ static int faad_main(int argc, char *argv[])
             if (optarg)
             {
                 adts_out = 1;
-                adtsFileName = (char *) malloc(sizeof(char) * (strlen(optarg) + 1));
+                adtsFileName = (char *) vmalloc(sizeof(char) * (strlen(optarg) + 1));
                 if (adtsFileName == NULL)
                 {
-                    faad_fprintf(stderr, "Error allocating memory for adtsFileName.\n");
+                    kprintf("Error allocating memory for adtsFileName.\n");
                     return 1;
                 }
                 strcpy(adtsFileName, optarg);
@@ -1217,22 +1237,22 @@ static int faad_main(int argc, char *argv[])
 
     NeAACDecGetVersion(&faad_id_string, &faad_copyright_string);
 
-    faad_fprintf(stderr, " *********** Ahead Software MPEG-4 AAC Decoder V%s ******************\n\n", faad_id_string);
+    kprintf(" *********** Ahead Software MPEG-4 AAC Decoder V%s ******************\n\n", faad_id_string);
 #ifndef BUILD_DATE
 #define BUILD_DATE __DATE__
 #endif
-    faad_fprintf(stderr, " Build: %s\n", BUILD_DATE);
+    kprintf(" Build: %s\n", BUILD_DATE);
 #undef BUILD_DATE
-    faad_fprintf(stderr, "%s", faad_copyright_string);
+    kprintf("%s", faad_copyright_string);
     if (cap & FIXED_POINT_CAP)
-        faad_fprintf(stderr, " Fixed point version\n");
+        kprintf(" Fixed point version\n");
     else
-        faad_fprintf(stderr, " Floating point version\n");
-    faad_fprintf(stderr, "\n");
-    faad_fprintf(stderr, " This program is free software; you can redistribute it and/or modify\n");
-    faad_fprintf(stderr, " it under the terms of the GNU General Public License.\n");
-    faad_fprintf(stderr, "\n");
-    faad_fprintf(stderr, " **************************************************************************\n\n");
+        kprintf(" Floating point version\n");
+    kprintf("\n");
+    kprintf(" This program is vfree software; you can redistribute it and/or modify\n");
+    kprintf(" it under the terms of the GNU General Public License.\n");
+    kprintf("\n");
+    kprintf(" **************************************************************************\n\n");
 
 
     /* check that we have at least two non-option arguments */
@@ -1252,10 +1272,10 @@ static int faad_main(int argc, char *argv[])
 #endif
 
     /* point to the specified file name */
-    aacFileName = (char *) malloc(sizeof(char) * (strlen(argv[optind]) + 1));
+    aacFileName = (char *) vmalloc(sizeof(char) * (strlen(argv[optind]) + 1));
     if (aacFileName == NULL)
     {
-        faad_fprintf(stderr, "Error allocating memory for aacFileName.\n");
+        kprintf("Error allocating memory for aacFileName.\n");
         return 1;
     }
     strcpy(aacFileName, argv[optind]);
@@ -1263,7 +1283,7 @@ static int faad_main(int argc, char *argv[])
 #ifdef _WIN32
     begin = GetTickCount();
 #else
-    begin = clock();
+    begin = VOSGetTicks();//clock();
 #endif
 
     /* Only calculate the path and open the file for writing if
@@ -1271,10 +1291,10 @@ static int faad_main(int argc, char *argv[])
      */
     if(!writeToStdio && !outfile_set)
     {
-        audioFileName = (char *) malloc(sizeof(char) * (strlen(aacFileName) + strlen(file_ext[format]) + 1));
+        audioFileName = (char *) vmalloc(sizeof(char) * (strlen(aacFileName) + strlen(file_ext[format]) + 1));
         if (audioFileName == NULL)
         {
-            faad_fprintf(stderr, "Error allocating memory for audioFileName.\n");
+            kprintf("Error allocating memory for audioFileName.\n");
             return 1;
         }
         strcpy(audioFileName, aacFileName);
@@ -1289,31 +1309,27 @@ static int faad_main(int argc, char *argv[])
 
     /* check for mp4 file */
     if (0 == strcmp(aacFileName, "-")) {
-        faad_fprintf(stderr, "Reading from stdin: %s\n", aacFileName);
-        readFromStdin = 1;
-        hMP4File  = stdin;
-#ifdef _WIN32
-        _setmode(_fileno(stdin), O_BINARY);
-#endif
 
     } else {
 
         mp4file = 0;
-        hMP4File = faad_fopen(aacFileName, "rb");
-        if (!hMP4File)
+//        hMP4File = faad_fopen(aacFileName, "rb");
+        res = f_open(&hMP4File, aacFileName, FA_READ);
+        if (res)
         {
-            faad_fprintf(stderr, "Error opening file: %s\n", aacFileName);
+            kprintf("Error opening file: %s\n", aacFileName);
             return 1;
         }
     }
 
-    bread = fread(header, 1, 8, hMP4File);
-
-    if (! readFromStdin )
-      fclose(hMP4File);
+    //bread = fread(header, 1, 8, hMP4File);
+    bread = 0;
+    res = f_read (&hMP4File, header, 8, &bread);
+//    if (! readFromStdin )
+//      f_close(&hMP4File);
 
     if (bread != 8) {
-        faad_fprintf(stderr, "Error reading file.\n");
+        kprintf("Error reading file.\n");
         return 1;
     }
 
@@ -1321,7 +1337,7 @@ static int faad_main(int argc, char *argv[])
         mp4file = 1;
 
     if (!mp4file && seekTo != 0) {
-        faad_fprintf(stderr, "Warning: can only seek in MP4 files\n");
+        kprintf("Warning: can only seek in MP4 files\n");
     }
 
     if (mp4file)
@@ -1331,14 +1347,14 @@ static int faad_main(int argc, char *argv[])
     } else {
 
     if (readFromStdin == 1) {
-        ungetc(header[7],hMP4File);
-        ungetc(header[6],hMP4File);
-        ungetc(header[5],hMP4File);
-        ungetc(header[4],hMP4File);
-        ungetc(header[3],hMP4File);
-        ungetc(header[2],hMP4File);
-        ungetc(header[1],hMP4File);
-        ungetc(header[0],hMP4File);
+        x_ungetc(header[7], &hMP4File);
+        x_ungetc(header[6], &hMP4File);
+        x_ungetc(header[5], &hMP4File);
+        x_ungetc(header[4], &hMP4File);
+        x_ungetc(header[3], &hMP4File);
+        x_ungetc(header[2], &hMP4File);
+        x_ungetc(header[1], &hMP4File);
+        x_ungetc(header[0], &hMP4File);
     }
 
         result = decodeAACfile(aacFileName, audioFileName, adtsFileName, writeToStdio,
@@ -1347,9 +1363,9 @@ static int faad_main(int argc, char *argv[])
     }
 
     if (audioFileName != NULL)
-      free (audioFileName);
+      vfree (audioFileName);
     if (adtsFileName != NULL)
-      free (adtsFileName);
+      vfree (adtsFileName);
 
     if (!result && !infoOnly)
     {
@@ -1360,30 +1376,30 @@ static int faad_main(int argc, char *argv[])
         /* clock() grabs time since the start of the app but when we decode
            multiple files, each file has its own starttime (begin).
          */
-        float dec_length = (float)(clock() - begin)/(float)CLOCKS_PER_SEC;
+        float dec_length = (float)(VOSGetTicks() - begin)/(float)CLOCKS_PER_SEC;
 #endif
-        faad_fprintf(stderr, "Decoding %s took: %5.2f sec. %5.2fx real-time.\n", aacFileName,
+        kprintf("Decoding %s took: %5.2f sec. %5.2fx real-time.\n", aacFileName,
             dec_length, (dec_length > 0.01) ? (length/dec_length) : 0.);
     }
 
     if (aacFileName != NULL)
-      free (aacFileName);
+      vfree (aacFileName);
 
     return 0;
 }
 
-int main(int argc, char *argv[])
-{
-#if defined WIN32 || defined _WIN32 || defined WIN64 || defined _WIN64
-    int argc_utf8, exit_code;
-    char **argv_utf8;
-    init_console_utf8(stderr);
-    init_commandline_arguments_utf8(&argc_utf8, &argv_utf8);
-    exit_code = faad_main(argc_utf8, argv_utf8);
-    free_commandline_arguments_utf8(&argc_utf8, &argv_utf8);
-    uninit_console_utf8();
-    return exit_code;
-#else
-    return faad_main(argc, argv);
-#endif
-}
+//int main(int argc, char *argv[])
+//{
+//#if defined WIN32 || defined _WIN32 || defined WIN64 || defined _WIN64
+//    int argc_utf8, exit_code;
+//    char **argv_utf8;
+//    init_console_utf8(stderr);
+//    init_commandline_arguments_utf8(&argc_utf8, &argv_utf8);
+//    exit_code = faad_main(argc_utf8, argv_utf8);
+//    free_commandline_arguments_utf8(&argc_utf8, &argv_utf8);
+//    uninit_console_utf8();
+//    return exit_code;
+//#else
+//    return faad_main(argc, argv);
+//#endif
+//}

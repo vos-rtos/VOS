@@ -26,6 +26,8 @@
 
 #include "unicode_support.h"
 #include "mp4read.h"
+#include "ff.h"
+#include "vos.h"
 
 enum ATOM_TYPE
 {
@@ -44,7 +46,7 @@ typedef struct
 
 mp4config_t mp4config = { 0 };
 
-static FILE *g_fin = NULL;
+static FIL g_fin;
 
 static inline uint32_t bswap32(const uint32_t u32)
 {
@@ -80,18 +82,33 @@ enum {ERR_OK = 0, ERR_FAIL = -1, ERR_UNSUPPORTED = -2};
 
 static int datain(void *data, int size)
 {
-    if (fread(data, 1, size, g_fin) != size)
-        return ERR_FAIL;
-    return size;
+	u32 num;
+	FRESULT res;
+
+	num = 0;
+	res = f_read (&g_fin, data, size, &num);
+	if (res == 0 && num == size) {
+		return size;
+	}
+	else
+		return ERR_FAIL;
+//    if (fread(data, 1, size, g_fin) != size)
+//        return ERR_FAIL;
+//    return size;
 }
 
 static int stringin(char *txt, int sizemax)
 {
+	u32 num;
+	FRESULT res;
     int size;
     for (size = 0; size < sizemax; size++)
     {
-        if (fread(txt + size, 1, 1, g_fin) != 1)
-            return ERR_FAIL;
+//        if (fread(txt + size, 1, 1, g_fin) != 1)
+//            return ERR_FAIL;
+    	res = f_read (&g_fin, txt + size, 1, &num);
+    	if (res || num != 1)
+    		return ERR_FAIL;
         if (!txt[size])
             break;
     }
@@ -134,12 +151,12 @@ static int ftypin(int size)
     u32 = u32in();
 
     if (mp4config.verbose.header)
-        fprintf(stderr, "Brand:\t\t\t%s(version %d)\n", buf, u32);
+        kprintf( "Brand:\t\t\t%s(version %d)\n", buf, u32);
 
     stringin(buf, BUFSIZE);
 
     if (mp4config.verbose.header)
-        fprintf(stderr, "Compatible brands:\t%s\n", buf);
+        kprintf( "Compatible brands:\t%s\n", buf);
 
     return size;
 }
@@ -192,17 +209,17 @@ static int hdlr1in(int size)
     // Component subtype
     datain(buf, 4);
     if (mp4config.verbose.header)
-        fprintf(stderr, "*track media type: '%s': ", buf);
+        kprintf( "*track media type: '%s': ", buf);
     if (memcmp("soun", buf, 4))
     {
         if (mp4config.verbose.header)
-            fprintf(stderr, "unsupported, skipping\n");
+            kprintf( "unsupported, skipping\n");
         return ERR_UNSUPPORTED;
     }
     else
     {
         if (mp4config.verbose.header)
-            fprintf(stderr, "OK\n");
+            kprintf( "OK\n");
     }
     // reserved
     u32in();
@@ -531,7 +548,7 @@ static int ilstin(int size)
         "Unknown",
     };
 
-    fprintf(stderr, "----------tag list-------------\n");
+    kprintf( "----------tag list-------------\n");
     while(read < size)
     {
         int asize, dsize;
@@ -555,11 +572,11 @@ static int ilstin(int size)
         }
 
         if (tags[cnt].name)
-            fprintf(stderr, "%s :   ", tags[cnt].name);
+            kprintf( "%s :   ", tags[cnt].name);
         else
         {
             if (tags[cnt].flag != EXTAG)
-                fprintf(stderr, "'%s'       :   ", id);
+                kprintf( "'%s'       :   ", id);
         }
 
         dsize = u32in();
@@ -603,13 +620,13 @@ static int ilstin(int size)
             if (spc < 0) spc = 0;
             while (dsize > 0)
             {
-                fprintf(stderr, "%c",u8in());
+                kprintf( "%c",u8in());
                 asize--;
                 dsize--;
             }
             while (spc--)
-                fprintf(stderr, " ");
-            fprintf(stderr, ":   ");
+                kprintf( " ");
+            kprintf( ":   ");
             if (asize >= 8)
             {
                 dsize = u32in() - 8;
@@ -625,11 +642,11 @@ static int ilstin(int size)
             }
             while (dsize > 0)
             {
-                fprintf(stderr, "%c",u8in());
+                kprintf( "%c",u8in());
                 asize--;
                 dsize--;
             }
-            fprintf(stderr, "\n");
+            kprintf( "\n");
 
             goto skip;
         }
@@ -643,7 +660,7 @@ static int ilstin(int size)
         case 1:
             while (asize > 0)
             {
-                fprintf(stderr, "%c",u8in());
+                kprintf( "%c",u8in());
                 asize--;
             }
             break;
@@ -654,9 +671,9 @@ static int ilstin(int size)
                 u16in();
                 asize -= 2;
 
-                fprintf(stderr, "%d", u16in());
+                kprintf( "%d", u16in());
                 asize -= 2;
-                fprintf(stderr, "/%d", u16in());
+                kprintf( "/%d", u16in());
                 asize -= 2;
                 break;
             case GENRE:
@@ -668,35 +685,35 @@ static int ilstin(int size)
                     gnum--;
                     if (gnum >= 147)
                         gnum = 147;
-                    fprintf(stderr, "%s", genres[gnum]);
+                    kprintf( "%s", genres[gnum]);
                 }
                 break;
             default:
                 while(asize > 0)
                 {
-                    fprintf(stderr, "%d/", u16in());
+                    kprintf( "%d/", u16in());
                     asize-=2;
                 }
             }
             break;
         case 0x15:
-            //fprintf(stderr, "(8bit data)");
+            //kprintf( "(8bit data)");
             while(asize > 0)
             {
-                fprintf(stderr, "%d", u8in());
+                kprintf( "%d", u8in());
                 asize--;
                 if (asize)
-                    fprintf(stderr, "/");
+                    kprintf( "/");
             }
             break;
         case 0xd:
-            fprintf(stderr, "(image data)");
+            kprintf( "(image data)");
             break;
         default:
-            fprintf(stderr, "(unknown data type)");
+            kprintf( "(unknown data type)");
             break;
         }
-        fprintf(stderr, "\n");
+        kprintf( "\n");
 
     skip:
         // skip to the end of atom
@@ -706,7 +723,7 @@ static int ilstin(int size)
             asize--;
         }
     }
-    fprintf(stderr, "-------------------------------\n");
+    kprintf( "-------------------------------\n");
 
     return size;
 };
@@ -715,15 +732,16 @@ static creator_t *g_atom = 0;
 static int parse(uint32_t *sizemax)
 {
     long apos = 0;
-    long aposmax = ftell(g_fin) + *sizemax;
+//    long aposmax = ftell(g_fin) + *sizemax;
+    long aposmax = f_tell(&g_fin) + *sizemax;
     uint32_t size;
 
     if (g_atom->opcode != ATOM_NAME)
     {
-        fprintf(stderr, "parse error: root is not a 'name' opcode\n");
+        kprintf( "parse error: root is not a 'name' opcode\n");
         return ERR_FAIL;
     }
-    //fprintf(stderr, "looking for '%s'\n", (char *)g_atom->data);
+    //kprintf( "looking for '%s'\n", (char *)g_atom->data);
 
     // search for atom in the file
     while (1)
@@ -731,15 +749,17 @@ static int parse(uint32_t *sizemax)
         char name[4];
         uint32_t tmp;
 
-        apos = ftell(g_fin);
+//        apos = ftell(g_fin);
+        apos = f_tell(&g_fin);
         if (apos >= (aposmax - 8))
         {
-            fprintf(stderr, "parse error: atom '%s' not found\n", (char *)g_atom->data);
+            kprintf( "parse error: atom '%s' not found\n", (char *)g_atom->data);
             return ERR_FAIL;
         }
         if ((tmp = u32in()) < 8)
         {
-            fprintf(stderr, "invalid atom size %x @%lx\n", tmp, ftell(g_fin));
+//            kprintf( "invalid atom size %x @%lx\n", tmp, ftell(g_fin));
+        	kprintf( "invalid atom size %x @%lx\n", tmp, f_tell(&g_fin));
             return ERR_FAIL;
         }
 
@@ -747,20 +767,22 @@ static int parse(uint32_t *sizemax)
         if (datain(name, 4) != 4)
         {
             // EOF
-            fprintf(stderr, "can't read atom name @%lx\n", ftell(g_fin));
+//            kprintf( "can't read atom name @%lx\n", ftell(g_fin));
+        	kprintf( "can't read atom name @%lx\n", f_tell(&g_fin));
             return ERR_FAIL;
         }
 
-        //fprintf(stderr, "atom: '%c%c%c%c'(%x)", name[0],name[1],name[2],name[3], size);
+        //kprintf( "atom: '%c%c%c%c'(%x)", name[0],name[1],name[2],name[3], size);
 
         if (!memcmp(name, g_atom->data, 4))
         {
-            //fprintf(stderr, "OK\n");
+            //kprintf( "OK\n");
             break;
         }
-        //fprintf(stderr, "\n");
+        //kprintf( "\n");
 
-        fseek(g_fin, apos + size, SEEK_SET);
+//        fseek(g_fin, apos + size, SEEK_SET);
+        f_lseek(&g_fin, apos + size);
     }
     *sizemax = size;
     g_atom++;
@@ -769,16 +791,17 @@ static int parse(uint32_t *sizemax)
         int err = ((int (*)(int)) g_atom->data)(size - 8);
         if (err < ERR_OK)
         {
-            fseek(g_fin, apos + size, SEEK_SET);
+//            fseek(g_fin, apos + size, SEEK_SET);
+        	f_lseek(&g_fin, apos + size);
             return err;
         }
         g_atom++;
     }
     if (g_atom->opcode == ATOM_DESCENT)
     {
-        long apos = ftell(g_fin);;
-
-        //fprintf(stderr, "descent\n");
+//        long apos = ftell(g_fin);;
+    	long apos = f_tell(&g_fin);;
+        //kprintf( "descent\n");
         g_atom++;
         while (g_atom->opcode != ATOM_STOP)
         {
@@ -789,14 +812,15 @@ static int parse(uint32_t *sizemax)
                 g_atom++;
                 break;
             }
-            fseek(g_fin, apos, SEEK_SET);
+            f_lseek(&g_fin, apos);
             if ((ret = parse(&subsize)) < 0)
                 return ret;
         }
-        //fprintf(stderr, "ascent\n");
+        //kprintf( "ascent\n");
     }
 
-    fseek(g_fin, apos + size, SEEK_SET);
+//    fseek(g_fin, apos + size, SEEK_SET);
+    f_lseek(&g_fin, apos + size);
 
     return ERR_OK;
 }
@@ -805,7 +829,8 @@ static int parse(uint32_t *sizemax)
 
 static int moovin(int sizemax)
 {
-    long apos = ftell(g_fin);
+//    long apos = ftell(g_fin);
+	long apos = f_tell(&g_fin);
     uint32_t atomsize;
     creator_t *old_atom = g_atom;
     int err, ret = sizemax;
@@ -851,31 +876,34 @@ static int moovin(int sizemax)
     };
 
     g_atom = mvhd;
-    atomsize = sizemax + apos - ftell(g_fin);
+//    atomsize = sizemax + apos - ftell(g_fin);
+    atomsize = sizemax + apos - f_tell(&g_fin);
     if (parse(&atomsize) < 0) {
         g_atom = old_atom;
         return ERR_FAIL;
     }
 
-    fseek(g_fin, apos, SEEK_SET);
+//    fseek(g_fin, apos, SEEK_SET);
+    f_lseek(&g_fin, apos);
 
     while (1)
     {
-        //fprintf(stderr, "TRAK\n");
+        //kprintf( "TRAK\n");
         g_atom = trak;
-        atomsize = sizemax + apos - ftell(g_fin);
+//        atomsize = sizemax + apos - ftell(g_fin);
+        atomsize = sizemax + apos - f_tell(&g_fin);
         if (atomsize < 8)
             break;
-        //fprintf(stderr, "PARSE(%x)\n", atomsize);
+        //kprintf( "PARSE(%x)\n", atomsize);
         err = parse(&atomsize);
-        //fprintf(stderr, "SIZE: %x/%x\n", atomsize, sizemax);
+        //kprintf( "SIZE: %x/%x\n", atomsize, sizemax);
         if (err >= 0)
             break;
         if (err != ERR_UNSUPPORTED) {
             ret = err;
             break;
         }
-        //fprintf(stderr, "UNSUPP\n");
+        //kprintf( "UNSUPP\n");
     }
 
     g_atom = old_atom;
@@ -926,16 +954,20 @@ static creator_t g_meta2[] = {
 
 int mp4read_frame(void)
 {
+	u32 num;
+	FRESULT res;
     if (mp4config.frame.current >= mp4config.frame.ents)
         return ERR_FAIL;
 
     mp4config.bitbuf.size = mp4config.frame.data[mp4config.frame.current + 1]
         - mp4config.frame.data[mp4config.frame.current];
 
-    if (fread(mp4config.bitbuf.data, 1, mp4config.bitbuf.size, g_fin)
-        != mp4config.bitbuf.size)
+//    if (fread(mp4config.bitbuf.data, 1, mp4config.bitbuf.size, g_fin)
+//        != mp4config.bitbuf.size)
+	res = f_read (&g_fin, mp4config.bitbuf.data, mp4config.bitbuf.size, &num);
+	if (res || num != mp4config.bitbuf.size)
     {
-        fprintf(stderr, "can't read frame data(frame %d@0x%x)\n",
+        kprintf( "can't read frame data(frame %d@0x%x)\n",
                mp4config.frame.current,
                mp4config.frame.data[mp4config.frame.current]);
 
@@ -951,9 +983,10 @@ int mp4read_seek(int framenum)
 {
     if (framenum > mp4config.frame.ents)
         return ERR_FAIL;
-    if (fseek(g_fin, mp4config.mdatofs + mp4config.frame.data[framenum], SEEK_SET))
-        return ERR_FAIL;
-
+//    if (fseek(g_fin, mp4config.mdatofs + mp4config.frame.data[framenum], SEEK_SET))
+//        return ERR_FAIL;
+	if (f_lseek(&g_fin, mp4config.mdatofs + mp4config.frame.data[framenum]))
+		return ERR_FAIL;
     mp4config.frame.current = framenum;
 
     return ERR_OK;
@@ -961,19 +994,19 @@ int mp4read_seek(int framenum)
 
 static void mp4info(void)
 {
-    fprintf(stderr, "Modification Time:\t\t%s\n", mp4time(mp4config.mtime));
-    fprintf(stderr, "Samplerate:\t\t%d\n", mp4config.samplerate);
-    fprintf(stderr, "Total samples:\t\t%d\n", mp4config.samples);
-    fprintf(stderr, "Total channels:\t\t%d\n", mp4config.channels);
-    fprintf(stderr, "Bits per sample:\t%d\n", mp4config.bits);
-    fprintf(stderr, "Buffer size:\t\t%d\n", mp4config.buffersize);
-    fprintf(stderr, "Max bitrate:\t\t%d\n", mp4config.bitratemax);
-    fprintf(stderr, "Average bitrate:\t%d\n", mp4config.bitrateavg);
-    fprintf(stderr, "Samples per frame:\t%d\n", mp4config.framesamples);
-    fprintf(stderr, "Frames:\t\t\t%d\n", mp4config.frame.ents);
-    fprintf(stderr, "ASC size:\t\t%d\n", mp4config.asc.size);
-    fprintf(stderr, "Duration:\t\t%.1f sec\n", (float)mp4config.samples/mp4config.samplerate);
-    fprintf(stderr, "Data offset/size:\t%x/%x\n", mp4config.mdatofs, mp4config.mdatsize);
+    kprintf( "Modification Time:\t\t%s\n", mp4time(mp4config.mtime));
+    kprintf( "Samplerate:\t\t%d\n", mp4config.samplerate);
+    kprintf( "Total samples:\t\t%d\n", mp4config.samples);
+    kprintf( "Total channels:\t\t%d\n", mp4config.channels);
+    kprintf( "Bits per sample:\t%d\n", mp4config.bits);
+    kprintf( "Buffer size:\t\t%d\n", mp4config.buffersize);
+    kprintf( "Max bitrate:\t\t%d\n", mp4config.bitratemax);
+    kprintf( "Average bitrate:\t%d\n", mp4config.bitrateavg);
+    kprintf( "Samples per frame:\t%d\n", mp4config.framesamples);
+    kprintf( "Frames:\t\t\t%d\n", mp4config.frame.ents);
+    kprintf( "ASC size:\t\t%d\n", mp4config.asc.size);
+    kprintf( "Duration:\t\t%.1f sec\n", (float)mp4config.samples/mp4config.samplerate);
+    kprintf( "Data offset/size:\t%x/%x\n", mp4config.mdatofs, mp4config.mdatsize);
 }
 
 int mp4read_close(void)
@@ -992,22 +1025,24 @@ int mp4read_open(char *name)
 
     mp4read_close();
 
-    g_fin = faad_fopen(name, "rb");
-    if (!g_fin)
+    //g_fin = faad_fopen(name, "rb");
+    FRESULT res = f_open(&g_fin, name, FA_READ);
+    if (res) {
         return ERR_FAIL;
-
+    }
     if (mp4config.verbose.header)
-        fprintf(stderr, "**** MP4 header ****\n");
+        kprintf( "**** MP4 header ****\n");
     g_atom = g_head;
     atomsize = INT_MAX;
     if (parse(&atomsize) < 0)
         goto err;
     g_atom = g_moov;
     atomsize = INT_MAX;
-    rewind(g_fin);
+    //rewind(g_fin);
+    f_rewind(&g_fin);
     if ((ret = parse(&atomsize)) < 0)
     {
-        fprintf(stderr, "parse:%d\n", ret);
+        kprintf( "parse:%d\n", ret);
         goto err;
     }
 
@@ -1020,18 +1055,20 @@ int mp4read_open(char *name)
     if (mp4config.verbose.header)
     {
         mp4info();
-        fprintf(stderr, "********************\n");
+        kprintf( "********************\n");
     }
 
     if (mp4config.verbose.tags)
     {
-        rewind(g_fin);
+//        rewind(g_fin);
+    	f_rewind(&g_fin);
         g_atom = g_meta1;
         atomsize = INT_MAX;
         ret = parse(&atomsize);
         if (ret < 0)
         {
-            rewind(g_fin);
+            //rewind(g_fin);
+        	f_rewind(&g_fin);
             g_atom = g_meta2;
             atomsize = INT_MAX;
             ret = parse(&atomsize);

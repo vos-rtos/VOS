@@ -28,7 +28,7 @@
 ** $Id: huffman.c,v 1.26 2007/11/01 12:33:30 menno Exp $
 **/
 
-#include "common.h"
+#include "../libfaad/common.h"
 #include "structs.h"
 
 #include <stdlib.h>

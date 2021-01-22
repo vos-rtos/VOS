@@ -32,7 +32,7 @@
    Reads the AAC bitstream as defined in 14496-3 (MPEG-4 Audio)
 */
 
-#include "common.h"
+#include "../libfaad/common.h"
 #include "structs.h"
 
 #include <stdlib.h>

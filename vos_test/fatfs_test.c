@@ -104,7 +104,7 @@ static void task_speex_codec(void *param)
 		};
 	test_enc(4, argv);
 #endif
-#if 1
+#if 0
 	int speexenc_test(int argc, char **argv);
 	char *argv[3] = {
 			"xxx",
@@ -113,6 +113,17 @@ static void task_speex_codec(void *param)
 	};
 	speexenc_test(3, argv);
 #endif
+#if 1
+	int faad_main(int argc, char *argv[]);
+	char *argv[3] = {
+			"xxx",
+			"-o 0:/xxx.wav",
+			"0:/aaa.aac",
+	};
+	faad_main(3, argv);
+#endif
+
+
 #if 0
 	int speex_dec(int argc, char **argv);
 	char *argv_dec[3] = {

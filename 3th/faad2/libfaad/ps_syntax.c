@@ -28,7 +28,7 @@
 ** $Id: ps_syntax.c,v 1.11 2007/11/01 12:33:33 menno Exp $
 **/
 
-#include "common.h"
+#include "../libfaad/common.h"
 
 #ifdef PS_DEC
 
