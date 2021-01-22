@@ -754,7 +754,7 @@ int speex_dec(int argc, char **argv)
             } else {
                int lost=0;
                packet_no++;
-               if (loss_percent>0 && 100*((float)(HwRandomBuild()>>1))/RAND_MAX<loss_percent)
+               if (loss_percent>0 && 100*((float)(HwRandomBuildRang(0, 10000)))/RAND_MAX<loss_percent)
                   lost=1;
 
                /*End of stream condition*/

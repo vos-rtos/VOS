@@ -25,6 +25,7 @@
 #define be_short(s) ((short) ((unsigned short) (s) << 8) | ((unsigned short) (s) >> 8))
 #endif
 
+/** Convert little endian */
 static inline spx_int32_t le_int(spx_int32_t i)
 {
 #if !defined(__LITTLE_ENDIAN__) && ( defined(WORDS_BIGENDIAN) || defined(__BIG_ENDIAN__) )
@@ -40,6 +41,7 @@ static inline spx_int32_t le_int(spx_int32_t i)
 #endif
 }
 
+
 void comment_init(char **comments, int* length, char *vendor_string);
 void comment_add(char **comments, int* length, char *tag, char *val);
 
@@ -51,6 +53,9 @@ int oe_write_page(ogg_page *page, FIL *fp)
    u32 num;
    FRESULT res;
    u32 mark = 0;
+
+//   int dumphex(const unsigned char *buf, int size);
+//   dumphex(page->header, page->header_len);
    while(1) {
 	   res = f_write (fp, page->header+mark, page->header_len-mark, &num);
 	   if (res == 0 && num > 0) {
@@ -60,6 +65,7 @@ int oe_write_page(ogg_page *page, FIL *fp)
    }
    written = mark;
    mark = 0;
+//   dumphex(page->body, page->body_len);
    while (1) {
 	   res = f_write (fp, page->body+mark, page->body_len-mark, &num);
 	   if (res == 0 && num > 0) {
@@ -74,8 +80,8 @@ int oe_write_page(ogg_page *page, FIL *fp)
    return written;
 }
 
-#define MAX_FRAME_SIZE 1000//2000
-#define MAX_FRAME_BYTES 1000//2000
+#define MAX_FRAME_SIZE 2000
+#define MAX_FRAME_BYTES 2000
 
 static u32 totalxxxxx = 0;
 /* Convert input audio bits, endians and channels */
@@ -734,12 +740,12 @@ int speexenc_test(int argc, char **argv)
    /*Initialize Ogg stream struct*/
    HwRandomInit();
 
-   if (ogg_stream_init(&os, HwRandomBuild()>>1)==-1)
+   if (ogg_stream_init(&os, 5000/*HwRandomBuildRang(0, 10000)*/)==-1)
    {
       kprintf("Error: stream init failed\r\n");
       exit(1);
    }
-   if (with_skeleton && ogg_stream_init(&so, HwRandomBuild()>>1)==-1)
+   if (with_skeleton && ogg_stream_init(&so, HwRandomBuildRang(0, 10000))==-1)
    {
       kprintf("Error: stream init failed\r\n");
       exit(1);
@@ -1106,11 +1112,14 @@ int speexenc_test(int argc, char **argv)
          op.granulepos = total_samples;
       /*kprintf ("granulepos: %d %d %d %d %d %d\r\n", (int)op.granulepos, id, nframes, lookahead, 5, 6);*/
       op.packetno = 2+id/nframes;
+
       ogg_stream_packetin(&os, &op);
+
 #if 1
       /*Write all new pages (most likely 0 or 1)*/
       while (ogg_stream_pageout(&os,&og))
       {
+    	 //dumphex(og.body, og.body_len);
          ret = oe_write_page(&og, &fout);
          if(ret != og.header_len + og.body_len)
          {
@@ -1120,6 +1129,8 @@ int speexenc_test(int argc, char **argv)
          else
             bytes_written += ret;
       }
+//      dumphex(og.header, og.header_len);
+//      dumphex(og.body, og.body_len);
 #endif
    }
    if ((id+1)%nframes!=0)

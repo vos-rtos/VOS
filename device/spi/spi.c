@@ -1,7 +1,7 @@
 #include "spi.h"
 #include "stm32f4xx_hal.h"
 
-SPI_HandleTypeDef SPI1_Handler;  //SPI¾ä±ú
+//SPI_HandleTypeDef SPI1_Handler;  //SPI¾ä±ú
 
 
 typedef struct StSpiBus {
@@ -43,7 +43,33 @@ s32 spi_open(s32 port, s32 BaudRatePrescaler)
     spi_read_write(port, 0Xff, 1000);
 }
 
+s32 spi_ctrl(s32 port, s32 tag, void *value, s32 len)
+{
+	struct StSpiBus *pSpiBus = &gSpiBus[port];
+	__HAL_SPI_DISABLE(&pSpiBus->hdl);
+	switch (tag) {
+	case PARA_SPI_DIRECTION:
 
+		break;
+	case PARA_SPI_DATASIZE:
+		break;
+	case PARA_SPI_CLK_POLARITY:
+		pSpiBus->hdl.Init.CLKPolarity = *(u32*)value;
+		HAL_SPI_Init(&pSpiBus->hdl);
+		break;
+	case PARA_SPI_CLK_PHASE:
+		pSpiBus->hdl.Init.CLKPhase = *(u32*)value;
+		HAL_SPI_Init(&pSpiBus->hdl);
+		break;
+	case PARA_SPI_BAUDRATE_PRESCALER:
+	    pSpiBus->hdl.Instance->CR1 &= 0XFFC7;
+	    pSpiBus->hdl.Instance->CR1 |= *(u32*)value;
+		break;
+	default:
+		break;
+	};
+	__HAL_SPI_ENABLE(&pSpiBus->hdl);
+}
 
 s32 spi_read_write(s32 port, u8 ch, u32 timeout)
 {

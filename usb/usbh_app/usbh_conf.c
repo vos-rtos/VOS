@@ -324,7 +324,7 @@ USBH_StatusTypeDef USBH_LL_Init(USBH_HandleTypeDef *phost)
 	  hhcd_USB_OTG_FS.Init.Sof_enable = DISABLE;
 	  if (HAL_HCD_Init(&hhcd_USB_OTG_FS) != HAL_OK)
 	  {
-		Error_Handler( );
+		while(1);
 	  }
 
 	  USBH_LL_SetTimer(phost, HAL_HCD_GetCurrentFrame(&hhcd_USB_OTG_FS));
@@ -345,7 +345,7 @@ USBH_StatusTypeDef USBH_LL_Init(USBH_HandleTypeDef *phost)
     hhcd_USB_OTG_HS.Init.use_external_vbus = ENABLE;
     if (HAL_HCD_Init(&hhcd_USB_OTG_HS) != HAL_OK)
     {
-      Error_Handler();
+      while(1);
     }
 
     USBH_LL_SetTimer (phost, HAL_HCD_GetCurrentFrame(&hhcd_USB_OTG_HS));

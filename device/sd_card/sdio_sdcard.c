@@ -14,8 +14,7 @@ DMA_HandleTypeDef SDTxDMAHandler,SDRxDMAHandler;    //SD卡DMA发送和接收句柄
 
 //SD_ReadDisk/SD_WriteDisk函数专用buf,当这两个函数的数据缓存区地址不是4字节对齐的时候,
 //需要用到该数组,确保数据缓存区地址是4字节对齐的.
-//__align(4) u8 SDIO_DATA_BUFFER[512];
-//u8 SDIO_DATA_BUFFER[512] __attribute__ ((aligned (4)));
+u8 sdio_align_buf[512] __attribute__ ((aligned (8)));
 //SD卡初始化
 //返回值:0 初始化正确；其他值，初始化错误
 u8 SD_Init(void)
@@ -217,10 +216,22 @@ u8 SD_ReadDisk(u8* buf,u32 sector,u32 cnt)
     u8 sta=HAL_OK;
     long long lsector=sector;
 	u32 timeout=SD_TIMEOUT;
-    u8 n;
-	
-	sta=SD_ReadBlocks_DMA((uint32_t*)buf,lsector, 512,cnt);
-   
+	u32 cache_cnts = sizeof(sdio_align_buf)/512;
+    u32 mark = 0;
+
+    if ((u32)buf % 4 == 0) {
+    	sta = SD_ReadBlocks_DMA((uint32_t*)buf, lsector, 512,cnt);
+    }
+    else {//内存不是4字节对齐要处理，dma要求4字节对齐
+    	while(cnt > 0) {
+			sta = SD_ReadBlocks_DMA((uint32_t*)sdio_align_buf, lsector, 512, cache_cnts);
+			if (sta != 0) break; //错误跳出
+			memcpy(buf+mark, sdio_align_buf, sizeof(sdio_align_buf));
+			lsector += cache_cnts*512;
+			mark += cache_cnts*512;
+			cnt -= cache_cnts;
+    	}
+    }
     return sta;
 }  
 
@@ -229,15 +240,28 @@ u8 SD_ReadDisk(u8* buf,u32 sector,u32 cnt)
 //sector:扇区地址
 //cnt:扇区个数	
 //返回值:错误状态;0,正常;其他,错误代码;	
+
 u8 SD_WriteDisk(u8 *buf,u32 sector,u32 cnt)
 {   
     u8 sta=HAL_OK;
+    u32 cache_cnts = sizeof(sdio_align_buf)/512;
     long long lsector=sector;
 	u32 timeout=SD_TIMEOUT;
-    u8 n;
-
-	sta=SD_WriteBlocks_DMA((uint32_t*)buf,lsector,512,cnt);//多个sector的写操作
-
+	u32 mark = 0;
+    if ((u32)buf % 4) {
+    	while (cnt > 0) {
+    		memcpy(sdio_align_buf, buf+mark, sizeof(sdio_align_buf));
+    		//写dma必须4字节对齐
+    		sta = SD_WriteBlocks_DMA((uint32_t*)sdio_align_buf, lsector, 512, cache_cnts);//多个sector的写操作
+    		if (sta != 0) break; //错误跳出
+    		cnt -= cache_cnts;
+    		mark += cache_cnts*512;
+    		lsector += cache_cnts*512;
+    	}
+    }
+    else {
+    	sta = SD_WriteBlocks_DMA((uint32_t*)buf,lsector,512,cnt);//多个sector的写操作
+    }
     return sta;
 } 
 

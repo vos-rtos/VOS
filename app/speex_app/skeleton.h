@@ -15,6 +15,7 @@ extern "C" {
 #endif
 
 #include <ogg/ogg.h>
+#include "ff.h"
 
 #define SKELETON_VERSION_MAJOR 3
 #define SKELETON_VERSION_MINOR 0
@@ -63,7 +64,7 @@ extern fisbone_packet fisbone_from_ogg(ogg_packet *op);
 extern int add_fishead_to_stream(ogg_stream_state *os, fishead_packet *fp);
 extern int add_fisbone_to_stream(ogg_stream_state *os, fisbone_packet *fp);
 extern int add_eos_packet_to_stream(ogg_stream_state *os);
-extern int flush_ogg_stream_to_file(ogg_stream_state *os, FILE *out);
+extern int flush_ogg_stream_to_file(ogg_stream_state *os, FIL *out);
 
 #ifdef __cplusplus
 }

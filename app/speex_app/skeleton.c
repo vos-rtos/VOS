@@ -10,13 +10,34 @@
 #include <ogg/ogg.h>
 
 #include "skeleton.h"
+#include "ff.h"
+#include "vos.h"
 
 /* write an ogg_page to a file pointer */
 int write_ogg_page_to_file(ogg_page *og, FILE *out) {
    int written;
-
-   written = fwrite(og->header,1, og->header_len, out);
-   written += fwrite(og->body,1, og->body_len, out);
+   u32 num;
+   FRESULT res;
+   u32 mark = 0;
+   while(1) {
+	   res = f_write (out, og->header+mark, og->header_len-mark, &num);
+	   if (res == 0 && num > 0) {
+		   mark += num;
+	   }
+	   if (mark >= og->header_len) break;
+   }
+   written = mark;
+   mark = 0;
+   while (1) {
+	   res = f_write (out, og->body+mark, og->body_len-mark, &num);
+	   if (res == 0 && num > 0) {
+		   mark += num;
+	   }
+	   if (mark >= og->body_len) break;
+   }
+   written += mark;
+//   written = fwrite(og->header,1, og->header_len, out);
+//   written += fwrite(og->body,1, og->body_len, out);
 
    return written;
 }
@@ -33,7 +54,7 @@ int add_message_header_field(fisbone_packet *fp,
         int new_size = (fp->current_header_size + this_message_size) * sizeof(char);
         fp->message_header_fields = _ogg_realloc(fp->message_header_fields, new_size);
     }
-    snprintf(fp->message_header_fields + fp->current_header_size,
+    rpl_snprintf(fp->message_header_fields + fp->current_header_size,
                 this_message_size+1,
                 "%s: %s\r\n",
                 header_key,
@@ -171,7 +192,7 @@ int add_eos_packet_to_stream(ogg_stream_state *os) {
     return 0;
 }
 
-int flush_ogg_stream_to_file(ogg_stream_state *os, FILE *out) {
+int flush_ogg_stream_to_file(ogg_stream_state *os, FIL *out) {
 
     ogg_page og;
     int result;

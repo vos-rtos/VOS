@@ -18,6 +18,7 @@
 #include "vtype.h"
 #include "vlist.h"
 #include "verror.h"
+#include "vheap.h"
 
 
 enum {

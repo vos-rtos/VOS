@@ -11,6 +11,8 @@
 
 #include "vtype.h"
 
+struct StVMemHeap;
+
 void VHeapMgrInit();
 void VHeapMgrAdd(struct StVMemHeap *pheap);
 void VHeapMgrDel(struct StVMemHeap *pheap);

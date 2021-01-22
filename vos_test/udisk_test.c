@@ -3,6 +3,43 @@
 char USBHPath[4];   /* USBH logical drive path */
 FATFS USBDISKFatFs;           /* File system object for USB disk logical drive */
 
+
+static long long speex_stack[8*1024];//__attribute__ ((section(".bss.CCMRAM")));
+
+static void task_speex_codec(void *param)
+{
+#if 0
+	int test_enc(int argc, char **argv);
+	char *argv[4] = {
+				"xxx",
+				"0:/aaa.wav",
+				"0:/aaa.data",
+				"0:/aaa.spx",
+		};
+	test_enc(4, argv);
+#endif
+#if 1
+	int speexenc_test(int argc, char **argv);
+	char *argv[3] = {
+			"xxx",
+			"0:/aaa.wav",
+			"0:/aaa.spx",
+	};
+	speexenc_test(3, argv);
+#endif
+#if 0
+	int speex_dec(int argc, char **argv);
+	char *argv_dec[3] = {
+			"xxx",
+			"0:/kkk.spx",
+			"0:/zzz.wav",
+	};
+	speex_dec(3, argv_dec);
+#endif
+	while (1)  {VOSTaskDelay(5*1000);}
+}
+
+
 static u8 buf[512*16] __attribute__ ((aligned (4)));
 void fatfs_udisk_test()
 {
@@ -23,6 +60,10 @@ void fatfs_udisk_test()
 	{
 		return;
 	}
+
+	s32 task_id;
+	task_id = VOSTaskCreate(task_speex_codec, 0, speex_stack, sizeof(speex_stack), TASK_PRIO_REAL, "speex_codec");
+	while (1)  {VOSTaskDelay(5*1000);}
 
     for (i=0; i<sizeof(buf); i++) {
     	buf[i] = 'a'+i%26;

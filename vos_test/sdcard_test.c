@@ -48,7 +48,7 @@ void sd_test_test()
 	{
 		dumphex(buf, 512);
 	}
-	vfree(0,buf);
+	vfree(buf);
 }
 
 void show_sdcard_info(void)
