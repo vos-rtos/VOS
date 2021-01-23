@@ -37,7 +37,7 @@ volatile u32 VOSCtxSwtFlag = 0; //是否切换上下文，这个标志在执行完上下文切换后清
 volatile u32 vos_dis_irq_counter = 0;//记录调用irq disable层数
 
 
-long long stack_idle[1024];
+long long stack_idle[128];
 
 u32 gArrPrioBitMap[MAX_VOS_TASK_PRIO_NUM/8/4]; //每bit置位代表优先级数值
 u8  gArrPrio2Taskid[MAX_VOS_TASK_PRIO_NUM]; //通过优先级查找第一个相同优先级的链表头任务

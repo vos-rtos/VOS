@@ -759,13 +759,13 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
             SetConsoleTitle(percents);
 #endif
         }
-
+#if 1
         if ((frameInfo.error == 0) && (frameInfo.samples > 0) && (!adts_out))
         {
             if (write_audio_file(aufile, sample_buffer, frameInfo.samples, 0) == 0)
                 break;
         }
-
+#endif
         /* fill buffer */
         fill_buffer(&b);
 

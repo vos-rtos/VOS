@@ -93,12 +93,6 @@ void __attribute__((weak,noreturn)) abort(void)
 *********************************************************************************************************/
 extern void SystemClock_Config();
 
-struct StVMemHeap *gCcramHeapPtr = 0;
-struct StVMemHeap *GetCCRamHeapHandle()
-{
-	return gCcramHeapPtr;
-}
-
 void __attribute__ ((section(".after_vectors")))
 vos_start(void)
 {
@@ -115,11 +109,11 @@ vos_start(void)
 	irq_save = __vos_irq_save();
 
 	VHeapMgrInit();
-
-//	创建CCRAM系统堆，dma不能访问，做专用堆，给编码和解码器使用
-	gCcramHeapPtr = VMemBuild((u8*)&_Heap_ccmram_Begin, (u32)&_Heap_ccmram_Limit-(u32)&_Heap_ccmram_Begin,
-			1024, 8, VHEAP_ATTR_PRIV/*VHEAP_ATTR_SYS*/, "vos_sys_ccram_heap", 1);//启动slab分配器
-
+#if 0
+//	//创建CCRAM系统堆，dma不能访问，做专用堆，给编码和解码器
+	struct StVMemHeap *pheap2 = VMemBuild((u8*)&_Heap_ccmram_Begin, (u32)&_Heap_ccmram_Limit-(u32)&_Heap_ccmram_Begin,
+			1024, 8, VHEAP_ATTR_SYS, "vos_sys_ccram_heap", 1);//启动slab分配器
+#endif
 	//创建RAM系统堆
 	struct StVMemHeap *pheap1 = VMemBuild((u8*)&_Heap_Begin, (u32)&_Heap_Limit-(u32)&_Heap_Begin,
 			1024, 8, VHEAP_ATTR_SYS, "vos_sys_ram_heap", 1);//启动slab分配器

@@ -114,12 +114,13 @@ END_UARTIN:
 
 
 
-static long long task_modem_stack[1024];
+//static long long task_modem_stack[1024];
 void at_test()
 {
 	kprintf("4G Modem AT command TEST!\r\n");
 	s32 task_id;
-	task_id = VOSTaskCreate(task_modem, 0, task_modem_stack, sizeof(task_modem_stack), TASK_PRIO_NORMAL, "task_modem");
+	void *pstack = vmalloc(1024*8);
+	task_id = VOSTaskCreate(task_modem, 0, pstack/*task_modem_stack*/, 1024*8/*sizeof(task_modem_stack)*/, TASK_PRIO_NORMAL, "task_modem");
 	while (TestExitFlagGet() == 0) {
 		VOSTaskDelay(1*1000);
 	}
