@@ -31,8 +31,9 @@ static void task_speex_codec(void *param)
 	int faad_main(int argc, char *argv[]);
 	char *argv[3] = {
 			"xxx",
-			"-o0:/xxx.wav",
-			"0:/aaa.aac",
+			"-o0:/yyy.wav",
+//			"0:/aaa.aac",
+			"0:/ccc.aac",
 	};
 	faad_main(3, argv);
 #endif
@@ -73,7 +74,12 @@ void fatfs_udisk_test()
 	}
 
 	s32 task_id;
-	task_id = VOSTaskCreate(task_speex_codec, 0, speex_stack, sizeof(speex_stack), TASK_PRIO_REAL, "speex_codec");
+
+	task_id = VOSTaskCreate(task_speex_codec, 0, speex_stack,
+			sizeof(speex_stack), TASK_PRIO_REAL, "speex_codec");
+	//void *pxxxx = vmalloc(48*1024);
+//	task_id = VOSTaskCreate(task_speex_codec, 0, pxxxx/*speex_stack*/,
+//			48*1024/*sizeof(speex_stack)*/, TASK_PRIO_REAL, "speex_codec");
 	while (1)  {VOSTaskDelay(5*1000);}
 
     for (i=0; i<sizeof(buf); i++) {

@@ -114,17 +114,19 @@ vos_start(void)
 	struct StVMemHeap *pheap2 = VMemBuild((u8*)&_Heap_ccmram_Begin, (u32)&_Heap_ccmram_Limit-(u32)&_Heap_ccmram_Begin,
 			1024, 8, VHEAP_ATTR_SYS, "vos_sys_ccram_heap", 1);//启动slab分配器
 #endif
-	//创建RAM系统堆
-	struct StVMemHeap *pheap1 = VMemBuild((u8*)&_Heap_Begin, (u32)&_Heap_Limit-(u32)&_Heap_Begin,
-			1024, 8, VHEAP_ATTR_SYS, "vos_sys_ram_heap", 1);//启动slab分配器
 
 #if USE_USB_FS
-#if !defined(DATA_IN_ExtSRAM)
+#if !defined(DATA_IN_ExtSRAM)  //先装ext sram, 后装sram, sram留给aac解码malloc用
 	ExSRamInit();
 	struct StVMemHeap *pheap3 = VMemBuild(ExSRamGetBaseAddr(), ExSRamGetTotalSize(),
 			1024, 8, VHEAP_ATTR_SYS, "vos_sys_exsram_heap", 1);//启动slab分配器);
 #endif
 #endif
+
+	//创建RAM系统堆
+	struct StVMemHeap *pheap1 = VMemBuild((u8*)&_Heap_Begin, (u32)&_Heap_Limit-(u32)&_Heap_Begin,
+			1024, 8, VHEAP_ATTR_SYS, "vos_sys_ram_heap", 1);//启动slab分配器
+
 	VOSSemInit();
 	VOSMutexInit();
 	VOSMsgQueInit();
@@ -137,9 +139,9 @@ vos_start(void)
 
 	VOSShellInit();
 
-	void *main_stack = vmalloc(1024*16);//vmalloc(1024*32);
+	void *main_stack = vmalloc(1024*8);//vmalloc(1024*32);
 	if (main_stack) {
-		code = VOSTaskCreate(main, 0, main_stack, 1024*16, TASK_PRIO_NORMAL, "main");
+		code = VOSTaskCreate(main, 0, main_stack, 1024*8, TASK_PRIO_NORMAL, "main");
 	}
 	__vos_irq_restore(irq_save);
 

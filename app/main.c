@@ -67,27 +67,19 @@ int enhancer_main(int argc, char *argv[]);
 int mask_main(int argc, char *argv[]);
 int minutia_main(int argc, char *argv[]);
 
-//clock_t _times(struct tms* tms) {
-//    return (clock_t)-1;
-//}
-
-
-
 void main(void *param)
 {
+
 	s32 res;
 	s8 buf[100];
 	uart_open(0, 115200, 8, "none", 1);
 // 	uart_open(2, 115200, 8, "none", 1);
-
-
 
 	kprintf("VOS startup!\r\n");
  	//test_ttp229();
 
 //	void NRF24L01_TEST();
 //	NRF24L01_TEST();
-
 
 #if DEF_MP3_DEC
 	s32 mp3_dec_init();

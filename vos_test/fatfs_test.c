@@ -118,7 +118,8 @@ static void task_speex_codec(void *param)
 	char *argv[3] = {
 			"xxx",
 			"-o0:/xxx.wav",
-			"0:/aaa.aac",
+//			"0:/aaa.aac",
+			"0:/ccc.aac",
 	};
 	faad_main(3, argv);
 #endif
@@ -135,6 +136,7 @@ static void task_speex_codec(void *param)
 #endif
 	while (1)  {VOSTaskDelay(5*1000);}
 }
+
 
 static u8 buf[512*4] __attribute__ ((aligned (4)));
 void fatfs_sddisk_test()

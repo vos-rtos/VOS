@@ -213,7 +213,7 @@ static void auto_correlation(sbr_info *sbr, acorr_coef *ac,
 
 
 #ifdef FIXED_POINT
-    mask = 0;
+    uint32_t mask = 0;
 
     for (j = (offset-2); j < (len + offset); j++)
     {

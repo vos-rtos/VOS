@@ -176,6 +176,14 @@ void *faad_malloc(size_t size)
 {
 #if 0 // defined(_WIN32) && !defined(_WIN32_WCE)
     return _aligned_malloc(size, 16);
+#elif VOS
+    void *p = vmalloc_spec(size, "vos_sys_ram_heap");
+    if (!p) {
+    	return malloc(size);
+    }
+    else {
+    	return p;
+    }
 #else   // #ifdef 0
     return malloc(size);
 #endif  // #ifdef 0

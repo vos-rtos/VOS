@@ -289,3 +289,24 @@ void *VHeapMgrGetPageBaseAddr(void *any_addr, u8 *heap_name, s32 len)
 	return ptr;
 }
 
+void *vmalloc_spec(u32 size, s8 *heap_name)
+{
+	void *ptr = 0;
+	struct list_head *list;
+	struct StVMemHeap *pheap = 0;
+	VHEAP_LOCK();
+	list_for_each(list, &gVheapMgr.heap) {
+		pheap = list_entry(list, struct StVMemHeap, list_heap);
+		if (strcmp(heap_name, pheap->name) == 0) {
+			if (pheap->heap_attr == VHEAP_ATTR_SYS &&
+					(ptr = VMemMalloc(pheap, size, 0))) {//通用堆里分配
+				break;
+			}
+		}
+	}
+	VHEAP_UNLOCK();
+	if (ptr==0) {
+		kprintf("vmalloc=NULL(%d)!\r\n", size);
+	}
+	return ptr;
+}

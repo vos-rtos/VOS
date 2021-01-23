@@ -25,4 +25,6 @@ void vfree(void *ptr);
 void *vrealloc(void *ptr, u32 size);
 void *vcalloc(u32 nitems, u32 size);
 
+void *vmalloc_spec(u32 size, s8 *heap_name); //指定某个通用堆里分配内存，vfree同用一个
+
 #endif
