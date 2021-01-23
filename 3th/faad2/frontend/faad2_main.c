@@ -312,7 +312,7 @@ static void print_channel_info(NeAACDecFrameInfo *frameInfo)
     int i;
     long channelMask = aacChannelConfig2wavexChannelMask(frameInfo);
 
-    kprintf("  ---------------------\n");
+    kprintf("  ---------------------\r\n");
     if (frameInfo->num_lfe_channels > 0)
     {
         kprintf(" | Config: %2d.%d Ch     |", frameInfo->channels-frameInfo->num_lfe_channels, frameInfo->num_lfe_channels);
@@ -320,22 +320,22 @@ static void print_channel_info(NeAACDecFrameInfo *frameInfo)
         kprintf(" | Config: %2d Ch       |", frameInfo->channels);
     }
     if (channelMask)
-        kprintf(" WARNING: channels are reordered according to\n");
+        kprintf(" WARNING: channels are reordered according to\r\n");
     else
-        kprintf("\n");
+        kprintf("\r\n");
     kprintf("  ---------------------");
     if (channelMask)
-        kprintf("  MS defaults defined in WAVE_FORMAT_EXTENSIBLE\n");
+        kprintf("  MS defaults defined in WAVE_FORMAT_EXTENSIBLE\r\n");
     else
-        kprintf("\n");
-    kprintf(" | Ch |    Position    |\n");
-    kprintf("  ---------------------\n");
+        kprintf("\r\n");
+    kprintf(" | Ch |    Position    |\r\n");
+    kprintf("  ---------------------\r\n");
     for (i = 0; i < frameInfo->channels; i++)
     {
-        kprintf(" | %.2d | %-14s |\n", i, position2string((int)frameInfo->channel_position[i]));
+        kprintf(" | %.2d | %-14s |\r\n", i, position2string((int)frameInfo->channel_position[i]));
     }
-    kprintf("  ---------------------\n");
-    kprintf("\n");
+    kprintf("  ---------------------\r\n");
+    kprintf("\r\n");
 }
 
 static int FindAdtsSRIndex(int sr)
@@ -413,40 +413,40 @@ static const char *file_ext[] =
 
 static void usage(void)
 {
-    kprintf("\nUsage:\n");
-    kprintf("%s [options] infile.aac\n", progName);
-    kprintf("Options:\n");
-    kprintf(" -h    Shows this help screen.\n");
-    kprintf(" -i    Shows info about the input file.\n");
-    kprintf(" -a X  Write MPEG-4 AAC ADTS output file.\n");
-    kprintf(" -t    Assume old ADTS format.\n");
-    kprintf(" -o X  Set output filename.\n");
-    kprintf(" -f X  Set output format. Valid values for X are:\n");
-    kprintf("        1:  Microsoft WAV format (default).\n");
-    kprintf("        2:  RAW PCM data.\n");
-    kprintf(" -b X  Set output sample format. Valid values for X are:\n");
-    kprintf("        1:  16 bit PCM data (default).\n");
-    kprintf("        2:  24 bit PCM data.\n");
-    kprintf("        3:  32 bit PCM data.\n");
-    kprintf("        4:  32 bit floating point data.\n");
-    kprintf("        5:  64 bit floating point data.\n");
-    kprintf(" -s X  Force the samplerate to X (for RAW files).\n");
-    kprintf(" -l X  Set object type. Supported object types:\n");
-    kprintf("        1:  Main object type.\n");
-    kprintf("        2:  LC (Low Complexity) object type.\n");
-    kprintf("        4:  LTP (Long Term Prediction) object type.\n");
-    kprintf("        23: LD (Low Delay) object type.\n");
-    kprintf(" -d    Down matrix 5.1 to 2 channels\n");
-    kprintf(" -w    Write output to stdio instead of a file.\n");
-    kprintf(" -g    Disable gapless decoding.\n");
-    kprintf(" -q    Quiet - suppresses status messages.\n");
-    kprintf(" -j X  Jump - start output X seconds into track (MP4 files only).\n");
-    kprintf("Example:\n");
-    kprintf("       %s infile.aac\n", progName);
-    kprintf("       %s infile.mp4\n", progName);
-    kprintf("       %s -o outfile.wav infile.aac\n", progName);
-    kprintf("       %s -w infile.aac > outfile.wav\n", progName);
-    kprintf("       %s -a outfile.aac infile.aac\n", progName);
+    kprintf("\nUsage:\r\n");
+    kprintf("%s [options] infile.aac\r\n", progName);
+    kprintf("Options:\r\n");
+    kprintf(" -h    Shows this help screen.\r\n");
+    kprintf(" -i    Shows info about the input file.\r\n");
+    kprintf(" -a X  Write MPEG-4 AAC ADTS output file.\r\n");
+    kprintf(" -t    Assume old ADTS format.\r\n");
+    kprintf(" -o X  Set output filename.\r\n");
+    kprintf(" -f X  Set output format. Valid values for X are:\r\n");
+    kprintf("        1:  Microsoft WAV format (default).\r\n");
+    kprintf("        2:  RAW PCM data.\r\n");
+    kprintf(" -b X  Set output sample format. Valid values for X are:\r\n");
+    kprintf("        1:  16 bit PCM data (default).\r\n");
+    kprintf("        2:  24 bit PCM data.\r\n");
+    kprintf("        3:  32 bit PCM data.\r\n");
+    kprintf("        4:  32 bit floating point data.\r\n");
+    kprintf("        5:  64 bit floating point data.\r\n");
+    kprintf(" -s X  Force the samplerate to X (for RAW files).\r\n");
+    kprintf(" -l X  Set object type. Supported object types:\r\n");
+    kprintf("        1:  Main object type.\r\n");
+    kprintf("        2:  LC (Low Complexity) object type.\r\n");
+    kprintf("        4:  LTP (Long Term Prediction) object type.\r\n");
+    kprintf("        23: LD (Low Delay) object type.\r\n");
+    kprintf(" -d    Down matrix 5.1 to 2 channels\r\n");
+    kprintf(" -w    Write output to stdio instead of a file.\r\n");
+    kprintf(" -g    Disable gapless decoding.\r\n");
+    kprintf(" -q    Quiet - suppresses status messages.\r\n");
+    kprintf(" -j X  Jump - start output X seconds into track (MP4 files only).\r\n");
+    kprintf("Example:\r\n");
+    kprintf("       %s infile.aac\r\n", progName);
+    kprintf("       %s infile.mp4\r\n", progName);
+    kprintf("       %s -o outfile.wav infile.aac\r\n", progName);
+    kprintf("       %s -w infile.aac > outfile.wav\r\n", progName);
+    kprintf("       %s -a outfile.aac infile.aac\r\n", progName);
     return;
 }
 
@@ -493,7 +493,7 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
         res = f_open(&adtsFile, adts_fn, FA_WRITE | FA_CREATE_ALWAYS);
         if (res)
         {
-            kprintf("Error opening file: %s\n", adts_fn);
+            kprintf("Error opening file: %s\r\n", adts_fn);
             return 1;
         }
     }
@@ -508,7 +508,7 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
         if (res)
         {
             /* unable to open file */
-            kprintf("Error opening file: %s\n", aacfile);
+            kprintf("Error opening file: %s\r\n", aacfile);
             return 1;
         }
     }
@@ -522,7 +522,7 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
 #endif
     if (retval )
     {
-        kprintf("Input not seekable %s\n", aacfile);
+        kprintf("Input not seekable %s\r\n", aacfile);
         fileread = -1;
         streaminput = 1;
     } else {
@@ -534,7 +534,7 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
 
     if (!(b.buffer = (unsigned char*)vmalloc(FAAD_MIN_STREAMSIZE*MAX_CHANNELS)))
     {
-        kprintf("Memory allocation error\n");
+        kprintf("Memory allocation error\r\n");
         return 0;
     }
     memset(b.buffer, 0, FAAD_MIN_STREAMSIZE*MAX_CHANNELS);
@@ -596,7 +596,7 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
             bytes_per_frame = (float)frame_length/(float)(1000);
             bitrate = (int)(8. * bytes_per_frame * frames_per_sec + 0.5);
             length = 1;
-            kprintf("Streamed input format  samplerate %d channels %d.\n", samplerate, channels);
+            kprintf("Streamed input format  samplerate %d channels %d.\r\n", samplerate, channels);
         } else {
             adts_parse(&b, &bitrate, &length);
 //            fseek(b.infile, tagsize, SEEK_SET);
@@ -641,7 +641,7 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
         b.bytes_into_buffer, &samplerate, &channels)) < 0)
     {
         /* If some error initializing occured, skip the file */
-        kprintf("Error initializing decoder library.\n");
+        kprintf("Error initializing decoder library.\r\n");
         if (b.buffer)
             vfree(b.buffer);
         NeAACDecClose(hDecoder);
@@ -653,18 +653,18 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
     fill_buffer(&b);
 
     /* print AAC file info */
-    kprintf("%s file info:\n", aacfile);
+    kprintf("%s file info:\r\n", aacfile);
     switch (header_type)
     {
     case 0:
-        kprintf("RAW\n\n");
+        kprintf("RAW\r\n");
         break;
     case 1:
-        kprintf("ADTS, %.3f sec, %d kbps, %d Hz\n\n",
+        kprintf("ADTS, %.3f sec, %d kbps, %d Hz\r\n",
             length, bitrate, samplerate);
         break;
     case 2:
-        kprintf("ADIF, %.3f sec, %d kbps, %d Hz\n\n",
+        kprintf("ADIF, %.3f sec, %d kbps, %d Hz\r\n",
             length, bitrate, samplerate);
         break;
     }
@@ -678,7 +678,8 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
             vfree(b.buffer);
         return 0;
     }
-
+    u32 time_mark =  VOSGetTimeMs();
+    kprintf("aac decoder start ...\r\n");
     do
     {
         sample_buffer = NeAACDecDecode(hDecoder, &frameInfo,
@@ -712,7 +713,7 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
 
         if (frameInfo.error > 0)
         {
-            kprintf("Error: %s\n",
+            kprintf("Error: %s\r\n",
                 NeAACDecGetErrorMessage(frameInfo.error));
         }
 
@@ -743,7 +744,7 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
                     return 0;
                 }
             } else {
-                kprintf("Writing output MPEG-4 AAC ADTS file.\n\n");
+                kprintf("Writing output MPEG-4 AAC ADTS file.\r\n");
             }
             first_time = 0;
         }
@@ -752,8 +753,8 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
         if (percent > old_percent)
         {
             old_percent = percent;
-            snprintf(percents, MAX_PERCENTS, "%d%% decoding %s.", percent, aacfile);
-            kprintf("%s\r", percents);
+            rpl_snprintf(percents, MAX_PERCENTS, "%d%% decoding %s.", percent, aacfile);
+            kprintf("%s\r\n", percents);
 #ifdef _WIN32
             SetConsoleTitle(percents);
 #endif
@@ -774,10 +775,10 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
     } while (sample_buffer != NULL);
 
     NeAACDecClose(hDecoder);
-
+    kprintf("spends (%d ms)!\r\n;", (u32)(VOSGetTimeMs()-time_mark));
 //    if (adts_out == 1)
 //    {
-        f_close(&adtsFile);
+//        f_close(&adtsFile);
 //    }
 //
 //    if (b.infile != stdin)
@@ -833,7 +834,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
     unsigned decoded;
 
     if (strcmp(mp4file, "-") == 0 ) {
-        kprintf("Cannot open stdin for MP4 input \n");
+        kprintf("Cannot open stdin for MP4 input \r\n");
         return 1;
     }
 
@@ -845,7 +846,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
     if (mp4read_open(mp4file))
     {
         /* unable to open file */
-        kprintf("Error opening file: %s\n", mp4file);
+        kprintf("Error opening file: %s\r\n", mp4file);
         return 1;
     }
 
@@ -864,7 +865,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
         res = f_open(&adtsFile, adts_fn, FA_WRITE | FA_CREATE_ALWAYS);
         if (res)
         {
-            kprintf("Error opening file: %s\n", adts_fn);
+            kprintf("Error opening file: %s\r\n", adts_fn);
             return 1;
         }
     }
@@ -873,7 +874,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
                     &samplerate, &channels) < 0)
     {
         /* If some error initializing occured, skip the file */
-        kprintf("Error initializing decoder library.\n");
+        kprintf("Error initializing decoder library.\r\n");
         NeAACDecClose(hDecoder);
         mp4read_close();
         return 1;
@@ -893,7 +894,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
     }
 
     /* print some mp4 file info */
-    kprintf("%s file info:\n\n", mp4file);
+    kprintf("%s file info:\r\n", mp4file);
     {
         char *tag = NULL, *item = NULL;
         /*int k, j;*/
@@ -903,7 +904,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
 
         *song_length = seconds;
 
-        kprintf("%s\t%.3f secs, %d ch, %d Hz\n\n", ot[(mp4ASC.objectTypeIndex > 5)?0:mp4ASC.objectTypeIndex],
+        kprintf("%s\t%.3f secs, %d ch, %d Hz\r\n", ot[(mp4ASC.objectTypeIndex > 5)?0:mp4ASC.objectTypeIndex],
             seconds, mp4ASC.channelsConfiguration, mp4ASC.samplingFrequency);
     }
 
@@ -955,7 +956,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
 
         if (dur > framesize)
         {
-            kprintf("Warning: excess frame detected in MP4 file.\n");
+            kprintf("Warning: excess frame detected in MP4 file.\r\n");
             dur = framesize;
         }
 
@@ -1007,7 +1008,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
         {
             old_percent = percent;
             snprintf(percents, MAX_PERCENTS, "%d%% decoding %s.", percent, mp4file);
-            kprintf("%s\r", percents);
+            kprintf("%s\r\n", percents);
 #ifdef _WIN32
             SetConsoleTitle(percents);
 #endif
@@ -1021,7 +1022,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
 
         if (frameInfo.error > 0)
         {
-            kprintf("Warning: %s\n",
+            kprintf("Warning: %s\r\n",
                 NeAACDecGetErrorMessage(frameInfo.error));
         }
     }
@@ -1126,7 +1127,7 @@ int faad_main(int argc, char *argv[])
                 audioFileName = (char *) vmalloc(sizeof(char) * (strlen(optarg) + 1));
                 if (audioFileName == NULL)
                 {
-                    kprintf("Error allocating memory for audioFileName.\n");
+                    kprintf("Error allocating memory for audioFileName.\r\n");
                     return 1;
                 }
                 strcpy(audioFileName, optarg);
@@ -1139,7 +1140,7 @@ int faad_main(int argc, char *argv[])
                 adtsFileName = (char *) vmalloc(sizeof(char) * (strlen(optarg) + 1));
                 if (adtsFileName == NULL)
                 {
-                    kprintf("Error allocating memory for adtsFileName.\n");
+                    kprintf("Error allocating memory for adtsFileName.\r\n");
                     return 1;
                 }
                 strcpy(adtsFileName, optarg);
@@ -1237,22 +1238,22 @@ int faad_main(int argc, char *argv[])
 
     NeAACDecGetVersion(&faad_id_string, &faad_copyright_string);
 
-    kprintf(" *********** Ahead Software MPEG-4 AAC Decoder V%s ******************\n\n", faad_id_string);
+    kprintf(" *********** Ahead Software MPEG-4 AAC Decoder V%s ******************\r\n", faad_id_string);
 #ifndef BUILD_DATE
 #define BUILD_DATE __DATE__
 #endif
-    kprintf(" Build: %s\n", BUILD_DATE);
+    kprintf(" Build: %s\r\n", BUILD_DATE);
 #undef BUILD_DATE
     kprintf("%s", faad_copyright_string);
     if (cap & FIXED_POINT_CAP)
-        kprintf(" Fixed point version\n");
+        kprintf(" Fixed point version\r\n");
     else
-        kprintf(" Floating point version\n");
-    kprintf("\n");
-    kprintf(" This program is vfree software; you can redistribute it and/or modify\n");
-    kprintf(" it under the terms of the GNU General Public License.\n");
-    kprintf("\n");
-    kprintf(" **************************************************************************\n\n");
+        kprintf(" Floating point version\r\n");
+    kprintf("\r\n");
+    kprintf(" This program is vfree software; you can redistribute it and/or modify\r\n");
+    kprintf(" it under the terms of the GNU General Public License.\r\n");
+    kprintf("\r\n");
+    kprintf(" **************************************************************************\r\n");
 
 
     /* check that we have at least two non-option arguments */
@@ -1275,7 +1276,7 @@ int faad_main(int argc, char *argv[])
     aacFileName = (char *) vmalloc(sizeof(char) * (strlen(argv[optind]) + 1));
     if (aacFileName == NULL)
     {
-        kprintf("Error allocating memory for aacFileName.\n");
+        kprintf("Error allocating memory for aacFileName.\r\n");
         return 1;
     }
     strcpy(aacFileName, argv[optind]);
@@ -1294,7 +1295,7 @@ int faad_main(int argc, char *argv[])
         audioFileName = (char *) vmalloc(sizeof(char) * (strlen(aacFileName) + strlen(file_ext[format]) + 1));
         if (audioFileName == NULL)
         {
-            kprintf("Error allocating memory for audioFileName.\n");
+            kprintf("Error allocating memory for audioFileName.\r\n");
             return 1;
         }
         strcpy(audioFileName, aacFileName);
@@ -1317,7 +1318,7 @@ int faad_main(int argc, char *argv[])
         res = f_open(&hMP4File, aacFileName, FA_READ);
         if (res)
         {
-            kprintf("Error opening file: %s\n", aacFileName);
+            kprintf("Error opening file: %s\r\n", aacFileName);
             return 1;
         }
     }
@@ -1329,7 +1330,7 @@ int faad_main(int argc, char *argv[])
 //      f_close(&hMP4File);
 
     if (bread != 8) {
-        kprintf("Error reading file.\n");
+        kprintf("Error reading file.\r\n");
         return 1;
     }
 
@@ -1337,7 +1338,7 @@ int faad_main(int argc, char *argv[])
         mp4file = 1;
 
     if (!mp4file && seekTo != 0) {
-        kprintf("Warning: can only seek in MP4 files\n");
+        kprintf("Warning: can only seek in MP4 files\r\n");
     }
 
     if (mp4file)
@@ -1378,7 +1379,7 @@ int faad_main(int argc, char *argv[])
          */
         float dec_length = (float)(VOSGetTicks() - begin)/(float)CLOCKS_PER_SEC;
 #endif
-        kprintf("Decoding %s took: %5.2f sec. %5.2fx real-time.\n", aacFileName,
+        kprintf("Decoding %s took: %5.2f sec. %5.2fx real-time.\r\n", aacFileName,
             dec_length, (dec_length > 0.01) ? (length/dec_length) : 0.);
     }
 

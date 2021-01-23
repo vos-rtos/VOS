@@ -117,7 +117,7 @@ static void task_speex_codec(void *param)
 	int faad_main(int argc, char *argv[]);
 	char *argv[3] = {
 			"xxx",
-			"-o 0:/xxx.wav",
+			"-o0:/xxx.wav",
 			"0:/aaa.aac",
 	};
 	faad_main(3, argv);
