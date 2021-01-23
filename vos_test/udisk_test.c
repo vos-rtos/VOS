@@ -4,7 +4,7 @@ char USBHPath[4];   /* USBH logical drive path */
 FATFS USBDISKFatFs;           /* File system object for USB disk logical drive */
 
 
-static long long speex_stack[4*1024];//__attribute__ ((section(".bss.CCMRAM")));
+static long long speex_stack[6*1024];//__attribute__ ((section(".bss.CCMRAM")));
 
 static void task_speex_codec(void *param)
 {

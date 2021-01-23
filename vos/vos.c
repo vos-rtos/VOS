@@ -1235,9 +1235,11 @@ s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode)
 	u32 irq_save = 0;
 	s32 i = 0;
 	s32 j = 0;
+	s32 k = 0;
 	s32 ret = 0;
 	s32 ticks_totals = 0;
 	s8 stack_status[16];
+	u32 *pstack = 0;
 	StVosTask *ptask_prio = 0;
 	struct list_head *list_prio;
 	StVosTask *ptask_prio_sub = 0;
@@ -1354,16 +1356,22 @@ s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode)
 				//打印任务信息
 				memset(stack_status, 0, sizeof(stack_status));
 				strcpy(stack_status, "正常");
-				if (arr[j].stack_ptr <= arr[j].stack_top - arr[j].stack_size) {
+
+				//从栈低开始计算，没被修改的空间，这样评估最大栈使用记录
+				pstack = (u32*)(arr[j].stack_top - arr[j].stack_size);
+				for (k=0; k<arr[j].stack_size; k=k+4) {
+					if (*pstack++ != 0x64646464) {
+						break;
+					}
+				}
+				if (k == 0) {
 					stack_left = 0;
-				}
-				else {//正常
-					stack_left = arr[j].stack_size - (arr[j].stack_top - arr[j].stack_ptr);
-				}
-				//检查栈是否被修改或溢出, 检查栈底是否0x64被修改
-				if (*(u32*)(arr[j].stack_top - arr[j].stack_size) != 0x64646464) {
 					strcpy(stack_status, "破坏"); //可能是被自己破坏或者被自己下面的变量破坏
 				}
+				else {//正常
+					stack_left = k;
+				}
+
 				if (ticks_totals==0) ticks_totals = 1; //除法分母不能为0
 				kprintf("%04d\t%03d\t%3d%%\t%08x\t%08x\t%08x\t%08x\t%s\t%s\r\n",
 						arr[j].id, arr[j].prio, (u32)(arr[j].ticks*100/ticks_totals), arr[j].stack_top,
