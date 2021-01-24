@@ -312,8 +312,9 @@ void wm8978_test()
 	WM8978_Output_Cfg(1,0);
 
 	//wav_play_song("0:/075.wav");
-	wav_play_song("0:/ccc.wav");
+	//wav_play_song("0:/ccc.wav");
 	//wav_play_song("0:/aaa.wav");
+	wav_play_song("0:/yyy.wav");
 }
 
 

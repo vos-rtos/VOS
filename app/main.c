@@ -119,6 +119,7 @@ void main(void *param)
 	while (usbh_udisk_status() != APP_STATUS_READY) {
 		VOSTaskDelay(1000);
 	}
+
 	void fatfs_udisk_test();
 	fatfs_udisk_test();
 

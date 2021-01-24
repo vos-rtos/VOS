@@ -8,6 +8,8 @@ static long long speex_stack[6*1024];
 
 static void task_speex_codec(void *param)
 {
+	//wm8978_test();
+
 #if 0
 	int test_enc(int argc, char **argv);
 	char *argv[4] = {

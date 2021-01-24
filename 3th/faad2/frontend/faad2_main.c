@@ -56,8 +56,13 @@
 #include <neaacdec.h>
 
 #include "unicode_support.h"
-#include "audio.h"
+
 #include "mp4read.h"
+#include "audio.h"
+
+#include "wm8978/audio.h"
+#define AUDIO_WM8978_PORT 1
+
 
 #ifdef HAVE_GETOPT_H
 # include <getopt.h>
@@ -450,6 +455,40 @@ static void usage(void)
     return;
 }
 
+static int my_audio_16bit(void *sample_buffer,
+                             unsigned int samples)
+{
+    int ret;
+    unsigned int i;
+    short *sample_buffer16 = (short*)sample_buffer;
+    char *data = vmalloc(samples*16*sizeof(char)/8);
+
+    for (i = 0; i < samples; i++)
+    {
+        data[i*2] = (char)(sample_buffer16[i] & 0xFF);
+        data[i*2+1] = (char)((sample_buffer16[i] >> 8) & 0xFF);
+    }
+
+	int mark = 0;
+	s32 sended = 0;
+	s32 totals = samples*(16/8);
+	while (1) {
+		sended = audio_sends(AUDIO_WM8978_PORT, &data[mark], totals-mark, 100);
+		if (sended > 0) {
+			mark += sended;
+		}
+		if (sended == 0) {
+			VOSTaskDelay(5);
+		}
+		if (mark  ==  totals) {
+			break;
+		}
+	}
+    if (data) vfree(data);
+
+    return ret;
+}
+
 static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_stdout,
                   int def_srate, int object_type, int outputFormat, int fileType,
                   int downMatrix, int infoOnly, int adts_out, int old_format,
@@ -668,6 +707,10 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
         return 0;
     }
     u32 time_mark =  VOSGetTimeMs();
+    s32 ret = audio_open(AUDIO_WM8978_PORT, AUDIO_ADC_16BIT);
+    s32 sam = 16000;
+    audio_ctrl(AUDIO_WM8978_PORT, AUDIO_OPT_AUDIO_SAMPLE, &sam, 4);
+
     kprintf("aac decoder start ...\r\n");
     do
     {
@@ -742,11 +785,15 @@ static int decodeAACfile(char *aacfile, char *sndfile, char *adts_fn, int to_std
             rpl_snprintf(percents, MAX_PERCENTS, "%d%% decoding %s.", percent, aacfile);
             kprintf("%s\r\n", percents);
         }
-#if 1
+#if 0
         if ((frameInfo.error == 0) && (frameInfo.samples > 0) && (!adts_out))
         {
             if (write_audio_file(aufile, sample_buffer, frameInfo.samples, 0) == 0)
                 break;
+        }
+#else//write_audio_16bit(aufile, buf + offset*2, samples);
+        if ((frameInfo.error == 0) && (frameInfo.samples > 0) && (!adts_out)){
+        	my_audio_16bit(sample_buffer, frameInfo.samples);
         }
 #endif
         /* fill buffer */
@@ -781,6 +828,8 @@ static const unsigned long srates[] =
     12000, 11025, 8000
 };
 
+
+
 static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_stdout,
                   int outputFormat, int fileType, int downMatrix, int noGapless,
                   int infoOnly, int adts_out, float *song_length, float seek_to)
@@ -814,6 +863,7 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
     unsigned int useAacLength = 1;
     unsigned int framesize;
     unsigned decoded;
+
 
     if (!quiet)
     {
