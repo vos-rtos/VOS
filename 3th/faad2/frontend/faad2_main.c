@@ -942,6 +942,10 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
         return 0;
     }
 
+    s32 ret = audio_open(AUDIO_WM8978_PORT, AUDIO_ADC_16BIT);
+    s32 sam = 16000;
+    audio_ctrl(AUDIO_WM8978_PORT, AUDIO_OPT_AUDIO_SAMPLE, &sam, 4);
+
     startSampleId = 0;
     if (seek_to > 0.1)
         startSampleId = (int64_t)(seek_to * mp4config.samplerate / framesize);
@@ -1030,13 +1034,18 @@ static int decodeMP4file(char *mp4file, char *sndfile, char *adts_fn, int to_std
             snprintf(percents, MAX_PERCENTS, "%d%% decoding %s.", percent, mp4file);
             kprintf("%s\r\n", percents);
         }
-
+#if 0
         if ((frameInfo.error == 0) && (sample_count > 0) && (!adts_out))
         {
             if (write_audio_file(aufile, sample_buffer, sample_count, delay) == 0)
                 break;
         }
-
+#else
+        if ((frameInfo.error == 0) && (sample_count > 0) && (!adts_out))
+        {
+        	my_audio_16bit(sample_buffer, sample_count);
+        }
+#endif
         if (frameInfo.error > 0)
         {
             kprintf("Warning: %s\r\n",
@@ -1308,6 +1317,10 @@ int faad_main(int argc, char *argv[])
 
     /* check for mp4 file */
 	mp4file = 0;
+#if 1
+//	aacFileName = "0:/aaa.m4a";
+	aacFileName = "0:/ccc.m4a";
+#endif
 //        hMP4File = faad_fopen(aacFileName, "rb");
 	res = f_open(&hMP4File, aacFileName, FA_READ);
 	if (res)

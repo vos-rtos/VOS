@@ -365,7 +365,7 @@ static int stszin(int size)
     if (!(mp4config.frame.ents + 1))
         return ERR_FAIL;
 
-    mp4config.frame.data = malloc(sizeof(*mp4config.frame.data)
+    mp4config.frame.data = vmalloc(sizeof(*mp4config.frame.data)
                                   * (mp4config.frame.ents + 1));
 
     if (!mp4config.frame.data)
@@ -1011,7 +1011,7 @@ static void mp4info(void)
 
 int mp4read_close(void)
 {
-#define FREE(x) if(x){free(x);x=0;}
+#define FREE(x) if(x){vfree(x);x=0;}
     FREE(mp4config.frame.data);
     FREE(mp4config.bitbuf.data);
 
@@ -1047,7 +1047,7 @@ int mp4read_open(char *name)
     }
 
     // alloc frame buffer
-    mp4config.bitbuf.data = malloc(mp4config.frame.maxsize);
+    mp4config.bitbuf.data = vmalloc(mp4config.frame.maxsize);
 
     if (!mp4config.bitbuf.data)
         goto err;

@@ -122,7 +122,7 @@ extern "C" {
   #undef ERROR_RESILIENCE
 #endif
 
-#ifndef VOS_SPEED
+#ifndef VOS_CLOSE_SBR
 #define SBR_DEC
 //#define SBR_LOW_POWER
 #define PS_DEC

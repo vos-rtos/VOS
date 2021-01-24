@@ -33,9 +33,11 @@ static void task_speex_codec(void *param)
 	int faad_main(int argc, char *argv[]);
 	char *argv[3] = {
 			"xxx",
-			"-o0:/yyy.wav",
+			"-o0:/xxx.wav",
 //			"0:/aaa.aac",
 			"0:/ccc.aac",
+//			"-w 0:/xxx.wav",
+//			"0:/aaa.m4a",
 	};
 	faad_main(3, argv);
 #endif
