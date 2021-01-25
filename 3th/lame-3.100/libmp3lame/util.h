@@ -23,6 +23,11 @@
 #ifndef LAME_UTIL_H
 #define LAME_UTIL_H
 
+
+//#ifdef HAVE_CONFIG_H
+#include <config_lame.h>
+//#endif
+
 #include "l3side.h"
 #include "id3tag.h"
 #include "lame_global_flags.h"

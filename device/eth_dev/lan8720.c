@@ -1,4 +1,5 @@
 #include "lan8720.h"
+#include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_conf.h"
 #include "usart.h"  
 

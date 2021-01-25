@@ -471,7 +471,11 @@
 #ifdef HAL_LPTIM_MODULE_ENABLED
  #include "stm32f4xx_hal_lptim.h"
 #endif /* HAL_LPTIM_MODULE_ENABLED */
-   
+
+#ifdef USE_FULL_ASSERT
+#undef USE_FULL_ASSERT
+#endif
+
 /* Exported macro ------------------------------------------------------------*/
 #ifdef  USE_FULL_ASSERT
 /**
