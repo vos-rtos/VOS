@@ -8,6 +8,14 @@ $(if $(word 1, $(do)),\
 	$(call write_objs, ${1}, $(last), ${3}, ${4}),$(info ***** $(strip ${3}) finished *****))
 endef
 
+define loop
+$(eval do=$(wordlist 1, ${1}, ${2}))\
+$(if $(word 1, $(do)),\
+	$(eval last=$(subst $(do),,${2}))\
+	$(info $(strip ${3}) $(do))\
+	$(shell ${3} $(do))\
+	$(call loop, ${1}, $(last), ${3}),$(info ***** $(strip ${3}) finished *****))
+endef
 
 define obj2file
 $(shell echo.exe "" > ${2})\
