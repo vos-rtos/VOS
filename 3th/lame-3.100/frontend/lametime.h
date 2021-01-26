@@ -24,6 +24,7 @@
 
 #include <sys/types.h>
 #include "lame.h"
+#include "ff.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -32,7 +33,7 @@ extern "C" {
 extern double GetCPUTime(void);
 extern double GetRealTime(void);
 
-extern int lame_set_stream_binary_mode(FILE * const fp);
+extern int lame_set_stream_binary_mode(FIL * const fp);
 
 #if defined(__cplusplus)
 }

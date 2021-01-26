@@ -1053,7 +1053,7 @@ presets_set(lame_t gfp, int fast, int cbr, const char *preset_name, const char *
 
         }
         else {
-            lame_version_print(Console_IO.Error_fp);
+            //lame_version_print(Console_IO.Error_fp);
             error_printf("Error: The bitrate specified is out of the valid range for this preset\n"
                          "\n"
                          "When using this mode you must enter a value between \"32\" and \"320\"\n"
@@ -1062,7 +1062,7 @@ presets_set(lame_t gfp, int fast, int cbr, const char *preset_name, const char *
         }
     }
 
-    lame_version_print(Console_IO.Error_fp);
+    //lame_version_print(Console_IO.Error_fp);
     error_printf("Error: You did not enter a valid profile and/or options with --preset\n"
                  "\n"
                  "Available profiles are:\n"
@@ -1410,36 +1410,40 @@ static int
 set_id3_albumart(lame_t gfp, char const* file_name)
 {
     int ret = -1;
-    FILE *fpi = 0;
+    FIL fpi;
     char *albumart = 0;
 
     if (file_name == 0) {
         return 0;
     }
-    fpi = lame_fopen(file_name, "rb");
-    if (!fpi) {
+    //lame_fopen(&fpi, file_name, "rb");
+    FRESULT res = f_open(&fpi, file_name, FA_READ);
+    if (1) {
         ret = 1;
     }
     else {
         size_t size;
 
-        fseek(fpi, 0, SEEK_END);
-        size = ftell(fpi);
-        fseek(fpi, 0, SEEK_SET);
-        albumart = (char *)malloc(size);
+        f_lseek(&fpi, 0);
+        size = f_tell(&fpi);
+        f_lseek(&fpi, 0);
+        albumart = (char *)vmalloc(size);
         if (!albumart) {
             ret = 2;            
         }
         else {
-            if (fread(albumart, 1, size, fpi) != size) {
+        	s32 num = 0;
+        	res = f_read (&fpi, albumart, size, &num);
+        	//if (fread(albumart, 1, size, fpi) != size) {
+        	if (num != size) {
                 ret = 3;
             }
             else {
                 ret = id3tag_set_albumart(gfp, albumart, size) ? 4 : 0;
             }
-            free(albumart);
+            vfree(albumart);
         }
-        fclose(fpi);
+        f_close(&fpi);
     }
     switch (ret) {
     case 1: error_printf("Could not find: '%s'.\n", file_name); break;
@@ -2195,7 +2199,7 @@ parse_args_(lame_global_flags * gfp, int argc, char **argv,
 
                 T_ELIF_INTERNAL_WITH_ARG("debug-file") /* switch for developing, no DOCU */
                     /* file name to print debug info into */
-                    set_debug_file(nextArg);
+                    //set_debug_file(nextArg);
 
                 T_ELSE {
                     if (!argIgnored) {
@@ -2454,7 +2458,7 @@ parse_args_(lame_global_flags * gfp, int argc, char **argv,
     }                   /* loop over args */
 
     if (!input_file) {
-        usage(Console_IO.Console_fp, ProgramName);
+        //usage(Console_IO.Console_fp, ProgramName);
         return -1;
     }
 
@@ -2617,7 +2621,7 @@ int parse_args(lame_t gfp, int argc, char **argv, char *const inPath, char *cons
     dump_argv(str_argc, str_argv);
 #endif
     ret = parse_args_(gfp, str_argc, str_argv, inPath, outPath, nogap_inPath, num_nogap);
-    free(str);
+    vfree(str);
     return ret;
 }
 

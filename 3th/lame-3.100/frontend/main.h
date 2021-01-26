@@ -88,7 +88,7 @@ extern DecoderConfig global_decoder;
 extern RawPCMConfig global_raw_pcm;
 
 
-extern FILE* lame_fopen(char const* file, char const* mode);
+//extern FILE* lame_fopen(char const* file, char const* mode);
 extern char* utf8ToConsole8Bit(const char* str);
 extern char* utf8ToLocal8Bit(const char* str);
 extern unsigned short* utf8ToUtf16(char const* str);

@@ -1,3 +1,4 @@
+#if 0
 /*
  *      mp3rtp command line frontend program
  *
@@ -267,3 +268,4 @@ lame_main(lame_t gf, int argc, char **argv)
 }
 
 /* end of mp3rtp.c */
+#endif

@@ -22,7 +22,7 @@
  */
 
 /* $Id: main.c,v 1.131 2017/08/12 18:56:15 robert Exp $ */
-
+#if 0
 //#ifdef HAVE_CONFIG_H
 #include <config_lame.h>
 //#endif
@@ -453,10 +453,10 @@ char* lame_getenv(char const* var)
     return 0;
 }
 
-int main(int argc, char *argv[])
-{
-    return c_main(argc, argv);
-}
+//int main(int argc, char *argv[])
+//{
+//    return c_main(argc, argv);
+//}
 
 #endif
 
@@ -493,3 +493,4 @@ c_main(int argc, char *argv[])
     frontend_close_console();
     return ret;
 }
+#endif

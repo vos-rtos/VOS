@@ -2399,8 +2399,8 @@ lame_init_old(lame_global_flags * gfp)
 
     gfp->mode = NOT_SET;
     gfp->original = 1;
-    gfp->samplerate_in = 44100;
-    gfp->num_channels = 2;
+    gfp->samplerate_in = 8000;//44100;
+    gfp->num_channels = 1;
     gfp->num_samples = MAX_U_32_NUM;
 
     gfp->write_lame_tag = 1;
@@ -2443,9 +2443,9 @@ lame_init_old(lame_global_flags * gfp)
     gfp->findReplayGain = 0;
     gfp->decode_on_the_fly = 0;
 
-    gfp->asm_optimizations.mmx = 1;
-    gfp->asm_optimizations.amd3dnow = 1;
-    gfp->asm_optimizations.sse = 1;
+    gfp->asm_optimizations.mmx = 0;
+    gfp->asm_optimizations.amd3dnow = 0;
+    gfp->asm_optimizations.sse = 0;
 
     gfp->preset = 0;
 

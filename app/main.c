@@ -76,6 +76,8 @@ void main(void *param)
 // 	uart_open(2, 115200, 8, "none", 1);
 
 	kprintf("VOS startup!\r\n");
+
+
  	//test_ttp229();
 
 //	void NRF24L01_TEST();

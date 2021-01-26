@@ -26,6 +26,7 @@
 //#ifdef HAVE_CONFIG_H
 #include <config_lame.h>
 //#endif
+#include "ff.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -94,10 +95,10 @@ char   *strchr(), *strrchr();
 ************************************************************************/
 
 
-static FILE *
-init_files(lame_global_flags * gf, char const *inPath, char const *outPath)
+static FIL *
+init_files(FIL *outf, lame_global_flags * gf, char const *inPath, char const *outPath)
 {
-    FILE   *outf;
+    //FILE   *outf;
     /* Mostly it is not useful to use the same input and output name.
        This test is very easy and buggy and don't recognize different names
        assigning the same file
@@ -117,7 +118,8 @@ init_files(lame_global_flags * gf, char const *inPath, char const *outPath)
         error_printf("Can't init infile '%s'\n", inPath);
         return NULL;
     }
-    if ((outf = init_outfile(outPath, lame_get_decode_only(gf))) == NULL) {
+    //if ((outf = init_outfile(outPath, lame_get_decode_only(gf))) == NULL) {
+    if ((init_outfile(outf, outPath, lame_get_decode_only(gf))) == NULL) {
         error_printf("Can't init outfile '%s'\n", outPath);
         return NULL;
     }
@@ -167,7 +169,7 @@ printInputFormat(lame_t gfp)
  * samples to skip, to (for example) compensate for the encoder delay */
 
 static int
-lame_decoder_loop(lame_t gfp, FILE * outf, char *inPath, char *outPath)
+lame_decoder_loop(lame_t gfp, FIL * outf, char *inPath, char *outPath)
 {
     short int Buffer[2][1152];
     int     i, iread;
@@ -250,7 +252,7 @@ lame_decoder_loop(lame_t gfp, FILE * outf, char *inPath, char *outPath)
     }
     /* if outf is seekable, rewind and adjust length */
     if (!global_decoder.disable_wav_header && strcmp("-", outPath)
-        && !fseek(outf, 0l, SEEK_SET))
+        && !f_lseek(outf, 0l))
         WriteWaveHeader(outf, (int) wavsize, lame_get_in_samplerate(gfp), tmp_num_channels, 16);
 
     if (dp != 0)
@@ -259,12 +261,12 @@ lame_decoder_loop(lame_t gfp, FILE * outf, char *inPath, char *outPath)
 }
 
 static int
-lame_decoder(lame_t gfp, FILE * outf, char *inPath, char *outPath)
+lame_decoder(lame_t gfp, FIL * outf, char *inPath, char *outPath)
 {
     int     ret;
 
     ret = lame_decoder_loop(gfp, outf, inPath, outPath);
-    fclose(outf);       /* close the output file */
+    f_close(outf);       /* close the output file */
     close_infile();     /* close the input file */
     return ret;
 }
@@ -325,7 +327,7 @@ print_trailing_info(lame_global_flags * gf)
 
 
 static int
-write_xing_frame(lame_global_flags * gf, FILE * outf, size_t offset)
+write_xing_frame(lame_global_flags * gf, FIL * outf, size_t offset)
 {
     unsigned char mp3buffer[LAME_MAXMP3BUFFER];
     size_t  imp3, owrite;
@@ -344,11 +346,13 @@ write_xing_frame(lame_global_flags * gf, FILE * outf, size_t offset)
         return -1;
     }
     assert( offset <= LONG_MAX );
-    if (fseek(outf, (long) offset, SEEK_SET) != 0) {
+    if (f_lseek(outf, (long) offset) != 0) {
         error_printf("fatal error: can't update LAME-tag frame!\n");
         return -1;
     }
-    owrite = fwrite(mp3buffer, 1, imp3, outf);
+    //owrite = fwrite(mp3buffer, 1, imp3, outf);
+    owrite = 0;
+    FRESULT res = f_write (outf, mp3buffer, imp3, &owrite);
     if (owrite != imp3) {
         error_printf("Error writing LAME-tag \n");
         return -1;
@@ -362,7 +366,7 @@ write_xing_frame(lame_global_flags * gf, FILE * outf, size_t offset)
 
 
 static int
-write_id3v1_tag(lame_t gf, FILE * outf)
+write_id3v1_tag(lame_t gf, FIL * outf)
 {
     unsigned char mp3buffer[128];
     size_t  imp3, owrite;
@@ -376,7 +380,9 @@ write_id3v1_tag(lame_t gf, FILE * outf)
                      sizeof(mp3buffer), imp3);
         return 0;       /* not critical */
     }
-    owrite = fwrite(mp3buffer, 1, imp3, outf);
+    //owrite = fwrite(mp3buffer, 1, imp3, outf);
+    owrite = 0;
+    FRESULT res = f_write (outf, mp3buffer, imp3, &owrite);
     if (owrite != imp3) {
         error_printf("Error writing ID3v1 tag \n");
         return 1;
@@ -386,7 +392,7 @@ write_id3v1_tag(lame_t gf, FILE * outf)
 
 
 static int
-lame_encoder_loop(lame_global_flags * gf, FILE * outf, int nogap, char *inPath, char *outPath)
+lame_encoder_loop(lame_global_flags * gf, FIL * outf, int nogap, char *inPath, char *outPath)
 {
     unsigned char mp3buffer[LAME_MAXMP3BUFFER];
     int     Buffer[2][1152];
@@ -397,10 +403,12 @@ lame_encoder_loop(lame_global_flags * gf, FILE * outf, int nogap, char *inPath, 
 
     id3v2_size = lame_get_id3v2_tag(gf, 0, 0);
     if (id3v2_size > 0) {
-        unsigned char *id3v2tag = malloc(id3v2_size);
+        unsigned char *id3v2tag = vmalloc(id3v2_size);
         if (id3v2tag != 0) {
             size_t  n_bytes = lame_get_id3v2_tag(gf, id3v2tag, id3v2_size);
-            size_t  written = fwrite(id3v2tag, 1, n_bytes, outf);
+            //size_t  written = fwrite(id3v2tag, 1, n_bytes, outf);
+            size_t  written = 0;
+            f_write (outf, id3v2tag, n_bytes, &written);
             free(id3v2tag);
             if (written != n_bytes) {
                 encoder_progress_end(gf);
@@ -413,7 +421,9 @@ lame_encoder_loop(lame_global_flags * gf, FILE * outf, int nogap, char *inPath, 
         unsigned char* id3v2tag = getOldTag(gf);
         id3v2_size = sizeOfOldTag(gf);
         if ( id3v2_size > 0 ) {
-            size_t owrite = fwrite(id3v2tag, 1, id3v2_size, outf);
+            //size_t owrite = fwrite(id3v2tag, 1, id3v2_size, outf);
+            size_t owrite = 0;
+            FRESULT res = f_write (outf, id3v2tag, id3v2_size, &owrite);
             if (owrite != id3v2_size) {
                 encoder_progress_end(gf);
                 error_printf("Error writing ID3v2 tag \n");
@@ -422,7 +432,8 @@ lame_encoder_loop(lame_global_flags * gf, FILE * outf, int nogap, char *inPath, 
         }
     }
     if (global_writer.flush_write == 1) {
-        fflush(outf);
+//        fflush(outf);
+    	f_sync(outf);
     }
 
     /* do not feed more than in_limit PCM samples in one encode call
@@ -461,7 +472,9 @@ lame_encoder_loop(lame_global_flags * gf, FILE * outf, int nogap, char *inPath, 
                         error_printf("mp3 internal error:  error code=%i\n", imp3);
                     return 1;
                 }
-                owrite = (int) fwrite(mp3buffer, 1, imp3, outf);
+                //owrite = (int) fwrite(mp3buffer, 1, imp3, outf);
+                owrite = 0;
+                f_write (outf, mp3buffer, imp3, &owrite);
                 if (owrite != imp3) {
                     error_printf("Error writing mp3 output \n");
                     return 1;
@@ -469,7 +482,8 @@ lame_encoder_loop(lame_global_flags * gf, FILE * outf, int nogap, char *inPath, 
             } while (rest > 0);
         }
         if (global_writer.flush_write == 1) {
-            fflush(outf);
+//            fflush(outf);
+        	f_sync(outf);
         }
     } while (iread > 0);
 
@@ -489,24 +503,29 @@ lame_encoder_loop(lame_global_flags * gf, FILE * outf, int nogap, char *inPath, 
 
     encoder_progress_end(gf);
 
-    owrite = (int) fwrite(mp3buffer, 1, imp3, outf);
+    //owrite = (int) fwrite(mp3buffer, 1, imp3, outf);
+    owrite = 0;
+     f_write (outf, mp3buffer, imp3, &owrite);
     if (owrite != imp3) {
         error_printf("Error writing mp3 output \n");
         return 1;
     }
     if (global_writer.flush_write == 1) {
-        fflush(outf);
+//        fflush(outf);
+        f_sync(outf);
     }
     imp3 = write_id3v1_tag(gf, outf);
     if (global_writer.flush_write == 1) {
-        fflush(outf);
+//        fflush(outf);
+        f_sync(outf);
     }
     if (imp3) {
         return 1;
     }
     write_xing_frame(gf, outf, id3v2_size);
     if (global_writer.flush_write == 1) {
-        fflush(outf);
+//        fflush(outf);
+        f_sync(outf);
     }
     if (global_ui_config.silent <= 0) {
         print_trailing_info(gf);
@@ -516,15 +535,17 @@ lame_encoder_loop(lame_global_flags * gf, FILE * outf, int nogap, char *inPath, 
 
 
 static int
-lame_encoder(lame_global_flags * gf, FILE * outf, int nogap, char *inPath, char *outPath)
+lame_encoder(lame_global_flags * gf, FIL * outf, int nogap, char *inPath, char *outPath)
 {
     int     ret;
 
     ret = lame_encoder_loop(gf, outf, nogap, inPath, outPath);
-    fclose(outf);       /* close the output file */
+    f_close(outf);       /* close the output file */
     close_infile();     /* close the input file */
     return ret;
 }
+
+
 
 
 int
@@ -534,7 +555,7 @@ lame_main(lame_t gf, int argc, char **argv)
     char    outPath[PATH_MAX + 1];
     char    nogapdir[PATH_MAX + 1];
     /* support for "nogap" encoding of up to 200 .wav files */
-#define MAX_NOGAP 200
+#define MAX_NOGAP 1//200
     int     nogapout = 0;
     int     max_nogap = MAX_NOGAP;
     char    nogap_inPath_[MAX_NOGAP][PATH_MAX + 1];
@@ -544,7 +565,8 @@ lame_main(lame_t gf, int argc, char **argv)
 
     int     ret;
     int     i;
-    FILE   *outf = NULL;
+    FIL   outf;
+
 
     lame_set_msgf(gf, &frontend_msgf);
     lame_set_errorf(gf, &frontend_errorf);
@@ -595,12 +617,12 @@ lame_main(lame_t gf, int argc, char **argv)
                   return -1;
               }
           }
-          outf = init_files(gf, nogap_inPath[0], nogap_outPath[0]);
+          init_files(&outf, gf, nogap_inPath[0], nogap_outPath[0]);
     }
     else {
-        outf = init_files(gf, inPath, outPath);
+         init_files(&outf, gf, inPath, outPath);
     }
-    if (outf == NULL) {
+    if (0) {
         close_infile();
         return -1;
     }
@@ -619,7 +641,7 @@ lame_main(lame_t gf, int argc, char **argv)
             display_bitrates(stderr);
         }
         error_printf("fatal error during initialization\n");
-        fclose(outf);
+        f_close(&outf);
         close_infile();
         return ret;
     }
@@ -630,11 +652,11 @@ lame_main(lame_t gf, int argc, char **argv)
 
     if (lame_get_decode_only(gf)) {
         /* decode an mp3 file to a .wav */
-        ret = lame_decoder(gf, outf, inPath, outPath);
+        ret = lame_decoder(gf, &outf, inPath, outPath);
     }
     else if (max_nogap == 0) {
         /* encode a single input file */
-        ret = lame_encoder(gf, outf, 0, inPath, outPath);
+        ret = lame_encoder(gf, &outf, 0, inPath, outPath);
     }
     else {
         /* encode multiple input files using nogap option */
@@ -643,8 +665,8 @@ lame_main(lame_t gf, int argc, char **argv)
             if (i > 0) {
                 /* note: if init_files changes anything, like
                    samplerate, num_channels, etc, we are screwed */
-                outf = init_files(gf, nogap_inPath[i], nogap_outPath[i]);
-                if (outf == NULL) {
+                init_files(&outf, gf, nogap_inPath[i], nogap_outPath[i]);
+                if (1) {
                     close_infile();
                     return -1;
                 }
@@ -654,8 +676,153 @@ lame_main(lame_t gf, int argc, char **argv)
             }
             lame_set_nogap_total(gf, max_nogap);
             lame_set_nogap_currentindex(gf, i);
-            ret = lame_encoder(gf, outf, use_flush_nogap, nogap_inPath[i], nogap_outPath[i]);
+            ret = lame_encoder(gf, &outf, use_flush_nogap, nogap_inPath[i], nogap_outPath[i]);
         }
     }
     return ret;
+}
+
+int
+console_printf(const char *format, ...)
+{
+    va_list args;
+    s32 num;
+    s32 new_len;
+    char *pnew = 0;
+    int     ret;
+	char temp[64];
+    va_start(args, format);
+    num = rpl_vsnprintf(temp, sizeof(temp), format, args);
+    	if (num >= sizeof(temp)) {
+    		new_len = num+1;
+    		pnew = vmalloc(new_len);
+    		if (pnew) {
+    			num = rpl_vsnprintf(pnew, new_len, format, args);
+    			vputs(pnew, num);
+    			vfree(pnew);
+    		}
+    	}
+    	else {
+    		vputs(temp, num);
+    	}
+    va_end(args);
+
+    return num;
+}
+
+int
+error_printf(const char *format, ...)
+{
+   va_list args;
+	s32 num;
+	s32 new_len;
+	char *pnew = 0;
+	int     ret;
+	char temp[64];
+	va_start(args, format);
+	num = rpl_vsnprintf(temp, sizeof(temp), format, args);
+		if (num >= sizeof(temp)) {
+			new_len = num+1;
+			pnew = vmalloc(new_len);
+			if (pnew) {
+				num = rpl_vsnprintf(pnew, new_len, format, args);
+				vputs(pnew, num);
+				vfree(pnew);
+			}
+		}
+		else {
+			vputs(temp, num);
+		}
+	va_end(args);
+
+	return num;
+}
+
+
+int
+report_printf(const char *format, ...)
+{
+    va_list args;
+    s32 num;
+    s32 new_len;
+    char *pnew = 0;
+    int     ret;
+	char temp[64];
+    va_start(args, format);
+    num = rpl_vsnprintf(temp, sizeof(temp), format, args);
+    	if (num >= sizeof(temp)) {
+    		new_len = num+1;
+    		pnew = vmalloc(new_len);
+    		if (pnew) {
+    			num = rpl_vsnprintf(pnew, new_len, format, args);
+    			vputs(pnew, num);
+    			vfree(pnew);
+    		}
+    	}
+    	else {
+    		vputs(temp, num);
+    	}
+    va_end(args);
+
+    return num;
+}
+
+void
+frontend_debugf(const char *format, va_list ap)
+{
+	char temp[256];
+	s32 num = 0;
+	num = rpl_vsnprintf(temp, sizeof(temp), format, ap);
+    vputs(temp, num);
+}
+
+void
+frontend_msgf(const char *format, va_list ap)
+{
+	char temp[256];
+	s32 num = 0;
+	num = rpl_vsnprintf(temp, sizeof(temp), format, ap);
+    vputs(temp, num);
+}
+
+void
+frontend_errorf(const char *format, va_list ap)
+{
+	char temp[256];
+	s32 num = 0;
+	num = rpl_vsnprintf(temp, sizeof(temp), format, ap);
+    vputs(temp, num);
+}
+
+
+int c_main(int argc, char *argv[])
+{
+    lame_t  gf;
+    int     ret;
+
+
+    gf = lame_init(); /* initialize libmp3lame */
+    if (NULL == gf) {
+        error_printf("fatal error during initialization\n");
+        ret = 1;
+    }
+    else {
+        ret = lame_main(gf, argc, argv);
+        lame_close(gf);
+    }
+    return ret;
+}
+
+//FIL* lame_fopen(FIL *fp, char const* file, char const* mode)
+//{
+//    return fopen(file, mode);
+//}
+
+char* lame_getenv(char const* var)
+{
+    char* str = getenv(var);
+    if (str) {
+        return strdup(str);
+    }
+    return 0;
 }

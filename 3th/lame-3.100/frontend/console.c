@@ -1,3 +1,4 @@
+#if 0
 //#ifdef HAVE_CONFIG_H
 #include <config_lame.h>
 //#endif
@@ -308,3 +309,4 @@ set_debug_file(const char *fn)
 }
 
 /* end of console.c */
+#endif

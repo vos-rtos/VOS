@@ -40,12 +40,12 @@
 
 #include <assert.h>
 #include <stdio.h>
-#include <time.h>
+//#include <time.h>
 
 #ifdef WITH_DMALLOC
 #include <dmalloc.h>
 #endif
-
+#include "ff.h"
 #include "lametime.h"
 
 #if !defined(CLOCKS_PER_SEC)
@@ -58,13 +58,13 @@ double
 GetCPUTime(void)
 {
     clock_t t;
-
-#if defined(_MSC_VER)  ||  defined(__BORLANDC__)
-    t = clock();
-#else
-    t = clock();
-#endif
-    return t / (double) CLOCKS_PER_SEC;
+    return VOSGetTimeMs()/ (double)1000.0;
+//#if defined(_MSC_VER)  ||  defined(__BORLANDC__)
+//    t = clock();
+//#else
+//    t = clock();
+//#endif
+//    return t / (double) CLOCKS_PER_SEC;
 }
 
 
@@ -112,9 +112,9 @@ GetRealTime(void)
 double
 GetRealTime(void)
 {                       /* conforming:  SVr4, SVID, POSIX, X/OPEN, BSD 4.3 */ /* BUT NOT GUARANTEED BY ANSI */
-    time_t  t;
+    u32  t;
 
-    t = time(NULL);
+    t = VOSGetTimeMs();//time(NULL);
     return (double) t;
 }
 
@@ -129,7 +129,7 @@ GetRealTime(void)
 #endif
 
 int
-lame_set_stream_binary_mode(FILE * const fp)
+lame_set_stream_binary_mode(FIL * const fp)
 {
 #if   defined __EMX__
     _fsetmode(fp, "b");

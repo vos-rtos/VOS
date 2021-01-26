@@ -1,6 +1,15 @@
 #ifndef __CONFIG_LAME_H__
 #define __CONFIG_LAME_H__
 
+#include "vos.h"
+
+#define malloc vmalloc
+#define free vfree
+#define calloc vcalloc
+#define realloc vrealloc
+
+#define TAKEHIRO_IEEE754_HACK 1
+
 /* The number of bytes in a double.  */
 #define SIZEOF_DOUBLE 8
 
@@ -14,7 +23,7 @@
 #define SIZEOF_LONG 4
 
 /* The number of bytes in a long double.  */
-#define SIZEOF_LONG_DOUBLE 12
+#define SIZEOF_LONG_DOUBLE 8
 
 /* The number of bytes in a short.  */
 #define SIZEOF_SHORT 2

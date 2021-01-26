@@ -84,6 +84,8 @@ char   *strchr(), *strrchr();
 #include "lametime.h"
 #include "console.h"
 
+#include "ff.h"
+
 #ifdef WITH_DMALLOC
 #include <dmalloc.h>
 #endif
@@ -108,11 +110,15 @@ static unsigned int uint32_high_low(unsigned char *bytes)
 }
 
 static double
-read_ieee_extended_high_low(FILE * fp)
+read_ieee_extended_high_low(FIL * fp)
 {
+	u32 num;
+	FRESULT res;
     unsigned char bytes[10];
     memset(bytes, 0, 10);
-    fread(bytes, 1, 10, fp);
+	num = 0;
+	res = f_read (fp, bytes, 10, &num);
+    //fread(bytes, 1, 10, fp);
     {
         int32_t const s = (bytes[0] & 0x80);
         int32_t const e_h = (bytes[0] & 0x7F);
@@ -141,10 +147,14 @@ read_ieee_extended_high_low(FILE * fp)
 
 
 static int
-read_16_bits_low_high(FILE * fp)
+read_16_bits_low_high(FIL * fp)
 {
+	u32 num;
+	FRESULT res;
     unsigned char bytes[2] = { 0, 0 };
-    fread(bytes, 1, 2, fp);
+	num = 0;
+	res = f_read (fp, bytes, 2, &num);
+    //fread(bytes, 1, 2, fp);
     {
         int32_t const low = bytes[0];
         int32_t const high = (signed char) (bytes[1]);
@@ -154,10 +164,14 @@ read_16_bits_low_high(FILE * fp)
 
 
 static int
-read_32_bits_low_high(FILE * fp)
+read_32_bits_low_high(FIL * fp)
 {
+	u32 num;
+	FRESULT res;
     unsigned char bytes[4] = { 0, 0, 0, 0 };
-    fread(bytes, 1, 4, fp);
+	num = 0;
+	res = f_read (fp, bytes, 4, &num);
+    //fread(bytes, 1, 4, fp);
     {
         int32_t const low = bytes[0];
         int32_t const medl = bytes[1];
@@ -168,10 +182,14 @@ read_32_bits_low_high(FILE * fp)
 }
 
 static int
-read_16_bits_high_low(FILE * fp)
+read_16_bits_high_low(FIL * fp)
 {
+	u32 num;
+	FRESULT res;
     unsigned char bytes[2] = { 0, 0 };
-    fread(bytes, 1, 2, fp);
+	num = 0;
+	res = f_read (fp, bytes, 2, &num);
+    //fread(bytes, 1, 2, fp);
     {
         int32_t const low = bytes[1];
         int32_t const high = (signed char) (bytes[0]);
@@ -180,10 +198,14 @@ read_16_bits_high_low(FILE * fp)
 }
 
 static int
-read_32_bits_high_low(FILE * fp)
+read_32_bits_high_low(FIL * fp)
 {
+	u32 num;
+	FRESULT res;
     unsigned char bytes[4] = { 0, 0, 0, 0 };
-    fread(bytes, 1, 4, fp);
+	num = 0;
+	res = f_read (fp, bytes, 4, &num);
+    //fread(bytes, 1, 4, fp);
     {
         int32_t const low = bytes[3];
         int32_t const medl = bytes[2];
@@ -194,23 +216,29 @@ read_32_bits_high_low(FILE * fp)
 }
 
 static void
-write_16_bits_low_high(FILE * fp, int val)
+write_16_bits_low_high(FIL * fp, int val)
 {
+	u32 num;
+	FRESULT res;
     unsigned char bytes[2];
     bytes[0] = (val & 0xff);
     bytes[1] = ((val >> 8) & 0xff);
-    fwrite(bytes, 1, 2, fp);
+    //fwrite(bytes, 1, 2, fp);
+    res = f_write (fp, bytes, 2, &num);
 }
 
 static void
-write_32_bits_low_high(FILE * fp, int val)
+write_32_bits_low_high(FIL * fp, int val)
 {
+	u32 num;
+	FRESULT res;
     unsigned char bytes[4];
     bytes[0] = (val & 0xff);
     bytes[1] = ((val >> 8) & 0xff);
     bytes[2] = ((val >> 16) & 0xff);
     bytes[3] = ((val >> 24) & 0xff);
-    fwrite(bytes, 1, 4, fp);
+    //fwrite(bytes, 1, 4, fp);
+    res = f_write (fp, bytes, 4, &num);
 }
 
 #ifdef LIBSNDFILE
@@ -359,7 +387,7 @@ typedef struct get_audio_global_data_struct {
     int     pcm_is_unsigned_8bit;
     int     pcm_is_ieee_float;
     unsigned int num_samples_read;
-    FILE   *music_in;
+    FIL   music_in;
     SNDFILE *snd_file;
     hip_t   hip;
     PcmBuffer pcm32;
@@ -375,22 +403,22 @@ static get_audio_global_data global;
 #ifdef AMIGA_MPEGA
 int     lame_decode_initfile(const char *fullname, mp3data_struct * const mp3data);
 #else
-int     lame_decode_initfile(FILE * fd, mp3data_struct * mp3data, int *enc_delay, int *enc_padding);
+int     lame_decode_initfile(FIL * fd, mp3data_struct * mp3data, int *enc_delay, int *enc_padding);
 #endif
 
 /* read mp3 file until mpglib returns one frame of PCM data */
-static int lame_decode_fromfile(FILE * fd, short int pcm_l[], short int pcm_r[],
+static int lame_decode_fromfile(FIL * fd, short int pcm_l[], short int pcm_r[],
                                 mp3data_struct * mp3data);
 
 
-static int read_samples_pcm(FILE * musicin, int sample_buffer[2304], int samples_to_read);
-static int read_samples_mp3(lame_t gfp, FILE * musicin, short int mpg123pcm[2][1152]);
+static int read_samples_pcm(FIL * musicin, int sample_buffer[2304], int samples_to_read);
+static int read_samples_mp3(lame_t gfp, FIL * musicin, short int mpg123pcm[2][1152]);
 #ifdef LIBSNDFILE
 static SNDFILE *open_snd_file(lame_t gfp, char const *inPath);
 #endif
-static FILE *open_mpeg_file(lame_t gfp, char const *inPath, int *enc_delay, int *enc_padding);
-static FILE *open_wave_file(lame_t gfp, char const *inPath, int *enc_delay, int *enc_padding);
-static int close_input_file(FILE * musicin);
+static FIL *open_mpeg_file(FIL *pf, lame_t gfp, char const *inPath, int *enc_delay, int *enc_padding);
+static FIL *open_wave_file(FIL *pf, lame_t gfp, char const *inPath, int *enc_delay, int *enc_padding);
+static int close_input_file(FIL * musicin);
 
 
 static  size_t
@@ -417,7 +445,7 @@ machine_byte_order(void)
 
 
 static int
-fskip(FILE * fp, long offset, int whence)
+fskip(FIL * fp, long offset, int whence)
 {
 #ifndef PIPE_BUF
     char    buffer[4096];
@@ -434,6 +462,7 @@ fskip(FILE * fp, long offset, int whence)
 #endif
 
 #ifdef S_ISFIFO
+#if 0
     /* fseek is known to fail on pipes with several C-Library implementations
        workaround: 1) test for pipe
        2) for pipes, only relatvie seeking is possible
@@ -443,7 +472,6 @@ fskip(FILE * fp, long offset, int whence)
     {
         int const fd = fileno(fp);
         struct stat file_stat;
-
         if (fstat(fd, &file_stat) == 0) {
             if (S_ISFIFO(file_stat.st_mode)) {
                 if (whence != SEEK_CUR || offset < 0) {
@@ -463,7 +491,10 @@ fskip(FILE * fp, long offset, int whence)
         }
     }
 #endif
-    if (0 == fseek(fp, offset, whence)) {
+#endif
+    //if (0 == fseek(fp, offset, whence)) {
+    if (SEEK_CUR != whence) { while(1); }
+    if (0 == f_lseek(fp, offset+fp->fptr)) {
         return 0;
     }
 
@@ -477,7 +508,9 @@ fskip(FILE * fp, long offset, int whence)
 
     while (offset > 0) {
         size_t const bytes_to_skip = min_size_t(sizeof(buffer), offset);
-        size_t const read = fread(buffer, 1, bytes_to_skip, fp);
+        size_t read = 0;
+        f_read (fp, buffer, bytes_to_skip, &read);
+        //size_t const read = fread(buffer, 1, bytes_to_skip, fp);
         if (read < 1) {
             return -1;
         }
@@ -490,29 +523,31 @@ fskip(FILE * fp, long offset, int whence)
 
 
 static  off_t
-lame_get_file_size(FILE * fp)
+lame_get_file_size(FIL * fp)
 {
     struct stat sb;
     int     fd = fileno(fp);
 
-    if (0 == fstat(fd, &sb))
-        return sb.st_size;
+//    if (0 == fstat(fd, &sb))
+//        return sb.st_size;
+    return f_size(fp);
     return (off_t) - 1;
 }
 
 
-FILE   *
-init_outfile(char const *outPath, int decode)
+FIL   *
+init_outfile(FIL *outf, char const *outPath, int decode)
 {
-    FILE   *outf;
+	FRESULT res;
+    //FIL   *outf = fp;
 
     /* open the output file */
     if (0 == strcmp(outPath, "-")) {
-        outf = stdout;
-        lame_set_stream_binary_mode(outf);
+
     }
     else {
-        outf = lame_fopen(outPath, "w+b");
+        //outf = lame_fopen(outPath, "w+b");
+        res = f_open(outf, outPath, FA_WRITE | FA_CREATE_ALWAYS);
 #ifdef __riscos__
         /* Assign correct file type */
         if (outf != NULL) {
@@ -605,12 +640,12 @@ init_infile(lame_t gfp, char const *inPath)
     global. pcm_is_unsigned_8bit = global_raw_pcm.in_signed == 1 ? 0 : 1;
     global. pcm_is_ieee_float = 0;
     global. hip = 0;
-    global. music_in = 0;
+    //global. music_in = 0;
     global. snd_file = 0;
     global. in_id3v2_size = 0;
     global. in_id3v2_tag = 0;
     if (is_mpeg_file_format(global_reader.input_format)) {
-        global. music_in = open_mpeg_file(gfp, inPath, &enc_delay, &enc_padding);
+        open_mpeg_file(&global. music_in, gfp, inPath, &enc_delay, &enc_padding);
     }
     else {
 #ifdef LIBSNDFILE
@@ -619,7 +654,7 @@ init_infile(lame_t gfp, char const *inPath)
         }
 #endif
         if (global.snd_file == 0) {
-            global. music_in = open_wave_file(gfp, inPath, &enc_delay, &enc_padding);
+            open_wave_file(&global.music_in, gfp, inPath, &enc_delay, &enc_padding);
         }
     }
     initPcmBuffer(&global.pcm32, sizeof(int));
@@ -632,7 +667,8 @@ init_infile(lame_t gfp, char const *inPath)
             lame_set_num_samples(gfp, n > discard ? n - discard : 0);
         }
     }
-    return (global.snd_file != NULL || global.music_in != NULL) ? 1 : -1;
+    //return (global.snd_file != NULL) ? 1 : -1;
+    return 1;
 }
 
 int
@@ -656,7 +692,7 @@ close_infile(void)
         global. hip = 0;
     }
 #endif
-    close_input_file(global.music_in);
+    close_input_file(&global.music_in);
 #ifdef LIBSNDFILE
     if (global.snd_file) {
         if (sf_close(global.snd_file) != 0) {
@@ -669,7 +705,7 @@ close_infile(void)
 #endif
     freePcmBuffer(&global.pcm32);
     freePcmBuffer(&global.pcm16);
-    global. music_in = 0;
+    //global. music_in = 0;
     free(global.in_id3v2_tag);
     global.in_id3v2_tag = 0;
     global.in_id3v2_size = 0;
@@ -796,9 +832,9 @@ get_audio_common(lame_t gfp, int buffer[2][1152], short buffer16[2][1152])
 
     if (is_mpeg_file_format(global_reader.input_format)) {
         if (buffer != NULL)
-            samples_read = read_samples_mp3(gfp, global.music_in, buf_tmp16);
+            samples_read = read_samples_mp3(gfp, &global.music_in, buf_tmp16);
         else
-            samples_read = read_samples_mp3(gfp, global.music_in, buffer16);
+            samples_read = read_samples_mp3(gfp, &global.music_in, buffer16);
         if (samples_read < 0) {
             return samples_read;
         }
@@ -813,7 +849,7 @@ get_audio_common(lame_t gfp, int buffer[2][1152], short buffer16[2][1152])
         }
         else {
             samples_read =
-                read_samples_pcm(global.music_in, insamp, num_channels * samples_to_read);
+                read_samples_pcm(&global.music_in, insamp, num_channels * samples_to_read);
         }
         if (samples_read < 0) {
             return samples_read;
@@ -883,7 +919,7 @@ get_audio_common(lame_t gfp, int buffer[2][1152], short buffer16[2][1152])
 
 
 static int
-read_samples_mp3(lame_t gfp, FILE * musicin, short int mpg123pcm[2][1152])
+read_samples_mp3(lame_t gfp, FIL * musicin, short int mpg123pcm[2][1152])
 {
     int     out;
 #if defined(AMIGA_MPEGA)  ||  defined(HAVE_MPGLIB)
@@ -955,14 +991,19 @@ int set_input_samplerate(lame_t gfp, int input_samplerate)
 }
 
 int
-WriteWaveHeader(FILE * const fp, int pcmbytes, int freq, int channels, int bits)
+WriteWaveHeader(FIL * fp, int pcmbytes, int freq, int channels, int bits)
 {
+	u32 num;
+	FRESULT res;
     int     bytes = (bits + 7) / 8;
 
     /* quick and dirty, but documented */
-    fwrite("RIFF", 1, 4, fp); /* label */
+    //fwrite("RIFF", 1, 4, fp); /* label */
+    num = 0;
+    res = f_write (fp, "RIFF", 4, &num);
     write_32_bits_low_high(fp, pcmbytes + 44 - 8); /* length in bytes without header */
-    fwrite("WAVEfmt ", 2, 4, fp); /* 2 labels */
+    //fwrite("WAVEfmt ", 2, 4, fp); /* 2 labels */
+    res = f_write (fp, "WAVEfmt ", 2*4, &num);
     write_32_bits_low_high(fp, 2 + 2 + 4 + 4 + 2 + 2); /* length of PCM format declaration area */
     write_16_bits_low_high(fp, 1); /* is PCM? */
     write_16_bits_low_high(fp, channels); /* number of channels */
@@ -970,10 +1011,11 @@ WriteWaveHeader(FILE * const fp, int pcmbytes, int freq, int channels, int bits)
     write_32_bits_low_high(fp, freq * channels * bytes); /* bytes per second */
     write_16_bits_low_high(fp, channels * bytes); /* bytes per sample time */
     write_16_bits_low_high(fp, bits); /* bits per sample */
-    fwrite("data", 1, 4, fp); /* label */
+    //fwrite("data", 1, 4, fp); /* label */
+    res = f_write (fp, "data", 1*4, &num);
     write_32_bits_low_high(fp, pcmbytes); /* length in bytes of raw PCM data */
 
-    return ferror(fp) ? -1 : 0;
+    return f_error(fp) ? -1 : 0;
 }
 
 
@@ -1220,8 +1262,9 @@ returns: number of samples read
 */
 static int
 unpack_read_samples(const int samples_to_read, const int bytes_per_sample,
-                    const int swap_order, int *sample_buffer, FILE * pcm_in)
+                    const int swap_order, int *sample_buffer, FIL * pcm_in)
 {
+	FRESULT res;
     int     samples_read;
     int     i;
     int    *op;              /* output pointer */
@@ -1229,7 +1272,9 @@ unpack_read_samples(const int samples_to_read, const int bytes_per_sample,
     const int b = sizeof(int) * 8;
 
     {
-        size_t  samples_read_ = fread(sample_buffer, bytes_per_sample, samples_to_read, pcm_in);
+        //size_t  samples_read_ = fread(sample_buffer, bytes_per_sample, samples_to_read, pcm_in);
+    	size_t samples_read_ = 0;
+    	res = f_read (pcm_in, sample_buffer, bytes_per_sample*samples_to_read, &samples_read_);
         assert( samples_read_ <= INT_MAX );
         samples_read = (int) samples_read_;
     }
@@ -1305,7 +1350,7 @@ unpack_read_samples(const int samples_to_read, const int bytes_per_sample,
 ************************************************************************/
 
 static int
-read_samples_pcm(FILE * musicin, int sample_buffer[2304], int samples_to_read)
+read_samples_pcm(FIL * musicin, int sample_buffer[2304], int samples_to_read)
 {
     int     samples_read;
     int     bytes_per_sample = global.pcmbitwidth / 8;
@@ -1345,7 +1390,7 @@ read_samples_pcm(FILE * musicin, int sample_buffer[2304], int samples_to_read)
     }
     samples_read = unpack_read_samples(samples_to_read, bytes_per_sample, swap_byte_order,
                                        sample_buffer, musicin);
-    if (ferror(musicin)) {
+    if (f_error(musicin)) {
         if (global_ui_config.silent < 10) {
             error_printf("Error reading input file\n");
         }
@@ -1406,7 +1451,7 @@ make_even_number_of_bytes_in_length(long x)
  *****************************************************************************/
 
 static int
-parse_wave_header(lame_global_flags * gfp, FILE * sf)
+parse_wave_header(lame_global_flags * gfp, FIL * sf)
 {
     int     format_tag = 0;
     int     channels = 0;
@@ -1578,7 +1623,7 @@ aiff_check2(IFF_AIFF * const pcm_aiff_data)
  *****************************************************************************/
 
 static int
-parse_aiff_header(lame_global_flags * gfp, FILE * sf)
+parse_aiff_header(lame_global_flags * gfp, FIL * sf)
 {
     long    chunkSize = 0, subSize = 0, typeID = 0, dataType = IFF_ID_NONE;
     IFF_AIFF aiff_info;
@@ -1641,7 +1686,8 @@ parse_aiff_header(lame_global_flags * gfp, FILE * sf)
                 /* We've found the audio data. Read no further! */
                 break;
             }
-            pcm_data_pos = ftell(sf);
+//            pcm_data_pos = ftell(sf);
+            pcm_data_pos = f_tell(sf);
             if (pcm_data_pos >= 0) {
                 pcm_data_pos += aiff_info.blkAlgn.offset;
             }
@@ -1684,7 +1730,8 @@ parse_aiff_header(lame_global_flags * gfp, FILE * sf)
         global. pcm_is_unsigned_8bit = 0;
         global. pcm_is_ieee_float = 0; /* FIXME: possible ??? */
         if (pcm_data_pos >= 0) {
-            if (fseek(sf, pcm_data_pos, SEEK_SET) != 0) {
+//            if (fseek(sf, pcm_data_pos, SEEK_SET) != 0) {
+        	  if (f_lseek(sf, pcm_data_pos) != 0) {
                 if (global_ui_config.silent < 10) {
                     error_printf("Can't rewind stream to audio data position\n");
                 }
@@ -1714,7 +1761,7 @@ parse_aiff_header(lame_global_flags * gfp, FILE * sf)
 ************************************************************************/
 
 static int
-parse_file_header(lame_global_flags * gfp, FILE * sf)
+parse_file_header(lame_global_flags * gfp, FIL * sf)
 {
 
     int     type = read_32_bits_high_low(sf);
@@ -1775,7 +1822,7 @@ parse_file_header(lame_global_flags * gfp, FILE * sf)
 
 
 static int
-open_mpeg_file_part2(lame_t gfp, FILE* musicin, char const *inPath, int *enc_delay, int *enc_padding)
+open_mpeg_file_part2(lame_t gfp, FIL* musicin, char const *inPath, int *enc_delay, int *enc_padding)
 {
 #ifdef HAVE_MPGLIB
     if (-1 == lame_decode_initfile(musicin, &global_decoder.mp3input_data, enc_delay, enc_padding)) {
@@ -1796,11 +1843,11 @@ open_mpeg_file_part2(lame_t gfp, FILE* musicin, char const *inPath, int *enc_del
 }
 
 
-static FILE *
-open_wave_file(lame_t gfp, char const *inPath, int *enc_delay, int *enc_padding)
+static FIL *
+open_wave_file(FIL *musicin, lame_t gfp, char const *inPath, int *enc_delay, int *enc_padding)
 {
-    FILE   *musicin;
-
+    //FIL   *musicin;
+    FRESULT res ;
     /* set the defaults from info incase we cannot determine them from file */
     lame_set_num_samples(gfp, MAX_U_32_NUM);
 
@@ -1808,7 +1855,9 @@ open_wave_file(lame_t gfp, char const *inPath, int *enc_delay, int *enc_padding)
         lame_set_stream_binary_mode(musicin = stdin); /* Read from standard input. */
     }
     else {
-        if ((musicin = lame_fopen(inPath, "rb")) == NULL) {
+        //if ((musicin = lame_fopen(inPath, "rb")) == NULL) {
+        res = f_open(musicin, inPath, FA_READ);
+        if (res) {
             if (global_ui_config.silent < 10) {
                 error_printf("Could not find \"%s\".\n", inPath);
             }
@@ -1863,11 +1912,11 @@ open_wave_file(lame_t gfp, char const *inPath, int *enc_delay, int *enc_padding)
 
 
 
-static FILE *
-open_mpeg_file(lame_t gfp, char const *inPath, int *enc_delay, int *enc_padding)
+static FIL *
+open_mpeg_file(FIL *musicin, lame_t gfp, char const *inPath, int *enc_delay, int *enc_padding)
 {
-    FILE   *musicin;
-
+//    FILE   *musicin;
+	 FRESULT res ;
     /* set the defaults from info incase we cannot determine them from file */
     lame_set_num_samples(gfp, MAX_U_32_NUM);
 
@@ -1876,8 +1925,9 @@ open_mpeg_file(lame_t gfp, char const *inPath, int *enc_delay, int *enc_padding)
         lame_set_stream_binary_mode(musicin); /* Read from standard input. */
     }
     else {
-        musicin = lame_fopen(inPath, "rb");
-        if (musicin == NULL) {
+    	res = f_open(musicin, inPath, FA_READ);
+        //musicin = lame_fopen(inPath, "rb");
+        if (res) {
             if (global_ui_config.silent < 10) {
                 error_printf("Could not find \"%s\".\n", inPath);
             }
@@ -1918,12 +1968,12 @@ open_mpeg_file(lame_t gfp, char const *inPath, int *enc_delay, int *enc_padding)
 
 
 static int
-close_input_file(FILE * musicin)
+close_input_file(FIL * musicin)
 {
     int     ret = 0;
 
-    if (musicin != stdin && musicin != 0) {
-        ret = fclose(musicin);
+    if (musicin) {
+        ret = f_close(musicin);
     }
     if (ret != 0) {
         if (global_ui_config.silent < 10) {
@@ -2010,7 +2060,7 @@ lenOfId3v2Tag(unsigned char const* buf)
 }
 
 int
-lame_decode_initfile(FILE * fd, mp3data_struct * mp3data, int *enc_delay, int *enc_padding)
+lame_decode_initfile(FIL * fd, mp3data_struct * mp3data, int *enc_delay, int *enc_padding)
 {
     /*  VBRTAGDATA pTagData; */
     /* int xing_header,len2,num_frames; */
@@ -2153,7 +2203,7 @@ For lame_decode1_headers():  return code
    n     number of samples output.  either 576 or 1152 depending on MP3 file.
 */
 static int
-lame_decode_fromfile(FILE * fd, short pcm_l[], short pcm_r[], mp3data_struct * mp3data)
+lame_decode_fromfile(FIL * fd, short pcm_l[], short pcm_r[], mp3data_struct * mp3data)
 {
     int     ret = 0;
     size_t  len = 0;
@@ -2212,7 +2262,7 @@ is_mpeg_file_format(int input_file_format)
 #define HIGH_BYTE(x) ((x >> 8) & 0x00ff)
 
 void
-put_audio16(FILE * outf, short Buffer[2][1152], int iread, int nch)
+put_audio16(FIL* outf, short Buffer[2][1152], int iread, int nch)
 {
     char    data[2 * 1152 * 2];
     int     i, m = 0;
@@ -2260,10 +2310,12 @@ put_audio16(FILE * outf, short Buffer[2][1152], int iread, int nch)
         }
     }
     if (m > 0) {
-        fwrite(data, 1, m, outf);
+    	u32 num = 0;
+    	f_write (outf, data, 1, &num);
+        //fwrite(data, 1, m, outf);
     }
     if (global_writer.flush_write == 1) {
-        fflush(outf);
+    	f_sync(outf);
     }
 }
 

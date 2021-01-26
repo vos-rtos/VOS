@@ -57,7 +57,7 @@
  * printf ( "blah\n") with printf ( "blah%s\n", Console_IO.str_clreoln );
  */
 
-extern Console_IO_t Console_IO;
+//extern Console_IO_t Console_IO;
 
 static struct brhist_struct {
     int     vbr_bitrate_min_index;
@@ -141,8 +141,8 @@ brhist_disp_line(int i, int br_hist_TOT, int br_hist_LR, int full, int frames)
 
     if (full != 0) {
         /* some problems when br_hist_TOT \approx br_hist_LR: You can't see that there are still MS frames */
-        barlen_TOT = (br_hist_TOT * (Console_IO.disp_width - res) + full - 1) / full; /* round up */
-        barlen_LR = (br_hist_LR * (Console_IO.disp_width - res) + full - 1) / full; /* round up */
+//        barlen_TOT = (br_hist_TOT * (Console_IO.disp_width - res) + full - 1) / full; /* round up */
+//        barlen_LR = (br_hist_LR * (Console_IO.disp_width - res) + full - 1) / full; /* round up */
     }
     else {
         barlen_TOT = barlen_LR = 0;
@@ -150,17 +150,17 @@ brhist_disp_line(int i, int br_hist_TOT, int br_hist_LR, int full, int frames)
 
     sprintf(brppt, " [%*i]", digits(frames), br_hist_TOT);
 
-    if (Console_IO.str_clreoln[0]) /* ClearEndOfLine available */
-        console_printf("\n%3d%s %.*s%.*s%s",
-                       brhist.kbps[i], brppt,
-                       barlen_LR, brhist.bar_percent,
-                       barlen_TOT - barlen_LR, brhist.bar_asterisk, Console_IO.str_clreoln);
-    else
-        console_printf("\n%3d%s %.*s%.*s%*s",
-                       brhist.kbps[i], brppt,
-                       barlen_LR, brhist.bar_percent,
-                       barlen_TOT - barlen_LR, brhist.bar_asterisk,
-                       Console_IO.disp_width - res - barlen_TOT, "");
+//    if (Console_IO.str_clreoln[0]) /* ClearEndOfLine available */
+//        console_printf("\n%3d%s %.*s%.*s%s",
+//                       brhist.kbps[i], brppt,
+//                       barlen_LR, brhist.bar_percent,
+//                       barlen_TOT - barlen_LR, brhist.bar_asterisk, Console_IO.str_clreoln);
+//    else
+//        console_printf("\n%3d%s %.*s%.*s%*s",
+//                       brhist.kbps[i], brppt,
+//                       barlen_LR, brhist.bar_percent,
+//                       barlen_TOT - barlen_LR, brhist.bar_asterisk,
+//                       Console_IO.disp_width - res - barlen_TOT, "");
 
     brhist.hist_printed_lines++;
 }
@@ -201,8 +201,8 @@ progress_line(const lame_global_flags * gf, int full, int frames)
             res += 5;
         }
         /* some problems when br_hist_TOT \approx br_hist_LR: You can't see that there are still MS frames */
-        barlen_TOT = (full * (Console_IO.disp_width - res) + full - 1) / full; /* round up */
-        barlen_COD = (frames * (Console_IO.disp_width - res) + full - 1) / full; /* round up */
+//        barlen_TOT = (full * (Console_IO.disp_width - res) + full - 1) / full; /* round up */
+//        barlen_COD = (frames * (Console_IO.disp_width - res) + full - 1) / full; /* round up */
         barlen_RST = barlen_TOT - barlen_COD;
         if (barlen_RST == 0) {
             sprintf(rst, "%.*s", res - 1, brhist.bar_coded);
@@ -211,17 +211,17 @@ progress_line(const lame_global_flags * gf, int full, int frames)
     else {
         barlen_TOT = barlen_COD = barlen_RST = 0;
     }
-    if (Console_IO.str_clreoln[0]) { /* ClearEndOfLine available */
-        console_printf("\n%.*s%s%.*s%s",
-                       barlen_COD, brhist.bar_coded,
-                       rst, barlen_RST, brhist.bar_space, Console_IO.str_clreoln);
-    }
-    else {
-        console_printf("\n%.*s%s%.*s%*s",
-                       barlen_COD, brhist.bar_coded,
-                       rst, barlen_RST, brhist.bar_space, Console_IO.disp_width - res - barlen_TOT,
-                       "");
-    }
+//    if (Console_IO.str_clreoln[0]) { /* ClearEndOfLine available */
+//        console_printf("\n%.*s%s%.*s%s",
+//                       barlen_COD, brhist.bar_coded,
+//                       rst, barlen_RST, brhist.bar_space, Console_IO.str_clreoln);
+//    }
+//    else {
+//        console_printf("\n%.*s%s%.*s%*s",
+//                       barlen_COD, brhist.bar_coded,
+//                       rst, barlen_RST, brhist.bar_space, Console_IO.disp_width - res - barlen_TOT,
+//                       "");
+//    }
     brhist.hist_printed_lines++;
 }
 
@@ -264,12 +264,12 @@ stats_line(double *stat)
     n += stats_head(stat[7], " short");
     n += stats_head(stat[8], " mixed");
     n += console_printf(" %%");
-    if (Console_IO.str_clreoln[0]) { /* ClearEndOfLine available */
-        console_printf("%s", Console_IO.str_clreoln);
-    }
-    else {
-        console_printf("%*s", Console_IO.disp_width - n, "");
-    }
+//    if (Console_IO.str_clreoln[0]) { /* ClearEndOfLine available */
+//        console_printf("%s", Console_IO.str_clreoln);
+//    }
+//    else {
+//        console_printf("%*s", Console_IO.disp_width - n, "");
+//    }
     brhist.hist_printed_lines++;
 
     n = 1;
@@ -285,12 +285,12 @@ stats_line(double *stat)
     n += stats_value(stat[6]);
     n += stats_value(stat[7]);
     n += stats_value(stat[8]);
-    if (Console_IO.str_clreoln[0]) { /* ClearEndOfLine available */
-        console_printf("%s", Console_IO.str_clreoln);
-    }
-    else {
-        console_printf("%*s", Console_IO.disp_width - n, "");
-    }
+//    if (Console_IO.str_clreoln[0]) { /* ClearEndOfLine available */
+//        console_printf("%s", Console_IO.str_clreoln);
+//    }
+//    else {
+//        console_printf("%*s", Console_IO.disp_width - n, "");
+//    }
     brhist.hist_printed_lines++;
 }
 
@@ -363,7 +363,7 @@ brhist_disp(const lame_global_flags * gf)
 void
 brhist_jump_back(void)
 {
-    console_up(brhist.hist_printed_lines);
+    //console_up(brhist.hist_printed_lines);
     brhist.hist_printed_lines = 0;
 }
 

@@ -30,6 +30,8 @@
 extern "C" {
 #endif
 
+#include "ff.h"
+
 typedef enum sound_file_format_e {
     sf_unknown,
     sf_raw,
@@ -54,9 +56,9 @@ int     get_audio_float(lame_t gfp, float buffer[2][1152]);
 int     get_audio_double(lame_t gfp, double buffer[2][1152]);
 hip_t   get_hip(void);
 
-FILE   *init_outfile(char const *outPath, int decode);
-int     WriteWaveHeader(FILE * const fp, int pcmbytes, int freq, int channels, int bits);
-void    put_audio16(FILE* outf, short Buffer[2][1152], int iread, int nch);
+FIL   *init_outfile(FIL *fp, char const *outPath, int decode);
+int     WriteWaveHeader(FIL * const fp, int pcmbytes, int freq, int channels, int bits);
+void    put_audio16(FIL* outf, short Buffer[2][1152], int iread, int nch);
 
 /*
 struct AudioReader;

@@ -229,8 +229,8 @@ encoder_progress_begin( lame_global_flags const* gf
                        strlen(inPath) + strlen(outPath) < 66 ? "" : "\n     ",
                        strcmp(outPath, "-") ? outPath : "<stdout>");
 
-        free(i_file);
-        free(o_file);
+        vfree(i_file);
+        vfree(o_file);
 
         console_printf("Encoding as %g kHz ", 1.e-3 * lame_get_out_samplerate(gf));
 
@@ -312,7 +312,7 @@ encoder_progress( lame_global_flags const* gf )
         if (global_ui_config.brhist) {
             brhist_disp(gf);
         }
-        console_flush();
+        //console_flush();
     }
 }
 
@@ -426,8 +426,8 @@ decoder_progress(DecoderProgress dp, const mp3data_struct * mp3data, int iread)
         dp->last_mode_ext = 0;
     }
 /*    console_printf ("%s", Console_IO.str_clreoln ); */
-    console_printf("        \b\b\b\b\b\b\b\b");
-    console_flush();
+    //console_printf("        \b\b\b\b\b\b\b\b");
+    //console_flush();
 }
 
 void
