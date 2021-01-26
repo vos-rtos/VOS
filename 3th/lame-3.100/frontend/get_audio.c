@@ -2311,7 +2311,7 @@ put_audio16(FIL* outf, short Buffer[2][1152], int iread, int nch)
     }
     if (m > 0) {
     	u32 num = 0;
-    	f_write (outf, data, 1, &num);
+    	f_write (outf, data, m, &num);
         //fwrite(data, 1, m, outf);
     }
     if (global_writer.flush_write == 1) {

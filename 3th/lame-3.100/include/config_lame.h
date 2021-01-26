@@ -8,7 +8,7 @@
 #define calloc vcalloc
 #define realloc vrealloc
 
-#define TAKEHIRO_IEEE754_HACK 1
+//#define TAKEHIRO_IEEE754_HACK 1
 
 /* The number of bytes in a double.  */
 #define SIZEOF_DOUBLE 8
@@ -23,7 +23,7 @@
 #define SIZEOF_LONG 4
 
 /* The number of bytes in a long double.  */
-#define SIZEOF_LONG_DOUBLE 8
+//#define SIZEOF_LONG_DOUBLE 8
 
 /* The number of bytes in a short.  */
 #define SIZEOF_SHORT 2
@@ -88,7 +88,7 @@
 //#define int64_t signed long long
 #endif
 
-typedef long double ieee854_float80_t;
+//typedef long double ieee854_float80_t;
 typedef double      ieee754_float64_t;
 typedef float       ieee754_float32_t;
 

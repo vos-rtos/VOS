@@ -1418,7 +1418,7 @@ set_id3_albumart(lame_t gfp, char const* file_name)
     }
     //lame_fopen(&fpi, file_name, "rb");
     FRESULT res = f_open(&fpi, file_name, FA_READ);
-    if (1) {
+    if (res) {
         ret = 1;
     }
     else {

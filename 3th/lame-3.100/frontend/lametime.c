@@ -114,7 +114,7 @@ GetRealTime(void)
 {                       /* conforming:  SVr4, SVID, POSIX, X/OPEN, BSD 4.3 */ /* BUT NOT GUARANTEED BY ANSI */
     u32  t;
 
-    t = VOSGetTimeMs();//time(NULL);
+    t = VOSGetTimeMs()/1000;//time(NULL);
     return (double) t;
 }
 
