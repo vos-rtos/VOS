@@ -21,10 +21,10 @@
 
 #ifndef _INPUT_H
 #define _INPUT_H
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "ff.h"
+//#ifdef HAVE_CONFIG_H
+#include "faac_config.h"
+//#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,9 +46,9 @@ typedef signed int int32_t;
 #ifndef HAVE_INT16_T
 typedef signed short int16_t;
 #endif
-#ifndef HAVE_U_INT32_T
-typedef unsigned int u_int32_t;
-#endif
+//#ifndef HAVE_U_INT32_T
+//typedef unsigned int u_int32_t;
+//#endif
 #ifndef HAVE_U_INT16_T
 typedef unsigned short u_int16_t;
 #endif
@@ -61,7 +61,8 @@ extern "C"
 
 typedef struct
 {
-  FILE *f;
+  FIL *f;
+  FIL fx;
   int channels;
   int samplebytes;
   int samplerate;

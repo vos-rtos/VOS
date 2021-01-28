@@ -4,7 +4,7 @@ char USBHPath[4];   /* USBH logical drive path */
 FATFS USBDISKFatFs;           /* File system object for USB disk logical drive */
 
 
-//static long long speex_stack[6*1024];
+static long long speex_stack[6*1024];
 
 static void task_speex_codec(void *param)
 {
@@ -41,7 +41,7 @@ static void task_speex_codec(void *param)
 	};
 	faad_main(3, argv);
 #endif
-#if 1
+#if 0
 	char *argv[3] = {
 			"xxx",
 			"0:/aaa.wav",
@@ -49,7 +49,15 @@ static void task_speex_codec(void *param)
 	};
 	c_main(3, argv);
 #endif
-
+#if 1
+	char *argv[3] = {
+			"xxx",
+			"0:/aaa.wav",
+			"0:/aaa.aac",
+	};
+	int faac_main(int argc, char *argv[]);
+	faac_main(3, argv);
+#endif
 #if 0
 	int speex_dec(int argc, char **argv);
 	char *argv_dec[3] = {
@@ -86,11 +94,11 @@ void fatfs_udisk_test()
 
 	s32 task_id;
 
-//	task_id = VOSTaskCreate(task_speex_codec, 0, speex_stack,
-//			sizeof(speex_stack), TASK_PRIO_REAL, "speex_codec");
-	void *pxxxx = vmalloc(256*1024);
-	task_id = VOSTaskCreate(task_speex_codec, 0, pxxxx/*speex_stack*/,
-			256*1024/*sizeof(speex_stack)*/, TASK_PRIO_REAL, "speex_codec");
+	task_id = VOSTaskCreate(task_speex_codec, 0, speex_stack,
+			sizeof(speex_stack), TASK_PRIO_REAL, "speex_codec");
+//	void *pxxxx = vmalloc(256*1024);
+//	task_id = VOSTaskCreate(task_speex_codec, 0, pxxxx/*speex_stack*/,
+//			256*1024/*sizeof(speex_stack)*/, TASK_PRIO_REAL, "speex_codec");
 	while (1)  {VOSTaskDelay(5*1000);}
 
     for (i=0; i<sizeof(buf); i++) {

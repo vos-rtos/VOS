@@ -1,3 +1,4 @@
+#if 0
 /*
  * FAAC - Freeware Advanced Audio Coder
  * Copyright (C) 2001 Menno Bakker
@@ -426,3 +427,4 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
 
     return DialogBox(hInstance, MAKEINTRESOURCE (IDD_MAINDIALOG), NULL, (DLGPROC) DialogProc);
 }
+#endif

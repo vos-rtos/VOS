@@ -2,7 +2,7 @@
  * FAAC - Freeware Advanced Audio Coder
  * Copyright (C) 2002 Krzysztof Nikiel
  *
- * This library is free software; you can redistribute it and/or
+ * This library is vfree software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
@@ -22,10 +22,12 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-
+#include "vos.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "ff.h"
+
 
 #ifdef _WIN32
 #include <io.h>
@@ -113,14 +115,16 @@ static unsigned char waveformat_pcm_guid[16] =
 
 static void unsuperr(const char *name)
 {
-  fprintf(stderr, "%s: file format not supported\n", name);
+  kprintf( "%s: file format not supported\n", name);
 }
 
 pcmfile_t *wav_open_read(const char *name, int rawinput)
 {
+	FRESULT res;
+	u32 num;
   int i;
   int skip;
-  FILE *wave_f;
+  //FILE *wave_f;
   riff_t riff;
   riffsub_t riffsub;
   struct WAVEFORMATEXTENSIBLE wave;
@@ -133,23 +137,22 @@ pcmfile_t *wav_open_read(const char *name, int rawinput)
   pcmfile_t *sndf;
   int dostdin = 0;
 
-  if (!strcmp(name, "-"))
+  sndf = vmalloc(sizeof(*sndf));
+  memset(sndf, 0, sizeof(*sndf));
+  sndf->f = &sndf->fx;
+  FIL *wave_f = sndf->f;
+
+  res = f_open(wave_f, name, FA_READ);
+  if (res)
   {
-#ifdef _WIN32
-    _setmode(_fileno(stdin), O_BINARY);
-#endif
-    wave_f = stdin;
-    dostdin = 1;
-  }
-  else if (!(wave_f = fopen(name, "rb")))
-  {
-    perror(name);
     return NULL;
   }
 
   if (!rawinput) // header input
   {
-    if (fread(&riff, 1, sizeof(riff), wave_f) != sizeof(riff))
+	res = f_read (wave_f, &riff, sizeof(riff), &num);
+    //if (fread(&riff, 1, sizeof(riff), wave_f) != sizeof(riff))
+	if (num != sizeof(riff))
       return NULL;
     if (memcmp(&(riff.label), riffl, 4))
       return NULL;
@@ -157,15 +160,18 @@ pcmfile_t *wav_open_read(const char *name, int rawinput)
       return NULL;
 
     // handle broadcast extensions. added by pro-tools,otherwise it must be fmt chunk.
-    if (fread(&riffsub, 1, sizeof(riffsub), wave_f) != sizeof(riffsub))
-        return NULL;
+    res = f_read (wave_f, &riffsub, sizeof(riffsub), &num);
+    //if (fread(&riffsub, 1, sizeof(riffsub), wave_f) != sizeof(riffsub))
+    if (num != sizeof(riffsub))
+    	return NULL;
     riffsub.len = UINT32(riffsub.len);
 
     if (!memcmp(&(riffsub.label), bextl, 4))
     {
-        fseek(wave_f, riffsub.len, SEEK_CUR);
-
-        if (fread(&riffsub, 1, sizeof(riffsub), wave_f) != sizeof(riffsub))
+        f_lseek(wave_f, riffsub.len+wave_f->fptr);
+        res = f_read (wave_f, &riffsub, sizeof(riffsub), &num);
+        //if (fread(&riffsub, 1, sizeof(riffsub), wave_f) != sizeof(riffsub))
+        if (num != sizeof(riffsub))
             return NULL;
         riffsub.len = UINT32(riffsub.len);
     }
@@ -175,16 +181,20 @@ pcmfile_t *wav_open_read(const char *name, int rawinput)
     memset(&wave, 0, sizeof(wave));
 
     fmtsize = (riffsub.len < sizeof(wave)) ? riffsub.len : sizeof(wave);
-    if (fread(&wave, 1, fmtsize, wave_f) != fmtsize)
+    res = f_read (wave_f, &wave, fmtsize, &num);
+    //if (fread(&wave, 1, fmtsize, wave_f) != fmtsize)
+    if (num != fmtsize)
         return NULL;
 
     for (skip = riffsub.len - fmtsize; skip > 0; skip--)
-      fgetc(wave_f);
+      vfgetc(wave_f);
 
     for (i = 0;; i++)
     {
-      if (fread(&riffsub, 1, sizeof(riffsub), wave_f) != sizeof(riffsub))
-	return NULL;
+      res = f_read (wave_f, &riffsub, sizeof(riffsub), &num);
+      //if (fread(&riffsub, 1, sizeof(riffsub), wave_f) != sizeof(riffsub))
+      if (num !=  sizeof(riffsub))
+    	  return NULL;
       riffsub.len = UINT32(riffsub.len);
       if (!memcmp(&(riffsub.label), datal, 4))
 	break;
@@ -192,7 +202,7 @@ pcmfile_t *wav_open_read(const char *name, int rawinput)
 	return NULL;
 
       for (skip = riffsub.len; skip > 0; skip--)
-	fgetc(wave_f);
+	vfgetc(wave_f);
     }
     if (UINT16(wave.Format.wFormatTag) != WAVE_FORMAT_PCM && UINT16(wave.Format.wFormatTag) != WAVE_FORMAT_FLOAT)
     {
@@ -218,9 +228,7 @@ pcmfile_t *wav_open_read(const char *name, int rawinput)
     }
   }
 
-  sndf = malloc(sizeof(*sndf));
-  memset(sndf, 0, sizeof(*sndf));
-  sndf->f = wave_f;
+
 
   if (UINT16(wave.Format.wFormatTag) == WAVE_FORMAT_FLOAT) {
     sndf->isfloat = 1;
@@ -234,9 +242,10 @@ pcmfile_t *wav_open_read(const char *name, int rawinput)
       sndf->samples = 0;
     else
     {
-      fseek(sndf->f, 0 , SEEK_END);
-      sndf->samples = ftell(sndf->f);
-      rewind(sndf->f);
+      f_lseek(sndf->f, f_size(sndf->f));
+
+      sndf->samples = f_tell(sndf->f);
+      f_rewind(sndf->f);
     }
   }
   else
@@ -254,7 +263,7 @@ pcmfile_t *wav_open_read(const char *name, int rawinput)
 static void chan_remap(int32_t *buf, int channels, int blocks, int *map)
 {
   int i;
-  int32_t *tmp = malloc(channels * sizeof(int32_t));
+  int32_t *tmp = vmalloc(channels * sizeof(int32_t));
 
   for (i = 0; i < blocks; i++)
   {
@@ -269,6 +278,8 @@ static void chan_remap(int32_t *buf, int channels, int blocks, int *map)
 
 size_t wav_read_float32(pcmfile_t *sndf, float *buf, size_t num, int *map)
 {
+	FRESULT res;
+	u32 numxx;
   size_t i = 0;
   unsigned char bufi[8];
 
@@ -276,8 +287,11 @@ size_t wav_read_float32(pcmfile_t *sndf, float *buf, size_t num, int *map)
     return 0;
 
   while (i<num) {
-    if (fread(bufi, sndf->samplebytes, 1, sndf->f) != 1)
-      break;
+
+	  res = f_read (sndf->f, bufi, sndf->samplebytes, &numxx);
+    //if (fread(bufi, sndf->samplebytes, 1, sndf->f) != 1)
+	  if (numxx != sndf->samplebytes)
+		  break;
 
     if (sndf->isfloat)
     {
@@ -388,8 +402,9 @@ size_t wav_read_int24(pcmfile_t *sndf, int32_t *buf, size_t num, int *map)
     return 0;
 
   bufi = (char *)buf + sizeof(*buf) * num - sndf->samplebytes * (num - 1) - sizeof(*buf);
-
-  size = fread(bufi, sndf->samplebytes, num, sndf->f);
+  size = 0;
+  f_read (sndf->f, bufi, sndf->samplebytes*num, &size);
+  //size = fread(bufi, sndf->samplebytes, num, sndf->f);
 
   // convert to 24 bit
   // fix endianness
@@ -484,7 +499,7 @@ size_t wav_read_int24(pcmfile_t *sndf, int32_t *buf, size_t num, int *map)
 
 int wav_close(pcmfile_t *sndf)
 {
-  int i = fclose(sndf->f);
-  free(sndf);
+  int i = f_close(sndf->f);
+  vfree(sndf);
   return i;
 }

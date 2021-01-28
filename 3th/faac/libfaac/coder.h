@@ -32,7 +32,7 @@ extern "C" {
 /* Allow encoding of Digital Radio Mondiale (DRM) with transform length 1024 */
 //#define DRM_1024
 
-#define MAX_CHANNELS 64
+#define MAX_CHANNELS 2//64
 
 #ifdef DRM
 #ifdef DRM_1024

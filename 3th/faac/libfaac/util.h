@@ -21,6 +21,7 @@
 
 #ifndef UTIL_H
 #define UTIL_H
+#include "vos.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,8 +42,8 @@ extern "C" {
 #endif
 
 /* Memory functions */
-#define AllocMemory(size) malloc(size)
-#define FreeMemory(block) free(block)
+#define AllocMemory(size) vmalloc(size)
+#define FreeMemory(block) vfree(block)
 #define SetMemory(block, value, size) memset(block, value, size)
 
 int GetSRIndex(unsigned int sampleRate);

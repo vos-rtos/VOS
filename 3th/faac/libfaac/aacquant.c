@@ -484,7 +484,6 @@ static int FixNoise(CoderInfo *coderInfo,
     const double ifqstep = pow(2.0, 0.1875);
     const double log_ifqstep = 1.0 / log(ifqstep);
     const double maxstep = 0.05;
-
     for (sb = 0; sb < coderInfo->nr_of_sfb; sb++)
     {
       double sfacfix;
@@ -499,123 +498,123 @@ static int FixNoise(CoderInfo *coderInfo,
       end = coderInfo->sfb_offset[sb+1];
 
       if (!xmin[sb])
-	goto nullsfb;
+    	  goto nullsfb;
 
       maxx = 0.0;
       for (i = start; i < end; i++)
       {
-	if (xr_pow[i] > maxx)
-	  maxx = xr_pow[i];
+    	  if (xr_pow[i] > maxx)
+    		  maxx = xr_pow[i];
       }
 
       //printf("band %d: maxx: %f\n", sb, maxx);
       if (maxx < 10.0)
       {
-      nullsfb:
-	for (i = start; i < end; i++)
-	  xi[i] = 0;
-	coderInfo->scale_factor[sb] = 10;
-	continue;
+    	  nullsfb:
+		  for (i = start; i < end; i++)
+			  xi[i] = 0;
+		  coderInfo->scale_factor[sb] = 10;
+		  continue;
       }
 
       sfacfix = 1.0 / maxx;
       sfac = (int)(log(sfacfix) * log_ifqstep - 0.5);
       for (i = start; i < end; i++)
-	xr_pow[i] *= sfacfix;
+    	  xr_pow[i] *= sfacfix;
       maxx *= sfacfix;
       coderInfo->scale_factor[sb] = sfac;
       QuantizeBand(xr_pow, xi, IPOW20(coderInfo->global_gain), start, end,
 		   adj43);
       //printf("\tsfac: %d\n", sfac);
 
-    calcdist:
+calcdist:
       diffvol = 0.0;
       for (i = start; i < end; i++)
       {
-	tmp = xi[i];
-	diffvol += tmp * tmp;  // ~x^(3/2)
+    	  tmp = xi[i];
+    	  diffvol += tmp * tmp;  // ~x^(3/2)
       }
 
       if (diffvol < 1e-6)
-	diffvol = 1e-6;
+    	  diffvol = 1e-6;
       tmp = pow(diffvol / (double)(end - start), -0.666);
 
       if (fabs(fixstep) > maxstep)
       {
-	double dd = 0.5*(tmp / xmin[sb] - 1.0);
+    	  double dd = 0.5*(tmp / xmin[sb] - 1.0);
 
-	if (fabs(dd) < fabs(fixstep))
-	{
-	  fixstep = dd;
+			if (fabs(dd) < fabs(fixstep))
+			{
+				fixstep = dd;
 
-	  if (fabs(fixstep) < maxstep)
-	    fixstep = maxstep * ((fixstep > 0) ? 1 : -1);
-	}
+				if (fabs(fixstep) < maxstep)
+					fixstep = maxstep * ((fixstep > 0) ? 1 : -1);
+			}
       }
 
       if (fixstep > 0)
       {
-	if (tmp < dist0)
-	{
-	  dist0 = tmp;
-	  sfacfix0 = sfacfix;
-	}
-	else
-	{
-	  if (fixstep > .1)
-	    fixstep = .1;
-	}
+			if (tmp < dist0)
+			{
+				dist0 = tmp;
+				sfacfix0 = sfacfix;
+			}
+			else
+			{
+				if (fixstep > .1)
+				fixstep = .1;
+			}
       }
       else
       {
-	dist0 = tmp;
-	sfacfix0 = sfacfix;
+		dist0 = tmp;
+		sfacfix0 = sfacfix;
       }
 
       dist = (tmp > xmin[sb]);
       fac = 0.0;
       if (fabs(fixstep) >= maxstep)
       {
-	if ((dist && (fixstep < 0))
-	    || (!dist && (fixstep > 0)))
-	{
-	  fixstep = -0.5 * fixstep;
-	}
+		if ((dist && (fixstep < 0))
+			|| (!dist && (fixstep > 0)))
+		{
+		  fixstep = -0.5 * fixstep;
+		}
 
-	fac = 1.0 + fixstep;
+		fac = 1.0 + fixstep;
       }
       else if (dist)
       {
-	fac = 1.0 + fabs(fixstep);
+    	  fac = 1.0 + fabs(fixstep);
       }
 
       if (fac != 0.0)
       {
-	if (maxx * fac >= IXMAX_VAL)
-	{
-	  // restore best noise
-	  fac = sfacfix0 / sfacfix;
-	  for (i = start; i < end; i++)
-	    xr_pow[i] *= fac;
-	  maxx *= fac;
-	  sfacfix *= fac;
-	  coderInfo->scale_factor[sb] = log(sfacfix) * log_ifqstep - 0.5;
-	  QuantizeBand(xr_pow, xi, IPOW20(coderInfo->global_gain), start, end,
-		       adj43);
-	  continue;
-	}
+		if (maxx * fac >= IXMAX_VAL)
+		{
+		  // restore best noise
+		  fac = sfacfix0 / sfacfix;
+		  for (i = start; i < end; i++)
+			xr_pow[i] *= fac;
+		  maxx *= fac;
+		  sfacfix *= fac;
+		  coderInfo->scale_factor[sb] = log(sfacfix) * log_ifqstep - 0.5;
+		  QuantizeBand(xr_pow, xi, IPOW20(coderInfo->global_gain), start, end,
+				   adj43);
+		  continue;
+		}
 
-	if (coderInfo->scale_factor[sb] < -10)
-	{
-	  for (i = start; i < end; i++)
-	    xr_pow[i] *= fac;
-          maxx *= fac;
-          sfacfix *= fac;
-	  coderInfo->scale_factor[sb] = log(sfacfix) * log_ifqstep - 0.5;
-	  QuantizeBand(xr_pow, xi, IPOW20(coderInfo->global_gain), start, end,
-		       adj43);
-	  goto calcdist;
-	}
+		if (coderInfo->scale_factor[sb] < -10)
+		{
+		  for (i = start; i < end; i++)
+			xr_pow[i] *= fac;
+		  maxx *= fac;
+		  sfacfix *= fac;
+		  coderInfo->scale_factor[sb] = log(sfacfix) * log_ifqstep - 0.5;
+		  QuantizeBand(xr_pow, xi, IPOW20(coderInfo->global_gain), start, end,
+				   adj43);
+		  goto calcdist;
+		}
       }
     }
     return 0;
