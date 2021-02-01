@@ -285,6 +285,8 @@ void VOSStarup();
 void VOSTaskSchedule();
 void VOSSysTick();
 
+void VOSDelayUs(u32 us);
+void VOSDelayUsAsm(u32 us, u32 cpu_mhz);
 
 void VOSTaskRaisePrioBeforeBlock(StVOSMutex *pMutex);
 void VOSTaskRestorePrioBeforeRelease();

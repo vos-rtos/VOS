@@ -57,9 +57,9 @@
 									<listOptionValue builtIn="false" value="USE_FULL_ASSERT"/>
 									<listOptionValue builtIn="false" value="TRACE"/>
 									<listOptionValue builtIn="false" value="OS_USE_TRACE_SEMIHOSTING_DEBUG"/>
-									<listOptionValue builtIn="false" value="STM32F407xx"/>
 									<listOptionValue builtIn="false" value="USE_HAL_DRIVER"/>
-									<listOptionValue builtIn="false" value="HSE_VALUE=8000000"/>
+									<listOptionValue builtIn="false" value="HSE_VALUE=25000000"/>
+									<listOptionValue builtIn="false" value="STM32F429xx"/>
 								</option>
 								<inputType id="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler.input.314706834" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler.input"/>
 							</tool>
@@ -134,9 +134,7 @@
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs.1590788832" name="Defined symbols (-D)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.defs" useByScannerDiscovery="true" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="DEBUG"/>
-									<listOptionValue builtIn="false" value="STM32F40_41xxx"/>
 									<listOptionValue builtIn="false" value="USE_STDPERIPH_DRIVER"/>
-									<listOptionValue builtIn="false" value="HSE_VALUE=8000000"/>
 									<listOptionValue builtIn="false" value="__FPU_PRESENT=1"/>
 									<listOptionValue builtIn="false" value="__FPU_USED=1"/>
 									<listOptionValue builtIn="false" value="ARM_MATH_CM4"/>
@@ -144,7 +142,6 @@
 									<listOptionValue builtIn="false" value="USB_OTG_HS=1"/>
 									<listOptionValue builtIn="false" value="USE_USB_FS=1"/>
 									<listOptionValue builtIn="false" value="STM32F4=1"/>
-									<listOptionValue builtIn="false" value="STM32F407xx"/>
 									<listOptionValue builtIn="false" value="__Vendor_SysTickConfig=1"/>
 									<listOptionValue builtIn="false" value="USE_FULL_LL_DRIVER"/>
 									<listOptionValue builtIn="false" value="VOS=1"/>
@@ -152,6 +149,8 @@
 									<listOptionValue builtIn="false" value="TRACE"/>
 									<listOptionValue builtIn="false" value="OS_USE_TRACE_SEMIHOSTING_DEBUG"/>
 									<listOptionValue builtIn="false" value="USE_HAL_DRIVER"/>
+									<listOptionValue builtIn="false" value="STM32F429xx"/>
+									<listOptionValue builtIn="false" value="HSE_VALUE=25000000"/>
 								</option>
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.other.488707711" name="Other compiler flags" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.other" useByScannerDiscovery="true" value="-Wa,-mimplicit-it=thumb" valueType="string"/>
 								<inputType id="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.input.467019840" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.input"/>
@@ -167,9 +166,9 @@
 									<listOptionValue builtIn="false" value="USE_FULL_ASSERT"/>
 									<listOptionValue builtIn="false" value="TRACE"/>
 									<listOptionValue builtIn="false" value="OS_USE_TRACE_SEMIHOSTING_DEBUG"/>
-									<listOptionValue builtIn="false" value="STM32F407xx"/>
 									<listOptionValue builtIn="false" value="USE_HAL_DRIVER"/>
-									<listOptionValue builtIn="false" value="HSE_VALUE=8000000"/>
+									<listOptionValue builtIn="false" value="HSE_VALUE=25000000"/>
+									<listOptionValue builtIn="false" value="STM32F429xx"/>
 								</option>
 								<inputType id="ilg.gnuarmeclipse.managedbuild.cross.tool.cpp.compiler.input.1886846618" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.cpp.compiler.input"/>
 							</tool>
@@ -189,7 +188,7 @@
 							<tool commandLinePattern="$(call obj2file, ${INPUTS}, objs_list.txt) ${command} ${cross_toolchain_flags} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} @objs_list.txt" id="ilg.gnuarmeclipse.managedbuild.cross.tool.cpp.linker.1116712172" name="GNU ARM Cross C++ Linker" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.cpp.linker">
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.cpp.linker.gcsections.1652274477" name="Remove unused sections (-Xlinker --gc-sections)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.cpp.linker.gcsections" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="ilg.gnuarmeclipse.managedbuild.cross.option.cpp.linker.paths.1490325825" name="Library search path (-L)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.cpp.linker.paths" useByScannerDiscovery="false" valueType="libPaths">
-									<listOptionValue builtIn="false" value="&quot;../ldscripts&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;../ldscripts/stm32f429xx&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;../3th/cmsis/Lib/GCC&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;../gui/STemWinV532/Lib&quot;"/>
 								</option>
@@ -225,7 +224,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="3th/amrenc|3th/amr-0.1.5/amrwb|3th/opencore-amr-0.1.5|3th/faac/libfaac/kiss_fft|3th/faac/common|3th/faac/docs|3th/faac/project|3th/faac/plugins|3th/cJSON/test.c|3th/cmsis/Device/ST/STM32F4xx/Source/Templates|3th/libogg-1.3.2|3th/speex-1.2.0/src|gui/STemWinV532/Software|gui/STemWinV532/OS/GUI_X.c|net/lwip/lwip-2.1.2/src/apps/http/fsdata.c|3th/stm32_hal/src/stm32f4xx_hal_timebase_tim_template.c|3th/stm32_hal/src/stm32f4xx_hal_timebase_rtc_wakeup_template.c|3th/stm32_hal/src/stm32f4xx_hal_timebase_rtc_alarm_template.c|3th/stm32_hal/src/stm32f4xx_hal_msp_template.c|3th/cJSON/tests|3th/cJSON/library_config|3th/cJSON/fuzzing|3th/cmsis/Core/Template|3th/cmsis/RTOS2|3th/cmsis/RTOS|3th/cmsis/NN|3th/cmsis/DSP|3th/cmsis/Core_A|3th/faad2/utils|3th/faad2/project|3th/faad2/plugins|3th/faad2/docs|3th/faad2/aacDECdrop|3th/fingerprints|3th/lame-3.100/misc|3th/lame-3.100/vc_solution|3th/lame-3.100/mpglib|3th/lame-3.100/macosx|3th/lame-3.100/mac|3th/lame-3.100/dshow|3th/lame-3.100/doc|3th/lame-3.100/Dll|3th/lame-3.100/debian|3th/lame-3.100/ACM|3th/mbedtls-2.16.6|3th/mongoose/test|3th/mongoose/src|3th/mongoose/examples|3th/mongoose/docs|3th/speex-1.2.0/win32|3th/speex-1.2.0/symbian|3th/speex-1.2.0/m4|3th/speex-1.2.0/doc|3th/speex-1.2.0/bin|3th/speex-1.2.0/ti|gui/STemWinV532/Simulation|net/lwip/lwip-2.1.2/doc|net/lwip/lwip-2.1.2/src/apps/http/makefsdata|net/lwip/lwip-2.1.2/test/unit|net/lwip/lwip-2.1.2/test/fuzz|usb/ST/STM32_USB_Device_Library/Class/Template|usb/ST/STM32_USB_Device_Library/Class/MSC|usb/ST/STM32_USB_Device_Library/Class/HID|usb/ST/STM32_USB_Device_Library/Class/DFU|usb/ST/STM32_USB_Device_Library/Class/CustomHID|usb/ST/STM32_USB_Device_Library/Class/CDC_RNDIS|usb/ST/STM32_USB_Device_Library/Class/CDC_ECM|usb/ST/STM32_USB_Device_Library/Class/BillBoard|usb/ST/STM32_USB_Device_Library/Class/AUDIO|vfs/fatfs/option/ccsbcs.c|vfs/fatfs/option/cc950.c|vfs/fatfs/option/cc949.c|vfs/fatfs/option/cc936.c|vfs/fatfs/option/cc932.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="ldscripts/stm32f407xx|device/wm8978|device/tp_ttp229|device/tp_dev|device/spi_rc522|device/spi_flash|device/spi|device/sd_wifi|device/sd_card|device/RF24L01|device/rand_dev|device/i2c|device/fprints_dev|device/ex_sram|device/eth_dev|app/mg_app|app/speex_app|app/mp3dec_app|3th/truetype|3th/libogg-1.3.4|3th/libmad-0.15.1b|3th/lame-3.100|3th/faad2|3th/faac|3th/speex-1.2.0|device/lcd_dev|stm32/f407xx|3th/amrenc|3th/amr-0.1.5/amrwb|3th/opencore-amr-0.1.5|3th/faac/libfaac/kiss_fft|3th/faac/common|3th/faac/docs|3th/faac/project|3th/faac/plugins|3th/cJSON/test.c|3th/cmsis/Device/ST/STM32F4xx/Source/Templates|3th/libogg-1.3.2|3th/speex-1.2.0/src|gui/STemWinV532/Software|gui/STemWinV532/OS/GUI_X.c|net/lwip/lwip-2.1.2/src/apps/http/fsdata.c|3th/stm32_hal/src/stm32f4xx_hal_timebase_tim_template.c|3th/stm32_hal/src/stm32f4xx_hal_timebase_rtc_wakeup_template.c|3th/stm32_hal/src/stm32f4xx_hal_timebase_rtc_alarm_template.c|3th/stm32_hal/src/stm32f4xx_hal_msp_template.c|3th/cJSON/tests|3th/cJSON/library_config|3th/cJSON/fuzzing|3th/cmsis/Core/Template|3th/cmsis/RTOS2|3th/cmsis/RTOS|3th/cmsis/NN|3th/cmsis/DSP|3th/cmsis/Core_A|3th/faad2/utils|3th/faad2/project|3th/faad2/plugins|3th/faad2/docs|3th/faad2/aacDECdrop|3th/fingerprints|3th/lame-3.100/misc|3th/lame-3.100/vc_solution|3th/lame-3.100/mpglib|3th/lame-3.100/macosx|3th/lame-3.100/mac|3th/lame-3.100/dshow|3th/lame-3.100/doc|3th/lame-3.100/Dll|3th/lame-3.100/debian|3th/lame-3.100/ACM|3th/mbedtls-2.16.6|3th/mongoose/test|3th/mongoose/src|3th/mongoose/examples|3th/mongoose/docs|3th/speex-1.2.0/win32|3th/speex-1.2.0/symbian|3th/speex-1.2.0/m4|3th/speex-1.2.0/doc|3th/speex-1.2.0/bin|3th/speex-1.2.0/ti|gui/STemWinV532/Simulation|net/lwip/lwip-2.1.2/doc|net/lwip/lwip-2.1.2/src/apps/http/makefsdata|net/lwip/lwip-2.1.2/test/unit|net/lwip/lwip-2.1.2/test/fuzz|usb/ST/STM32_USB_Device_Library/Class/Template|usb/ST/STM32_USB_Device_Library/Class/MSC|usb/ST/STM32_USB_Device_Library/Class/HID|usb/ST/STM32_USB_Device_Library/Class/DFU|usb/ST/STM32_USB_Device_Library/Class/CustomHID|usb/ST/STM32_USB_Device_Library/Class/CDC_RNDIS|usb/ST/STM32_USB_Device_Library/Class/CDC_ECM|usb/ST/STM32_USB_Device_Library/Class/BillBoard|usb/ST/STM32_USB_Device_Library/Class/AUDIO|vfs/fatfs/option/ccsbcs.c|vfs/fatfs/option/cc950.c|vfs/fatfs/option/cc949.c|vfs/fatfs/option/cc936.c|vfs/fatfs/option/cc932.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -372,7 +371,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="3th/amrenc|3th/amr-0.1.5/amrwb|3th/opencore-amr-0.1.5|3th/faac/libfaac/kiss_fft|3th/faac/common|3th/faac/docs|3th/faac/project|3th/faac/plugins|3th/cJSON/test.c|3th/cmsis/Device/ST/STM32F4xx/Source/Templates|3th/libogg-1.3.2|3th/speex-1.2.0/src|gui/STemWinV532/Software|gui/STemWinV532/OS/GUI_X.c|net/lwip/lwip-2.1.2/src/apps/http/fsdata.c|3th/stm32_hal/src/stm32f4xx_hal_timebase_tim_template.c|3th/stm32_hal/src/stm32f4xx_hal_timebase_rtc_wakeup_template.c|3th/stm32_hal/src/stm32f4xx_hal_timebase_rtc_alarm_template.c|3th/stm32_hal/src/stm32f4xx_hal_msp_template.c|3th/cJSON/tests|3th/cJSON/library_config|3th/cJSON/fuzzing|3th/cmsis/Core/Template|3th/cmsis/RTOS2|3th/cmsis/RTOS|3th/cmsis/NN|3th/cmsis/DSP|3th/cmsis/Core_A|3th/faad2/utils|3th/faad2/project|3th/faad2/plugins|3th/faad2/docs|3th/faad2/aacDECdrop|3th/fingerprints|3th/lame-3.100/misc|3th/lame-3.100/vc_solution|3th/lame-3.100/mpglib|3th/lame-3.100/macosx|3th/lame-3.100/mac|3th/lame-3.100/dshow|3th/lame-3.100/doc|3th/lame-3.100/Dll|3th/lame-3.100/debian|3th/lame-3.100/ACM|3th/mbedtls-2.16.6|3th/mongoose/test|3th/mongoose/src|3th/mongoose/examples|3th/mongoose/docs|3th/speex-1.2.0/win32|3th/speex-1.2.0/symbian|3th/speex-1.2.0/m4|3th/speex-1.2.0/doc|3th/speex-1.2.0/bin|3th/speex-1.2.0/ti|gui/STemWinV532/Simulation|net/lwip/lwip-2.1.2/doc|net/lwip/lwip-2.1.2/src/apps/http/makefsdata|net/lwip/lwip-2.1.2/test/unit|net/lwip/lwip-2.1.2/test/fuzz|usb/ST/STM32_USB_Device_Library/Class/Template|usb/ST/STM32_USB_Device_Library/Class/MSC|usb/ST/STM32_USB_Device_Library/Class/HID|usb/ST/STM32_USB_Device_Library/Class/DFU|usb/ST/STM32_USB_Device_Library/Class/CustomHID|usb/ST/STM32_USB_Device_Library/Class/CDC_RNDIS|usb/ST/STM32_USB_Device_Library/Class/CDC_ECM|usb/ST/STM32_USB_Device_Library/Class/BillBoard|usb/ST/STM32_USB_Device_Library/Class/AUDIO|vfs/fatfs/option/ccsbcs.c|vfs/fatfs/option/cc950.c|vfs/fatfs/option/cc949.c|vfs/fatfs/option/cc936.c|vfs/fatfs/option/cc932.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="ldscripts/stm32f407xx|device/wm8978|device/tp_ttp229|device/tp_dev|device/spi_rc522|device/spi_flash|device/spi|device/sd_wifi|device/sd_card|device/RF24L01|device/rand_dev|device/i2c|device/fprints_dev|device/ex_sram|device/eth_dev|app/mg_app|app/speex_app|app/mp3dec_app|3th/truetype|3th/libogg-1.3.4|3th/libmad-0.15.1b|3th/lame-3.100|3th/faad2|3th/faac|3th/speex-1.2.0|device/lcd_dev|stm32/f407xx|3th/amrenc|3th/amr-0.1.5/amrwb|3th/opencore-amr-0.1.5|3th/faac/libfaac/kiss_fft|3th/faac/common|3th/faac/docs|3th/faac/project|3th/faac/plugins|3th/cJSON/test.c|3th/cmsis/Device/ST/STM32F4xx/Source/Templates|3th/libogg-1.3.2|3th/speex-1.2.0/src|gui/STemWinV532/Software|gui/STemWinV532/OS/GUI_X.c|net/lwip/lwip-2.1.2/src/apps/http/fsdata.c|3th/stm32_hal/src/stm32f4xx_hal_timebase_tim_template.c|3th/stm32_hal/src/stm32f4xx_hal_timebase_rtc_wakeup_template.c|3th/stm32_hal/src/stm32f4xx_hal_timebase_rtc_alarm_template.c|3th/stm32_hal/src/stm32f4xx_hal_msp_template.c|3th/cJSON/tests|3th/cJSON/library_config|3th/cJSON/fuzzing|3th/cmsis/Core/Template|3th/cmsis/RTOS2|3th/cmsis/RTOS|3th/cmsis/NN|3th/cmsis/DSP|3th/cmsis/Core_A|3th/faad2/utils|3th/faad2/project|3th/faad2/plugins|3th/faad2/docs|3th/faad2/aacDECdrop|3th/fingerprints|3th/lame-3.100/misc|3th/lame-3.100/vc_solution|3th/lame-3.100/mpglib|3th/lame-3.100/macosx|3th/lame-3.100/mac|3th/lame-3.100/dshow|3th/lame-3.100/doc|3th/lame-3.100/Dll|3th/lame-3.100/debian|3th/lame-3.100/ACM|3th/mbedtls-2.16.6|3th/mongoose/test|3th/mongoose/src|3th/mongoose/examples|3th/mongoose/docs|3th/speex-1.2.0/win32|3th/speex-1.2.0/symbian|3th/speex-1.2.0/m4|3th/speex-1.2.0/doc|3th/speex-1.2.0/bin|3th/speex-1.2.0/ti|gui/STemWinV532/Simulation|net/lwip/lwip-2.1.2/doc|net/lwip/lwip-2.1.2/src/apps/http/makefsdata|net/lwip/lwip-2.1.2/test/unit|net/lwip/lwip-2.1.2/test/fuzz|usb/ST/STM32_USB_Device_Library/Class/Template|usb/ST/STM32_USB_Device_Library/Class/MSC|usb/ST/STM32_USB_Device_Library/Class/HID|usb/ST/STM32_USB_Device_Library/Class/DFU|usb/ST/STM32_USB_Device_Library/Class/CustomHID|usb/ST/STM32_USB_Device_Library/Class/CDC_RNDIS|usb/ST/STM32_USB_Device_Library/Class/CDC_ECM|usb/ST/STM32_USB_Device_Library/Class/BillBoard|usb/ST/STM32_USB_Device_Library/Class/AUDIO|vfs/fatfs/option/ccsbcs.c|vfs/fatfs/option/cc950.c|vfs/fatfs/option/cc949.c|vfs/fatfs/option/cc936.c|vfs/fatfs/option/cc932.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

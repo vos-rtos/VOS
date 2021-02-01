@@ -115,11 +115,12 @@ vos_start(void)
 			1024, 8, VHEAP_ATTR_SYS, "vos_sys_ccram_heap", 1);//启动slab分配器
 #endif
 
+
 #if USE_USB_FS
 #if !defined(DATA_IN_ExtSRAM)  //先装ext sram, 后装sram, sram留给aac解码malloc用
-	ExSRamInit();
-	struct StVMemHeap *pheap3 = VMemBuild(ExSRamGetBaseAddr(), ExSRamGetTotalSize(),
-			1024, 8, VHEAP_ATTR_SYS, "vos_sys_exsram_heap", 1);//启动slab分配器);
+//	ExSRamInit();
+//	struct StVMemHeap *pheap3 = VMemBuild(ExSRamGetBaseAddr(), ExSRamGetTotalSize(),
+//			1024, 8, VHEAP_ATTR_SYS, "vos_sys_exsram_heap", 1);//启动slab分配器);
 #endif
 #endif
 

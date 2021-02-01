@@ -1217,6 +1217,11 @@ void CaluTasksCpuUsedRateStart()
 
 }
 
+void VOSDelayUs(u32 us)
+{
+	VOSDelayUsAsm(us, CPU_HZ/1000000);
+}
+
 /********************************************************************************************************
 * 函数：s32 CaluTasksCpuUsedRateShow(struct StTaskInfo *arr, s32 cnts, s32 mode);
 * 描述: shell命令task调用这个函数显示相关信息

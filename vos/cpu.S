@@ -257,7 +257,7 @@ local_irq_enable:
     bx      lr
 
 /********************************************************************************************************
-* 函数：void VOSDelayUs(u32 us);
+* 函数：void VOSDelayUsAsm(u32 us, u32 cpu_mhz);
 * 描述: 汇编编写延时函数
 * 参数:
 * [1] ms: 延时毫秒数
@@ -266,17 +266,20 @@ local_irq_enable:
 *********************************************************************************************************/
 .text
 .align 2
-.global VOSDelayUs
+.global VOSDelayUsAsm
 .thumb
 .thumb_func
-VOSDelayUs:
-	mov r1, #172  //168MHz: 1us执行168条指令 + 4条指令
-	asr r1, r1, #1 //除2，因为内循环消耗2个指令
+VOSDelayUsAsm:
+	add r1, #4 //168MHz: 1us执行168条指令 + 4条指令
+loop_xus:
+	mov r2, r1
+	asr r2, r2, #2 //除4，因为内循环消耗4个指令, 加空指令为凑够4个指令
 loop_1us:
-	subs r1, #1
+	subs r2, #1
+	nop
 	bne loop_1us
 	subs r0, #1
-	bne VOSDelayUs
+	bne loop_xus
 	bx lr
 
 /********************************************************************************************************

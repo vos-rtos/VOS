@@ -66,7 +66,7 @@ int direction_main(int argc, char *argv[]);
 int enhancer_main(int argc, char *argv[]);
 int mask_main(int argc, char *argv[]);
 int minutia_main(int argc, char *argv[]);
-
+void loop_xus_abc(u32 x);
 void main(void *param)
 {
 
@@ -76,8 +76,6 @@ void main(void *param)
 // 	uart_open(2, 115200, 8, "none", 1);
 
 	kprintf("VOS startup!\r\n");
-
-
  	//test_ttp229();
 
 //	void NRF24L01_TEST();

@@ -545,7 +545,7 @@ void VSHELL_FUN_NOTE(wifi, "sd wifi 8081")(s8 **parr, s32 cnts)
 	for (i=0; i<cnts; i++) {
 		kprintf("param[%d]:%s\r\n", i, parr[i]);
 	}
-	usart_process(parr[1][0]);
+	//usart_process(parr[1][0]);
 }
 
 

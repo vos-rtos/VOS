@@ -69,4 +69,6 @@
 #define VOS_TASK_VSHELL_PRIO  1
 #define MAX_TICKS_TIMESLICE 10
 
+#define CPU_HZ (180000000) //180MHz
+
 #endif
