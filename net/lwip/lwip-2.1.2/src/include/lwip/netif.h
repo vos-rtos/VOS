@@ -134,6 +134,8 @@ enum lwip_internal_netif_client_data_index
    LWIP_NETIF_CLIENT_DATA_INDEX_MAX
 };
 
+
+
 #if LWIP_CHECKSUM_CTRL_PER_NETIF
 #define NETIF_CHECKSUM_GEN_IP       0x0001
 #define NETIF_CHECKSUM_GEN_UDP      0x0002

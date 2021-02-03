@@ -34,7 +34,7 @@ int Create_TTFFont(u8 *fxpath)
 
 	result = f_open(&TTFFontFile,(const TCHAR*)fxpath,FA_READ);	//打开字库文件
 	if(result != FR_OK) return 1;
-	
+#ifdef STM32F407xx
 	u32 TtfFontAddr();
 	u32 TtfFontSize();
 
@@ -48,7 +48,9 @@ int Create_TTFFont(u8 *fxpath)
 	if (TtfFontAddr()) {
 		TtfBuffer = (char*)TtfFontAddr();
 	}
-
+#elif defined(STM32F429xx)
+	TtfBuffer = vmalloc(1024*1024*2);
+#endif
 	//读取字体数据
 	#if SYSTEM_SUPPORT_OS
 		OS_CRITICAL_ENTER();	//临界区

@@ -308,6 +308,9 @@ ethernet_output(struct netif * netif, struct pbuf * p,
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE,
               ("ethernet_output: sending packet %p\n", (void *)p));
 
+//  if (p->len > 0) {
+//	  dumphex(p->payload, p->len);
+//  }
   /* send the packet */
   return netif->linkoutput(netif, p);
 

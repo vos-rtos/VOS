@@ -186,6 +186,11 @@ void SVC_Handler_C(u32 *svc_args, s32 is_psp)
 	__local_irq_restore(irq_save);
 	VOSIntExit ();
 }
+void __attribute__ ((section(".after_vectors"),noreturn))
+WWDG_IRQHandler()
+{
+	kprintf("WWDG_IRQHandler!\r\n");
+}
 
 void __attribute__ ((section(".after_vectors"),noreturn))
 Reset_Handler ()

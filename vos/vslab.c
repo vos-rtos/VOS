@@ -730,10 +730,10 @@ s32 VSlabBoudaryCheck(struct StVSlabMgr *pSlabMgr)
 	pSlabMgr->irq_save = __vos_irq_save();
 	//判断pSlabMgr内部所有元素是否正常
 	if (pSlabMgr->align_bytes != VSLAB_ALIGN_SIZE) BOUNDARY_ERROR();
-	if (pSlabMgr->page_size != VSLAB_PAGE_SIZE) BOUNDARY_ERROR();
+	//if (pSlabMgr->page_size != VSLAB_PAGE_SIZE) BOUNDARY_ERROR();
 	if (pSlabMgr->step_size != VSLAB_STEP_SIZE) BOUNDARY_ERROR();
 	if (pSlabMgr->slab_header_size != pSlabMgr->class_max * sizeof(struct StVSlabClass) + sizeof(struct StVSlabMgr)) BOUNDARY_ERROR();
-	if (pSlabMgr->page_header_size != VSlabPageHeaderGetSize(VSLAB_PAGE_SIZE, VSLAB_STEP_SIZE, VSLAB_ALIGN_SIZE)) BOUNDARY_ERROR();
+	//if (pSlabMgr->page_header_size != VSlabPageHeaderGetSize(VSLAB_PAGE_SIZE, VSLAB_STEP_SIZE, VSLAB_ALIGN_SIZE)) BOUNDARY_ERROR();
 	
 	//检查页的属性
 	for (i = 0; i<pSlabMgr->class_max; i++) {

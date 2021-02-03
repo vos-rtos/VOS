@@ -64,9 +64,11 @@ Purpose     : Display controller initialization
 //
 #include "vos.h"
 #include "vheap.h"
-
+#ifdef STM32F407xx
 #define GUI_NUMBYTES  (64*1024) //0x200000
-
+#elif defined(STM32F429xx)
+#define GUI_NUMBYTES  (64*1024) //0x200000
+#endif
 /*********************************************************************
 *
 *       Public code

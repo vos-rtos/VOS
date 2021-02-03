@@ -5,6 +5,12 @@
 #define delay_ms(x) VOSDelayUs((x)*1000)
 #define delay_us(x) VOSDelayUs(x)
 
+//#define IIC_Init() i2c_init(1)
+//#define IIC_Start() i2c_start(1)
+//#define IIC_Stop() i2c_stop(1)
+//#define IIC_Send_Byte(x) i2c_send(1,x)
+//#define IIC_Read_Byte(x) i2c_read(1,x)
+//#define IIC_Wait_Ack() i2c_wait_ack(1)
 
 typedef struct StI2cBusSoft {
 	u32 pin_scl;
@@ -14,7 +20,7 @@ typedef struct StI2cBusSoft {
 	GPIO_TypeDef *GPIOx;
 }StI2cBusSoft;
 
-struct StI2cBusSoft gI2cBusSoft[2];
+struct StI2cBusSoft gI2cBusSoft[3];
 
 
 void i2c_init(s32 port)
@@ -52,6 +58,24 @@ void i2c_init(s32 port)
 		__HAL_RCC_GPIOB_CLK_ENABLE();   //使能GPIOB时钟
 		//PH4,5初始化设置
 		GPIO_Initure.Pin	= GPIO_PIN_8|GPIO_PIN_9;;
+		GPIO_Initure.Mode	= GPIO_MODE_OUTPUT_PP;  //推挽输出
+		GPIO_Initure.Pull	= GPIO_PULLUP;          //上拉
+		GPIO_Initure.Speed	= GPIO_SPEED_FAST;     //快速
+		HAL_GPIO_Init(pI2cBus->GPIOx, &GPIO_Initure);
+		IIC_SDA = 1;
+		IIC_SCL = 1;
+    }
+    if (port == 2) {//for pcf8574
+
+    	pI2cBus->pin_scl = 4;
+    	pI2cBus->pin_sda = 5;
+    	pI2cBus->GPIOx = GPIOH;
+    	pI2cBus->odr_addr = GPIOH_ODR_Addr;
+    	pI2cBus->idr_addr = GPIOH_IDR_Addr;
+
+		__HAL_RCC_GPIOH_CLK_ENABLE();   //使能GPIOB时钟
+		//PH4,5初始化设置
+		GPIO_Initure.Pin	= GPIO_PIN_4|GPIO_PIN_5;
 		GPIO_Initure.Mode	= GPIO_MODE_OUTPUT_PP;  //推挽输出
 		GPIO_Initure.Pull	= GPIO_PULLUP;          //上拉
 		GPIO_Initure.Speed	= GPIO_SPEED_FAST;     //快速
@@ -98,9 +122,11 @@ u8 i2c_read(s32 port, u8 ack)
         VOSDelayUs(1);
     }
     if (!ack)
-        IIC_NAck();//发送nACK
+        //IIC_NAck();//发送nACK
+    	i2c_nack(port);
     else
-        IIC_Ack(); //发送ACK
+        //IIC_Ack(); //发送ACK
+    	i2c_ack(port);
     return recv;
 }
 

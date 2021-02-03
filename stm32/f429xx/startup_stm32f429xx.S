@@ -256,6 +256,7 @@ g_pfnVectors:
 * this definition.
 * 
 *******************************************************************************/
+/*
    .weak      NMI_Handler
    .thumb_set NMI_Handler,Default_Handler
   
@@ -270,7 +271,7 @@ g_pfnVectors:
 
    .weak      UsageFault_Handler
    .thumb_set UsageFault_Handler,Default_Handler
-
+*/
    .weak      SVC_Handler
    .thumb_set SVC_Handler,Default_Handler
 

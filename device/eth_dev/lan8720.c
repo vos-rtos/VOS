@@ -9,8 +9,13 @@ ETH_HandleTypeDef ETH_Handler;
 
 u32  ETH_GetRxPktSize(ETH_DMADescTypeDef *DMARxDesc);
 
+#ifdef STM32F429xx
+#include "io_exp/pcf8574.h"
+#endif
+
 void Lan8720ResetPinInit()
 {
+#ifdef STM32F407xx
    GPIO_InitTypeDef GPIO_Initure;
    __HAL_RCC_GPIOD_CLK_ENABLE();
 
@@ -20,13 +25,23 @@ void Lan8720ResetPinInit()
    GPIO_Initure.Speed=GPIO_SPEED_HIGH;
    HAL_GPIO_Init(GPIOD,&GPIO_Initure);
    HAL_GPIO_WritePin(GPIOD,GPIO_PIN_3,GPIO_PIN_SET);
+#elif defined(STM32F429xx)
+   PCF8574_Init();
+#endif
 }
 
 void Lan8720Reset()
 {
+#ifdef STM32F407xx
 	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_3,GPIO_PIN_RESET);
 	VOSDelayUs(50*1000);
 	HAL_GPIO_WritePin(GPIOD,GPIO_PIN_3,GPIO_PIN_SET);
+#elif defined(STM32F429xx)
+	PCF8574_WriteBit(ETH_RESET_IO,1);
+	VOSDelayUs(100*1000);
+	PCF8574_WriteBit(ETH_RESET_IO,0);
+	VOSDelayUs(100*1000);
+#endif
 }
 
 
@@ -63,10 +78,8 @@ void HAL_ETH_MspInit(ETH_HandleTypeDef *heth)
     GPIO_InitTypeDef GPIO_Initure;
 
     __HAL_RCC_ETH_CLK_ENABLE();
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-//	__HAL_RCC_GPIOB_CLK_ENABLE();
-    __HAL_RCC_GPIOC_CLK_ENABLE();
-    __HAL_RCC_GPIOG_CLK_ENABLE();
+
+#ifdef STM32F407xx
 
     /*
     ETH_MDIO -------------------------> PA2
@@ -78,8 +91,15 @@ void HAL_ETH_MspInit(ETH_HandleTypeDef *heth)
     ETH_RMII_TX_EN -------------------> PG11
     ETH_RMII_TXD0 --------------------> PG13
     ETH_RMII_TXD1 --------------------> PG14
-    ETH_RESET-------------------------> PCF8574À©Õ¹IO
+    ETH_RESET------------------------->
     */
+
+
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+//	__HAL_RCC_GPIOB_CLK_ENABLE();
+    __HAL_RCC_GPIOC_CLK_ENABLE();
+    __HAL_RCC_GPIOG_CLK_ENABLE();
+
 
     //PA1,2,7
     GPIO_Initure.Pin=GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_7;
@@ -97,7 +117,45 @@ void HAL_ETH_MspInit(ETH_HandleTypeDef *heth)
     //PG11,13,14
     GPIO_Initure.Pin=GPIO_PIN_11|GPIO_PIN_13|GPIO_PIN_14;
     HAL_GPIO_Init(GPIOG,&GPIO_Initure);
+#elif defined(STM32F429xx)
+    /*
+    ETH_MDIO -------------------------> PA2
+    ETH_MDC --------------------------> PC1
+    ETH_RMII_REF_CLK------------------> PA1
+    ETH_RMII_CRS_DV ------------------> PA7
+    ETH_RMII_RXD0 --------------------> PC4
+    ETH_RMII_RXD1 --------------------> PC5
+    ETH_RMII_TX_EN -------------------> PB11
+    ETH_RMII_TXD0 --------------------> PG13
+    ETH_RMII_TXD1 --------------------> PG14
+    ETH_RESET-------------------------> PCF8574À©Õ¹IO
+    */
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+	__HAL_RCC_GPIOB_CLK_ENABLE();
+    __HAL_RCC_GPIOC_CLK_ENABLE();
+    __HAL_RCC_GPIOG_CLK_ENABLE();
 
+
+    //PA1,2,7
+    GPIO_Initure.Pin=GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_7;
+    GPIO_Initure.Mode=GPIO_MODE_AF_PP;
+    GPIO_Initure.Pull=GPIO_NOPULL;
+    GPIO_Initure.Speed=GPIO_SPEED_HIGH;
+    GPIO_Initure.Alternate=GPIO_AF11_ETH;
+    HAL_GPIO_Init(GPIOA,&GPIO_Initure);
+
+    //PC1,4,5
+    GPIO_Initure.Pin=GPIO_PIN_1|GPIO_PIN_4|GPIO_PIN_5;
+    HAL_GPIO_Init(GPIOC,&GPIO_Initure);
+
+    //PB11
+    GPIO_Initure.Pin=GPIO_PIN_11;
+    HAL_GPIO_Init(GPIOB,&GPIO_Initure);
+
+    //PG13,14
+    GPIO_Initure.Pin=GPIO_PIN_13|GPIO_PIN_14;
+    HAL_GPIO_Init(GPIOG,&GPIO_Initure);
+#endif
     HAL_NVIC_SetPriority(ETH_IRQn,1,0);
     HAL_NVIC_EnableIRQ(ETH_IRQn);
 }

@@ -86,7 +86,7 @@ static int JpegGetData(void * p, const U8 ** ppData, unsigned NumBytesReq, U32 O
 //member:  缩放比例的分子项
 //denom:缩放比例的分母项
 //返回值:0 显示正常,其他 失败
-int displyjpeg(u8 *JPEGFileName,u8 mode,u32 x,u32 y,int member,int denom)
+int displayjpeg(u8 *JPEGFileName,u8 mode,u32 x,u32 y,int member,int denom)
 {
 	u16 bread;
 	char *jpegbuffer;
@@ -229,7 +229,11 @@ void jpegdisplay_demo(void)
 	while(1)
 	{
 		vvsprintf(buf, sizeof(buf), "0:/320x480/320x480_%d.jpg", num%30+1);
+#ifdef STM32F407xx
 		displayjpegex(buf,0,0,0,1,1);
+#else
+		displayjpegex(buf,0,0,0,1,1);
+#endif
 		//displyjpeg(buf,0,0,0,1,1);
 		GUI_Delay(100);
 		memset(buf, 0, sizeof(buf));

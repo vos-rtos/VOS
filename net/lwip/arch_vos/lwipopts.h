@@ -45,6 +45,8 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
 
 
 
+
+
 #define LWIP_PROVIDE_ERRNO 		1
 
 #define LWIP_TCPIP_CORE_LOCKING  0//1
@@ -202,6 +204,8 @@ extern void *vcalloc(unsigned int nitems, unsigned int size);
   #define CHECKSUM_CHECK_UDP              1
   /* CHECKSUM_CHECK_TCP==1: Check checksums in software for incoming TCP packets.*/
   #define CHECKSUM_CHECK_TCP              1
+
+  #define CHECKSUM_GEN_ICMP	0 //ICMP出去的checksum关闭，硬件产生。
 #endif
 
 

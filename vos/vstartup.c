@@ -124,6 +124,16 @@ vos_start(void)
 #endif
 #endif
 
+#define SDRAM_SUPPOR	1
+#if SDRAM_SUPPOR  //先装ext sram, 后装sram, sram留给aac解码malloc用
+	void SDRAM_Init();
+	SDRAM_Init();
+	u32 sdram_addr();
+	u32 sdram_size();
+	struct StVMemHeap *pheap4 = VMemBuild(sdram_addr(), sdram_size(),
+			1024*4, 8, VHEAP_ATTR_SYS, "vos_sys_sdram_heap", 1);//启动slab分配器);
+#endif
+
 	//创建RAM系统堆
 	struct StVMemHeap *pheap1 = VMemBuild((u8*)&_Heap_Begin, (u32)&_Heap_Limit-(u32)&_Heap_Begin,
 			1024, 8, VHEAP_ATTR_SYS, "vos_sys_ram_heap", 1);//启动slab分配器

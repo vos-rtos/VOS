@@ -91,7 +91,7 @@ void fatfs_udisk_test()
 	{
 		return;
 	}
-
+#if 0
 	s32 task_id;
 
 	task_id = VOSTaskCreate(task_speex_codec, 0, speex_stack,
@@ -100,7 +100,7 @@ void fatfs_udisk_test()
 //	task_id = VOSTaskCreate(task_speex_codec, 0, pxxxx/*speex_stack*/,
 //			256*1024/*sizeof(speex_stack)*/, TASK_PRIO_REAL, "speex_codec");
 	while (1)  {VOSTaskDelay(5*1000);}
-
+#endif
     for (i=0; i<sizeof(buf); i++) {
     	buf[i] = 'a'+i%26;
     }

@@ -83,12 +83,16 @@ void emwindemo_task(void *p_arg)
 }
 
 void fatfs_sd_card();
-static long long emwindemo_stack[1024*2];
+static long long emwindemo_stack[1024*4];
 void emWinTest()
 {
 
  	LCD_Init();
+#ifdef STM32F407xx
  	tp_dev.init();
+#elif defined(STM32F429xx)
+
+#endif
  	fatfs_sd_card();
  	__HAL_RCC_CRC_CLK_ENABLE();
 

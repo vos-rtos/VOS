@@ -49,8 +49,8 @@ int test_ttp229();
 void test_mg_download();
 void test_mg_http();
 //#define DEF_SD_WIFI 1
-//#define DEF_ETH 1
-//#define DEF_4G_PPP 1in
+#define DEF_ETH 1
+//#define DEF_4G_PPP 1
 //#define DEF_SD_FATFS 1
 //#define DEF_USB_FATFS 1
 //#define DEF_GUI 1
@@ -66,7 +66,7 @@ int direction_main(int argc, char *argv[]);
 int enhancer_main(int argc, char *argv[]);
 int mask_main(int argc, char *argv[]);
 int minutia_main(int argc, char *argv[]);
-void loop_xus_abc(u32 x);
+
 void main(void *param)
 {
 
@@ -76,6 +76,7 @@ void main(void *param)
 // 	uart_open(2, 115200, 8, "none", 1);
 
 	kprintf("VOS startup!\r\n");
+
  	//test_ttp229();
 
 //	void NRF24L01_TEST();
@@ -137,8 +138,8 @@ void main(void *param)
 #endif
 
 #if DEF_ETH
-	//SetNetWorkInfo ("192.168.2.101", "255.255.255.0", "192.168.2.100");
-	if (0 == NetDhcpClient(30*1000))
+	SetNetWorkInfo ("192.168.2.101", "255.255.255.0", "192.168.2.100");
+	//if (0 == NetDhcpClient(30*1000))
 	if (0) {
 		ip_addr_t perf_server_ip;
 		IP_ADDR4(&perf_server_ip, 192, 168, 2, 101);
@@ -149,8 +150,8 @@ void main(void *param)
 	}
 	else
 	{
-		test_mg_download();
-		//sock_tcp_test();
+		//test_mg_download();
+		sock_tcp_test();
 	}
 #endif
 #if DEF_4G_PPP
