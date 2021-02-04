@@ -1,7 +1,7 @@
 #include "vos.h"
 #include "usbh_custom.h"
 
-#define DEFAULT_WAIT_TIME          10//20//50
+#define DEFAULT_WAIT_TIME          50//10//20//50
 #define NOT_SUPPORT                0xFF
 
 

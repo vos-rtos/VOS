@@ -69,6 +69,6 @@
 #define VOS_TASK_VSHELL_PRIO  1
 #define MAX_TICKS_TIMESLICE 10
 
-#define CPU_HZ (180000000) //180MHz
-
+#define CPU_HZ (193000000) //180MHz
+#define OS_TICKS_PER_SEC (1000) //1ms调度一次
 #endif

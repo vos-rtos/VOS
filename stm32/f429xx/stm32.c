@@ -82,7 +82,7 @@ void SystemClock_Config(void)
 	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
 	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
 	RCC_OscInitStruct.PLL.PLLM = 25;
-	RCC_OscInitStruct.PLL.PLLN = 360;
+	RCC_OscInitStruct.PLL.PLLN = 386;//360;
 	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
 	RCC_OscInitStruct.PLL.PLLQ = 8;//4;
 	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
@@ -111,13 +111,27 @@ void SystemClock_Config(void)
 #endif
 }
 
+void systick_init()
+{
+	u32 cnts = CPU_HZ/1000000;
+	u32 reload;
+
+	HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);//SysTick频率为HCLK
+
+	reload = cnts;					    //每秒钟的计数次数 单位为K
+	reload *= 1000000/OS_TICKS_PER_SEC;	//根据delay_ostickspersec设定溢出时间
+											//reload为24位寄存器,最大值:16777216,在180M下,约合0.745s左右
+	SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;//开启SYSTICK中断
+	SysTick->LOAD = reload; 					//每1/OS_TICKS_PER_SEC秒中断一次
+	SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk; //开启SYSTICK
+}
 
 void misc_init()
 {
 	//NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
-	//uart_init(115200);
  	//TIM3_Int_Init(5000-1,8400-1);
-	//HwRandomInit();
+	systick_init();
+	HwRandomInit();
 }
 
 

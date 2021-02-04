@@ -150,9 +150,9 @@ vos_start(void)
 
 	VOSShellInit();
 
-	void *main_stack = vmalloc(1024*8);//vmalloc(1024*32);
+	void *main_stack = vmalloc(1024*16);//vmalloc(1024*32);
 	if (main_stack) {
-		code = VOSTaskCreate(main, 0, main_stack, 1024*8, TASK_PRIO_NORMAL, "main");
+		code = VOSTaskCreate(main, 0, main_stack, 1024*16, TASK_PRIO_NORMAL, "main");
 	}
 	__vos_irq_restore(irq_save);
 
