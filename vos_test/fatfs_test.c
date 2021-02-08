@@ -158,13 +158,13 @@ void fatfs_sddisk_test()
 	{
 		return;
 	}
-#if 1
+#if 0
 	s32 task_id;
 	task_id = VOSTaskCreate(task_speex_codec, 0, speex_stack, sizeof(speex_stack), TASK_PRIO_REAL, "speex_codec");
 	while (1)  {VOSTaskDelay(5*1000);}
 #endif
-	//s32 mp3_dec_file(s8 *path);
-	//mp3_dec_file("0:/386.mp3");
+	s32 mp3_dec_file(s8 *path);
+	mp3_dec_file("0:/386.mp3");
 	//wm8978_test();
 //	void mic_test();
 //	mic_test();

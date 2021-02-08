@@ -30,7 +30,6 @@ void i2c_init(s32 port)
     GPIO_InitTypeDef GPIO_Initure;
 
     if (port == 0) {//for wm8987
-
     	pI2cBus->pin_scl = 8;;
     	pI2cBus->pin_sda = 9;;
     	pI2cBus->GPIOx = GPIOB;

@@ -50,9 +50,9 @@ void test_mg_download();
 void test_mg_http();
 //#define DEF_SD_WIFI 1
 //#define DEF_ETH 1
-#define DEF_4G_PPP 1
+//#define DEF_4G_PPP 1
 //#define DEF_SD_FATFS 1
-//#define DEF_USB_FATFS 1
+#define DEF_USB_FATFS 1
 //#define DEF_GUI 1
 //#define DEF_MP3_DEC 1
 
@@ -78,10 +78,11 @@ void main(void *param)
 // 	uart_open(2, 115200, 8, "none", 1);
 
 	kprintf("VOS startup!\r\n");
-	void systime_calibration();
-	systime_calibration();
 
  	//test_ttp229();
+
+//	void fatfs_nand_test();
+//	fatfs_nand_test();
 
 //	void NRF24L01_TEST();
 //	NRF24L01_TEST();

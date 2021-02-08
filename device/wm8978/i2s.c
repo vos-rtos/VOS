@@ -1,3 +1,5 @@
+#ifdef STM32F407xx
+//#if 1
 #include "i2s.h"
 #include "vringbuf.h"
 #include "stm32f4xx_hal.h"
@@ -438,7 +440,7 @@ void DMA1_Stream3_IRQHandler()
 
 
 //I2S开始播放
-void i2s_tx_dma_start(s32 port)
+void sai(s32 port)
 {
 	struct StI2sBus *pI2sBus = &gI2sBus[port];
 	__HAL_DMA_ENABLE(&pI2sBus->hdma_tx);//开启DMA TX传输
@@ -466,5 +468,4 @@ void i2s_rx_dma_stop(s32 port)
 }
 
 
-
-
+#endif

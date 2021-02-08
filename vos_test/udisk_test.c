@@ -91,6 +91,10 @@ void fatfs_udisk_test()
 	{
 		return;
 	}
+	wm8978_test();
+//	s32 mp3_dec_file(s8 *path);
+//	mp3_dec_file("0:/386.mp3");
+
 #if 0
 	s32 task_id;
 

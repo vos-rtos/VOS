@@ -1,6 +1,14 @@
 #include "stm32f4xx_hal.h"
 #include "wm8978.h"
 #include "i2c.h"
+
+
+#ifdef STM32F407xx
+#define I2C_PORT_WM8978 (0)
+#elif defined(STM32F429xx)
+#define I2C_PORT_WM8978 (2)
+#endif
+
 //WM8978默认参数
 _wm8978_obj wm8978set=
 {
@@ -51,7 +59,8 @@ u8 WM8978_Init(void)
 {
 	u8 res;
 
-	i2c_init(0);
+	i2c_init(I2C_PORT_WM8978);
+
 	res=WM8978_Write_Reg(0,0);	//软复位WM8978
 	if(res)return 1;			//发送指令失败,WM8978异常
 	//以下为通用设置
@@ -76,14 +85,14 @@ u8 WM8978_Init(void)
 //    其他,错误代码
 u8 WM8978_Write_Reg(u8 reg,u16 val)
 {
-	i2c_start(0);
-	i2c_send(0, (WM8978_ADDR<<1)|0);
-    if (i2c_wait_ack(0)) return 1;
-    i2c_send(0, (reg<<1)|((val>>8)&0X01));
-    if(i2c_wait_ack(0)) return 2;
-    i2c_send(0, val & 0xFF);
-    if(i2c_wait_ack(0))return 3;
-	i2c_stop(0);
+	i2c_start(I2C_PORT_WM8978);
+	i2c_send(I2C_PORT_WM8978, (WM8978_ADDR<<1)|0);
+    if (i2c_wait_ack(I2C_PORT_WM8978)) return 1;
+    i2c_send(I2C_PORT_WM8978, (reg<<1)|((val>>8)&0X01));
+    if(i2c_wait_ack(I2C_PORT_WM8978)) return 2;
+    i2c_send(I2C_PORT_WM8978, val & 0xFF);
+    if(i2c_wait_ack(I2C_PORT_WM8978))return 3;
+	i2c_stop(I2C_PORT_WM8978);
 	WM8978_REGVAL_TBL[reg] = val;	//保存寄存器值到本地
 	return 0;
 }
@@ -302,8 +311,8 @@ void WM8978_EQ5_Set(u8 cfreq,u8 gain)
 void wm8978_test()
 {
 	WM8978_Init();
-	WM8978_HPvol_Set(40,40);
-	WM8978_SPKvol_Set(63);//(40);
+	WM8978_HPvol_Set(20,30);
+	WM8978_SPKvol_Set(33);//(40);
 
 	void recoder_enter_play_mode();
 	//recoder_enter_play_mode();

@@ -2,6 +2,7 @@
 #include "ff.h"
 #include "i2s.h"
 #include "wm8978.h"
+#include "sai.h"
 #if 0
 void (*i2s_tx_callback)(void);
 
@@ -315,20 +316,30 @@ u8 wav_play_song(u8* fname)
 
 	if(wavctrl.bps == 16) {
 		WM8978_I2S_Cfg(2, 0);	//飞利浦标准,16位数据长度I2S_DataFormat_16bextended
+#ifdef STM32F407xx
 		i2s_open(1, I2S_STANDARD_PHILIPS, I2S_MODE_MASTER_TX, I2S_CPOL_LOW, I2S_DATAFORMAT_16B_EXTENDED);	//飞利浦标准,主机发送,时钟低电平有效,16位扩展帧长度
+#elif defined(STM32F429xx)
+		sai_open(1, SAI_MODEMASTER_TX, SAI_CLOCKSTROBING_RISINGEDGE, SAI_DATASIZE_16);
+#endif
 	}
 	else if(wavctrl.bps == 24){
 		WM8978_I2S_Cfg(2, 2);	//飞利浦标准,24位数据长度
+#ifdef STM32F407xx
 		i2s_open(1, I2S_STANDARD_PHILIPS, I2S_MODE_MASTER_TX, I2S_CPOL_LOW, I2S_DATAFORMAT_24B);	//飞利浦标准,主机发送,时钟低电平有效,24位长度
+#elif defined(STM32F429xx)
+		sai_open(1, SAI_MODEMASTER_TX, SAI_CLOCKSTROBING_RISINGEDGE, SAI_DATASIZE_24);
+#endif
 	}
 	else  {
 		goto END;
 	}
 
 
-
+#ifdef STM32F407xx
 	I2S2_SampleRate_Set(wavctrl.samplerate);
-
+#elif defined(STM32F429xx)
+	SAIA_SampleRate_Set(1, wavctrl.samplerate);
+#endif
 //	DMA_XXX();
 //	I2S_Play_Stop();
 	s32 mark = 0;
@@ -342,7 +353,11 @@ u8 wav_play_song(u8* fname)
 			}
 			mark = 0;
 			while (1) {
+#ifdef STM32F407xx
 				ret = i2s_sends(1, buf+mark, readed-mark, 1000);
+#elif defined(STM32F429xx)
+				ret = sai_sends(1, buf+mark, readed-mark, 1000);
+#endif
 				if (ret > 0) {
 					mark += ret;
 				}
