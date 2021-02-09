@@ -9,8 +9,8 @@
 s32 audio_open(s32 port,  s32 data_bits)
 {
 	WM8978_Init();
-	WM8978_HPvol_Set(40,40);
-	WM8978_SPKvol_Set(60);//(40);
+	WM8978_HPvol_Set(25,25);
+	WM8978_SPKvol_Set(25);//(40);
 
 	WM8978_ADDA_Cfg(1,0);
 	WM8978_Input_Cfg(0,0,0);

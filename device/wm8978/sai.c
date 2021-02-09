@@ -39,7 +39,7 @@ void sai_tx_timer(void *ptimer, void *parg)
 	static s32 count = 0;
 	StVOSTimer *p = (StVOSTimer*)ptimer;
 	struct StSaiBus *pSaiBus = (struct StSaiBus *)parg;
-	if (pSaiBus->handle.Instance == SPI2) {
+	if (pSaiBus->handle.Instance == SAI1_Block_A) {
 		if (!pSaiBus->is_dma_tx_working) {
 			__HAL_DMA_ENABLE(&pSaiBus->hdma_tx);
 			pSaiBus->is_dma_tx_working = 1;
@@ -597,7 +597,7 @@ void DMA2_Stream3_IRQHandler(void)
     if(__HAL_DMA_GET_FLAG(&pSaiBus->hdma_tx,DMA_FLAG_TCIF3_7)!=RESET) //DMA传输完成
     {
         __HAL_DMA_CLEAR_FLAG(&pSaiBus->hdma_tx,DMA_FLAG_TCIF3_7);     //清除DMA传输完成中断标志位
-		if(DMA1_Stream4->CR & (1 << 19)) { //当前使用的是buf1, 证明中断是buf0完成
+		if(DMA2_Stream3->CR & (1 << 19)) { //当前使用的是buf1, 证明中断是buf0完成
 			pbuf = pSaiBus->tx_buf0;
 		}
 		else { //当前使用的是buf0, 证明中断是buf1完成
@@ -622,7 +622,7 @@ void DMA2_Stream5_IRQHandler(void)
 {
 	s32 ret = 0;
 	u8 *pbuf = 0;
-	struct StSaiBus *pSaiBus = SaiBusPtr(SAI1);
+	struct StSaiBus *pSaiBus = SaiBusPtr(SAI1_Block_B);
 	VOSIntEnter();
     if(__HAL_DMA_GET_FLAG(&pSaiBus->hdma_rx,DMA_FLAG_TCIF1_5)!=RESET) //DMA传输完成
     {
