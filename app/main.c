@@ -54,7 +54,7 @@ void test_mg_http();
 //#define DEF_SD_FATFS 1
 #define DEF_USB_FATFS 1
 //#define DEF_GUI 1
-#define DEF_MP3_DEC 1
+//#define DEF_MP3_DEC 1
 
 
 #undef printf

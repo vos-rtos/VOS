@@ -121,9 +121,41 @@ s32 sai_open(s32 port, u32 SAI_Mode, u32 SAI_Clock_Polarity, u32 SAI_DataFormat)
 		}
 
 	}
+	if (port == 0) { //从设备，同步接收
 
-	if (port == 1) {
-		
+		HAL_SAI_DeInit(&pSaiBus->handle);                          //清除以前的配置
+		pSaiBus->handle.Instance=SAI1_Block_B;                     //SAI1 Bock B
+		pSaiBus->handle.Init.AudioMode=SAI_Mode;                       //设置SAI1工作模式
+		pSaiBus->handle.Init.Synchro=SAI_SYNCHRONOUS;             //音频模块同步
+		pSaiBus->handle.Init.OutputDrive=SAI_OUTPUTDRIVE_ENABLE;   //立即驱动音频模块输出
+		pSaiBus->handle.Init.NoDivider=SAI_MASTERDIVIDER_ENABLE;   //使能主时钟分频器(MCKDIV)
+		pSaiBus->handle.Init.FIFOThreshold=SAI_FIFOTHRESHOLD_1QF;  //设置FIFO阈值,1/4 FIFO
+		pSaiBus->handle.Init.ClockSource=SAI_CLKSOURCE_PLLI2S;     //SIA时钟源为PLL2S
+		pSaiBus->handle.Init.MonoStereoMode=SAI_STEREOMODE;        //立体声模式
+		pSaiBus->handle.Init.Protocol=SAI_FREE_PROTOCOL;           //设置SAI1协议为:自由协议(支持I2S/LSB/MSB/TDM/PCM/DSP等协议)
+		pSaiBus->handle.Init.DataSize=SAI_DataFormat;                     //设置数据大小
+		pSaiBus->handle.Init.FirstBit=SAI_FIRSTBIT_MSB;            //数据MSB位优先
+		pSaiBus->handle.Init.ClockStrobing=SAI_Clock_Polarity;                   //数据在时钟的上升/下降沿选通
+
+		//帧设置
+		pSaiBus->handle.FrameInit.FrameLength=64;                  //设置帧长度为64,左通道32个SCK,右通道32个SCK.
+		pSaiBus->handle.FrameInit.ActiveFrameLength=32;            //设置帧同步有效电平长度,在I2S模式下=1/2帧长.
+		pSaiBus->handle.FrameInit.FSDefinition=SAI_FS_CHANNEL_IDENTIFICATION;//FS信号为SOF信号+通道识别信号
+		pSaiBus->handle.FrameInit.FSPolarity=SAI_FS_ACTIVE_LOW;    //FS低电平有效(下降沿)
+		pSaiBus->handle.FrameInit.FSOffset=SAI_FS_BEFOREFIRSTBIT;  //在slot0的第一位的前一位使能FS,以匹配飞利浦标准
+
+		//SLOT设置
+		pSaiBus->handle.SlotInit.FirstBitOffset=0;                 //slot偏移(FBOFF)为0
+		pSaiBus->handle.SlotInit.SlotSize=SAI_SLOTSIZE_32B;        //slot大小为32位
+		pSaiBus->handle.SlotInit.SlotNumber=2;                     //slot数为2个
+		pSaiBus->handle.SlotInit.SlotActive=SAI_SLOTACTIVE_0|SAI_SLOTACTIVE_1;//使能slot0和slot1
+
+		HAL_SAI_Init(&pSaiBus->handle);
+		SAIB_DMA_Enable();
+		__HAL_SAI_ENABLE(&pSaiBus->handle);                       //使能SAI
+	}
+	else if (port == 1) { //主设备，异步发送
+
 		HAL_SAI_DeInit(&pSaiBus->handle);                          //清除以前的配置
 		pSaiBus->handle.Instance=SAI1_Block_A;                     //SAI1 Bock A
 		pSaiBus->handle.Init.AudioMode=SAI_Mode;                       //设置SAI1工作模式
@@ -152,11 +184,6 @@ s32 sai_open(s32 port, u32 SAI_Mode, u32 SAI_Clock_Polarity, u32 SAI_DataFormat)
 		pSaiBus->handle.SlotInit.SlotActive=SAI_SLOTACTIVE_0|SAI_SLOTACTIVE_1;//使能slot0和slot1
 
 		HAL_SAI_Init(&pSaiBus->handle);
-
-		if (SAI_MODEMASTER_RX == SAI_Mode) {
-			SAIB_DMA_Enable();
-		}
-
 		__HAL_SAI_ENABLE(&pSaiBus->handle);                       //使能SAI
 	}
 
@@ -257,36 +284,20 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef *hsai)
 	struct StSaiBus *pSaiBus = SaiBusPtr(hsai->Instance);
 
 
-    if (hsai->Instance == SAI1_Block_A || hsai->Instance == SAI1_Block_B) {
-        __HAL_RCC_SAI1_CLK_ENABLE();                //使能SAI1时钟
-        __HAL_RCC_GPIOE_CLK_ENABLE();               //使能GPIOE时钟
+    __HAL_RCC_SAI1_CLK_ENABLE();                //使能SAI1时钟
+    __HAL_RCC_GPIOE_CLK_ENABLE();               //使能GPIOE时钟
 
-        //初始化PE2,3,4,5,6Sai
-        GPIO_Initure.Pin=GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6;
-        GPIO_Initure.Mode=GPIO_MODE_AF_PP;          //推挽复用
-        GPIO_Initure.Pull=GPIO_PULLUP;              //上拉
-        GPIO_Initure.Speed=GPIO_SPEED_HIGH;         //高速
-        GPIO_Initure.Alternate=GPIO_AF6_SAI1;       //复用为SAI
-        HAL_GPIO_Init(GPIOE,&GPIO_Initure);         //初始化
+    //初始化PE2,3,4,5,6Sai
+    GPIO_Initure.Pin=GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6;
+    GPIO_Initure.Mode=GPIO_MODE_AF_PP;          //推挽复用
+    GPIO_Initure.Pull=GPIO_PULLUP;              //上拉
+    GPIO_Initure.Speed=GPIO_SPEED_HIGH;         //高速
+    GPIO_Initure.Alternate=GPIO_AF6_SAI1;       //复用为SAI
+    HAL_GPIO_Init(GPIOE,&GPIO_Initure);         //初始化
+
+    if (hsai->Instance == SAI1_Block_A) {
 
         //发送DMA
-//        u32 memwidth=0,perwidth=0;      //外设和存储器位宽
-//         switch(1)
-//         {
-//             case 0:         //8位
-//                 memwidth=DMA_MDATAALIGN_BYTE;
-//                 perwidth=DMA_PDATAALIGN_BYTE;
-//                 break;
-//             case 1:         //16位
-//                 memwidth=DMA_MDATAALIGN_HALFWORD;
-//                 perwidth=DMA_PDATAALIGN_HALFWORD;
-//                 break;
-//             case 2:         //32位
-//                 memwidth=DMA_MDATAALIGN_WORD;
-//                 perwidth=DMA_PDATAALIGN_WORD;
-//                 break;
-//
-//         }
          __HAL_RCC_DMA2_CLK_ENABLE();                                    //使能DMA2时钟
          __HAL_LINKDMA(&pSaiBus->handle,hdmatx,pSaiBus->hdma_tx);        //将DMA与SAI联系起来
          pSaiBus->hdma_tx.Instance=DMA2_Stream3;                       //DMA2数据流3
@@ -313,25 +324,9 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef *hsai)
          __HAL_DMA_CLEAR_FLAG(&pSaiBus->hdma_tx, DMA_FLAG_TCIF3_7);     //清除DMA传输完成中断标志位
          HAL_NVIC_SetPriority(DMA2_Stream3_IRQn,0,0);                    //DMA中断优先级
          HAL_NVIC_EnableIRQ(DMA2_Stream3_IRQn);
-#if 0
+    }
+    else if (hsai->Instance == SAI1_Block_B) {
          //接收DMA
-//			u32 memwidth=0,perwidth=0;      //外设和存储器位宽
-//			switch(width)
-//			{
-//			case 0:         //8位
-//			   memwidth=DMA_MDATAALIGN_BYTE;
-//			   perwidth=DMA_PDATAALIGN_BYTE;
-//			   break;
-//			case 1:         //16位
-//			   memwidth=DMA_MDATAALIGN_HALFWORD;
-//			   perwidth=DMA_PDATAALIGN_HALFWORD;
-//			   break;
-//			case 2:         //32位
-//			   memwidth=DMA_MDATAALIGN_WORD;
-//			   perwidth=DMA_PDATAALIGN_WORD;
-//			   break;
-//
-//			}
            __HAL_RCC_DMA2_CLK_ENABLE();                                    //使能DMA2时钟
            __HAL_LINKDMA(&pSaiBus->handle,hdmarx,pSaiBus->hdma_rx);        //将DMA与SAI联系起来
            pSaiBus->hdma_rx.Instance=DMA2_Stream5;                       //DMA2数据流5
@@ -358,10 +353,7 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef *hsai)
 
            HAL_NVIC_SetPriority(DMA2_Stream5_IRQn,0,1);                    //DMA中断优先级
            HAL_NVIC_EnableIRQ(DMA2_Stream5_IRQn);
-#endif
     }
-
-
 }
 
 //SAI Block A采样率设置

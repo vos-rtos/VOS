@@ -2,6 +2,7 @@
 #include "stm32f4xx_hal.h"
 #include "wm8978.h"
 #include "i2s.h"
+#include "sai.h"
 int aaxx = 1;
 s32 mic_open(s32 port)
 {
@@ -17,7 +18,7 @@ s32 mic_open(s32 port)
 	//WM8978_LINEIN_Gain(0);
 	WM8978_SPKvol_Set(0);		//关闭喇叭.
 	WM8978_I2S_Cfg(2,0);		//飞利浦标准,16位数据长度
-
+#ifdef STM32F407xx
 	i2s_mode_set(port, MODE_I2S_RECORDER);
 
 	ret = i2s_open(port, I2S_STANDARD_PHILIPS,I2S_MODE_MASTER_TX,I2S_CPOL_LOW,I2S_DATAFORMAT_16B);
@@ -28,7 +29,17 @@ s32 mic_open(s32 port)
 	i2s_rx_dma_start(port);
 	//启动发送, 要发送，才能接收，spi原理
 	i2s_tx_dma_start(port);
+#elif defined(STM32F429xx)
+	sai_mode_set(port, MODE_SAI_RECORDER);
 
+	ret = sai_open(port, SAI_MODESLAVE_RX, SAI_CLOCKSTROBING_RISINGEDGE, SAI_DATASIZE_16);
+	SAIA_SampleRate_Set(0, 16000);
+	DMA2_Stream3->CR &= ~(1<<4);	//关闭传输完成中断(这里不用中断送数据)
+	//启动录音接收
+	sai_rx_dma_start(port);
+	//启动发送, 要发送，才能接收，spi原理
+	sai_tx_dma_start(port);
+#endif
 //	while (aaxx) {
 //		VOSTaskDelay(5);
 //	}
@@ -38,7 +49,11 @@ s32 mic_open(s32 port)
 
 s32 mic_recvs(s32 port, u8 *buf, s32 len, u32 timeout_ms)
 {
+#ifdef STM32F407xx
 	return i2s_recvs(port, buf, len, timeout_ms);
+#elif defined(STM32F429xx)
+	return sai_recvs(port, buf, len, timeout_ms);
+#endif
 }
 
 s32 mic_ctrl(s32 port, s32 option, void *value, s32 len)
@@ -106,11 +121,13 @@ void mic_test()
 		ret=f_write(&fmp3,(const void*)wavhead,sizeof(__WaveHeader),&bw);//写入头数据
 	}
 
-	mic_open(1);
+	//mic_open(1);
+	mic_open(0);
 	u32 mark_time = VOSGetTimeMs();
 	kprintf("recorder begin!\r\n");
 	while (1) {
-		ret = mic_recvs(1, buf, sizeof(buf), 100);
+		//ret = mic_recvs(1, buf, sizeof(buf), 100);
+		ret = mic_recvs(0, buf, sizeof(buf), 100);
 		if (ret > 0) {
 			total = ret;
 			mark = 0;
